@@ -165,15 +165,29 @@ elif [ -f "./bin/server" ]; then
     BINARY_SRC="./bin/server"
 elif [ -f "./keuangan-keluarga" ]; then
     BINARY_SRC="./keuangan-keluarga"
+elif [ -f "./dompetmungil" ]; then
+    BINARY_SRC="./dompetmungil"
 fi
 
+# Hentikan service terlebih dahulu jika sedang berjalan agar file binary tidak berstatus 'Text file busy'
+if systemctl is-active --quiet "$APP_NAME" 2>/dev/null; then
+    echo -e "${YELLOW}Menghentikan sementara service ${APP_NAME} untuk pembaruan binary...${NC}"
+    systemctl stop "$APP_NAME" 2>/dev/null || true
+fi
+
+# Pastikan proses lama mati total
+killall -9 "$APP_NAME" 2>/dev/null || true
+
 if [ -n "$BINARY_SRC" ]; then
+    # Gunakan install / rm -f terlebih dahulu untuk menghindari file lock Linux
+    rm -f "$BIN_PATH" 2>/dev/null || true
     cp "$BINARY_SRC" "$BIN_PATH"
     chmod 755 "$BIN_PATH"
 else
     # Jika binary belum dikompilasi lokal, kompilasi cepat jika ada go
     if command -v go >/dev/null 2>&1; then
         echo -e "${YELLOW}Mengompilasi binary langsung dari source...${NC}"
+        rm -f "$BIN_PATH" 2>/dev/null || true
         go build -o "$BIN_PATH" main.go
         chmod 755 "$BIN_PATH"
     else
