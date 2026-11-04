@@ -140,6 +140,10 @@ func (d *Database) migrate() error {
 		return err
 	}
 
+	// Migrasi adaptif: Tambahkan kolom baru ke tabel users jika tabel sudah dibuat dari versi lama
+	_, _ = d.conn.Exec("ALTER TABLE users ADD COLUMN account_mode TEXT NOT NULL DEFAULT 'personal'")
+	_, _ = d.conn.Exec("ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'member'")
+
 	// Masukkan kategori default jika belum ada
 	var count int
 	_ = d.conn.QueryRow("SELECT COUNT(*) FROM categories").Scan(&count)
