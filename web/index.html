@@ -182,8 +182,8 @@
       <section class="card-wallet">
         <div style="display:flex; justify-content:space-between; align-items:center;">
           <div class="wallet-balance-label">Total Saldo Terkelola</div>
-          <div id="salaryPaydayIndicator" style="font-size:0.75rem; background:rgba(255,255,255,0.3); padding:4px 10px; border-radius:12px;">
-            🗓️ Gajian: Tgl 25
+          <div id="salaryPaydayIndicator" onclick="openSalaryModal()" style="font-size:0.75rem; background:rgba(255,255,255,0.3); padding:4px 10px; border-radius:12px; cursor:pointer;" title="Klik untuk atur tanggal gajian & recall pemasukan bulanan">
+            🗓️ Gajian: <span id="paydayDateText">Tgl 25</span> ⚙️
           </div>
         </div>
         <div class="wallet-balance-val" id="totalBalanceDisplay">Rp 0</div>
@@ -196,6 +196,14 @@
             <div class="stat-item-label">Pengeluaran (Bulan ini)</div>
             <div class="stat-item-val" id="totalExpenseDisplay" style="color:#C62828;">-Rp 0</div>
           </div>
+        </div>
+
+        <!-- Tombol Recall Cepat Pemasukan Bulanan Pasti -->
+        <div style="margin-top:12px; padding-top:10px; border-top:1px dashed rgba(255,255,255,0.3); display:flex; justify-content:space-between; align-items:center;">
+          <small style="font-size:0.75rem; opacity:0.95;">💰 Pendapatan Pokok Rutin</small>
+          <button onclick="recallMonthlySalary()" class="btn-cute mint" style="padding:4px 10px; font-size:0.75rem; border-radius:10px;">
+            ⚡ Terapkan Gaji Bulan Ini
+          </button>
         </div>
       </section>
 
@@ -355,6 +363,37 @@
         <span>Panduan</span>
       </div>
     </nav>
+  </div>
+
+  <!-- Modal Konfigurasi Pendapatan Pokok Rutin / Gaji -->
+  <div class="modal-overlay" id="salaryModal">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3 class="modal-title">🗓️ Pengaturan Gaji / Pendapatan Pokok</h3>
+        <button onclick="closeSalaryModal()" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">✕</button>
+      </div>
+      <form id="salaryConfigForm">
+        <div class="form-group">
+          <label class="form-label">Tanggal Gajian / Pemasukan Tetap (1 - 31)</label>
+          <input type="number" id="salaryDayInput" class="form-input" min="1" max="31" value="25" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nominal Gaji Pokok Rutin (Rp)</label>
+          <input type="number" id="salaryAmountInput" class="form-input" placeholder="Contoh: 5000000" required min="1000">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Masuk ke Akun / Rekening</label>
+          <select id="salaryAccountSelect" class="form-select">
+            <option value="acc_bank">🏦 Rekening Bank</option>
+            <option value="acc_dompet">👛 Dompet Tunai</option>
+            <option value="acc_ewallet">📱 E-Wallet</option>
+          </select>
+        </div>
+        <button type="submit" class="btn-cute primary" style="width:100%; padding:14px; margin-top:8px;">
+          Simpan Jadwal Pendapatan Rutin ✨
+        </button>
+      </form>
+    </div>
   </div>
 
   <!-- Modal Pilih Karakter Maskot Kawaii -->

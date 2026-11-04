@@ -5,7 +5,23 @@ Format ini mengacu pada [Keep a Changelog](https://keepachangelog.com/id/1.0.0/)
 
 ---
 
-## [v0.02.0-beta] - 2026-11-04
+## [v0.03.0-beta] - 2026-11-05
+
+### 🌟 Fitur Baru & Perbaikan (Added & Fixed)
+- **Pemisahan Kategori Pemasukan vs Pengeluaran**:
+  - Modal pencatatan transaksi kini secara dinamis menampilkan kategori yang sesuai dengan tipe transaksi.
+  - *Pengeluaran*: Makanan, Belanja Dapur, Listrik/Wifi, Pendidikan Anak, Rekreasi, Kesehatan, Transportasi.
+  - *Pemasukan*: Gaji/Pendapatan Bulanan Tetap, Bonus, Usaha Sampingan, Investasi, Hadiah.
+- **Sistem Jadwal Gaji Pokok Rutin & 1-Klik Recall**:
+  - Pengguna dapat mengatur tanggal gajian pasti (1-31) dan nominal gaji bulanan.
+  - Tombol **"⚡ Terapkan Gaji Bulan Ini"** pada kartu dompet untuk secara instan mencatat pemasukan bulanan tetap tanpa perlu mengetik ulang dari awal setiap bulan.
+- **Auto-Recovery & Penyambungan Konfigurasi di Setup Wizard (`install.sh`)**:
+  - Jika konfigurasi lama ditemukan, wizard otomatis menyambungkannya (*seamless update*) tanpa menanyakan ulang port atau backup.
+  - Pada instalasi baru/fresh install di STB, jika terdeteksi `rclone` (Google Drive), wizard langsung menawarkan opsi **"Pulihkan Data dari Cloud (Recovery)"** untuk mengunduh snapshot `keuangan_snapshot_*.tar.gz` (database + kunci enkripsi) secara otomatis.
+
+---
+
+## [v0.02.2-beta] - 2026-11-04
 
 ### 🌟 Fitur Baru (Added)
 - **Mode Akun: Personal vs Keluarga**:

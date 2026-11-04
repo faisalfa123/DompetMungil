@@ -97,6 +97,55 @@ function disconnectGoogleAccount() {
     alert('Akun Google berhasil diputuskan.');
   }
 }
+// Pengaturan & Recall Pemasukan Pokok Rutin (Gaji)
+function openSalaryModal() {
+  const savedDay = localStorage.getItem('dm_salary_day') || '25';
+  const savedAmount = localStorage.getItem('dm_salary_amount') || '';
+  document.getElementById('salaryDayInput').value = savedDay;
+  if (savedAmount) document.getElementById('salaryAmountInput').value = savedAmount;
+  document.getElementById('salaryModal').classList.add('active');
+}
+
+function closeSalaryModal() {
+  document.getElementById('salaryModal').classList.remove('active');
+}
+
+async function recallMonthlySalary() {
+  const amount = parseFloat(localStorage.getItem('dm_salary_amount') || '0');
+  const day = localStorage.getItem('dm_salary_day') || '25';
+  const acc = localStorage.getItem('dm_salary_acc') || 'acc_bank';
+
+  if (!amount || amount <= 0) {
+    alert('Silakan atur nominal gaji pokok rutin Anda terlebih dahulu.');
+    openSalaryModal();
+    return;
+  }
+
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const txDate = `${year}-${month}-${String(day).padStart(2, '0')}`;
+
+  if (!confirm(`Terapkan Pemasukan Rutin Bulan Ini?\nNominal: Rp ${amount.toLocaleString('id-ID')}\nTanggal: ${txDate}`)) {
+    return;
+  }
+
+  const newTx = {
+    client_tx_id: `ctx_salary_${year}_${month}_${Date.now()}`,
+    type: 'income',
+    amount: amount,
+    category_id: 'cat_gaji',
+    account_id: acc,
+    date: txDate,
+    note: `Gaji Pokok Rutin Periode ${month}/${year}`
+  };
+
+  await saveLocalTx(newTx, true);
+  await renderLocalTransactions();
+  triggerSyncWithServer();
+  alert('🎉 Pemasukan rutin bulan ini berhasil diterapkan ke pencatatan keluarga!');
+}
+
 let currentMascot = localStorage.getItem('dm_mascot') || 'icon-cat-mascot';
 let userRole = localStorage.getItem('dm_role') || 'personal';
 let accountMode = localStorage.getItem('dm_mode') || 'personal';
@@ -196,9 +245,39 @@ function switchTab(tab) {
   });
 }
 
+// Daftar Kategori Lucu Terpisah (Pemasukan vs Pengeluaran)
+const CATEGORIES = {
+  expense: [
+    { id: 'cat_makan', name: '🍱 Makanan & Minuman' },
+    { id: 'cat_belanja', name: '🛒 Belanja Harian / Dapur' },
+    { id: 'cat_tagihan', name: '💡 Listrik, Air & Wifi' },
+    { id: 'cat_pendidikan', name: '📚 Pendidikan & Sekolah Anak' },
+    { id: 'cat_hiburan', name: '🎡 Rekreasi & Jalan-jalan' },
+    { id: 'cat_kesehatan', name: '💊 Kesehatan & Obat' },
+    { id: 'cat_kendaraan', name: '⛽ Bensin & Transportasi' },
+    { id: 'cat_lain_keluar', name: '🌸 Pengeluaran Lainnya' }
+  ],
+  income: [
+    { id: 'cat_gaji', name: '💰 Gaji / Pendapatan Bulanan Tetap' },
+    { id: 'cat_bonus', name: '🎁 Bonus & Tunjangan' },
+    { id: 'cat_bisnis', name: '🏪 Usaha Sampingan / Dagang' },
+    { id: 'cat_invest', name: '📈 Hasil Investasi / Dividen' },
+    { id: 'cat_hadiah', name: '💌 Uang Saku / Hadiah' },
+    { id: 'cat_lain_masuk', name: '🌱 Pemasukan Lainnya' }
+  ]
+};
+
+function populateCategoryOptions(type) {
+  const select = document.getElementById('formCategory');
+  if (!select) return;
+  const list = CATEGORIES[type] || CATEGORIES.expense;
+  select.innerHTML = list.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+}
+
 function openModal(type) {
   document.getElementById('formType').value = type;
   document.getElementById('modalFormTitle').innerText = type === 'expense' ? '🌸 Catat Pengeluaran' : '🌱 Catat Pemasukan';
+  populateCategoryOptions(type);
   document.getElementById('txModal').classList.add('active');
 }
 
@@ -428,7 +507,28 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('btnOpenAddIncome').onclick = () => openModal('income');
   document.getElementById('btnSyncNow').onclick = () => triggerSyncWithServer();
 
-  // Handle Form Submit
+  // Handle Form Gaji Pokok Rutin
+  const salaryForm = document.getElementById('salaryConfigForm');
+  if (salaryForm) {
+    salaryForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const day = document.getElementById('salaryDayInput').value;
+      const amount = document.getElementById('salaryAmountInput').value;
+      const acc = document.getElementById('salaryAccountSelect').value;
+
+      localStorage.setItem('dm_salary_day', day);
+      localStorage.setItem('dm_salary_amount', amount);
+      localStorage.setItem('dm_salary_acc', acc);
+
+      const paydayText = document.getElementById('paydayDateText');
+      if (paydayText) paydayText.innerText = `Tgl ${day}`;
+
+      closeSalaryModal();
+      alert(`✨ Jadwal pendapatan rutin berhasil disimpan! (Tgl ${day} tiap bulan)`);
+    });
+  }
+
+  // Handle Form Submit Transaksi
   document.getElementById('txForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const type = document.getElementById('formType').value;

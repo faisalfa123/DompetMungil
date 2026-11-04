@@ -103,18 +103,25 @@ fi
 
 show_msg "Pemeriksaan Sumber Daya Server" "$HARDWARE_INFO"
 
-# 3. Deteksi Apakah Ini Pembaruan (Update Mode)
+# 3. Deteksi Apakah Ini Pembaruan (Update Mode) atau Recovery Cloud
 IS_UPDATE=0
 SAVED_PORT="8080"
+SAVED_ENABLE_BACKUP="no"
+SAVED_RCLONE_REMOTE=""
+
 if [ -f "$CONFIG_DIR/config.env" ]; then
     IS_UPDATE=1
     # shellcheck disable=SC1091
     source "$CONFIG_DIR/config.env"
     SAVED_PORT="${PORT:-8080}"
+    SAVED_ENABLE_BACKUP="${ENABLE_BACKUP:-no}"
+    SAVED_RCLONE_REMOTE="${RCLONE_REMOTE:-}"
     show_msg "Deteksi Konfigurasi Lama" \
     "Ditemukan instalasi sebelumnya!\n\n\
 Port aktif: $SAVED_PORT\n\
-Database & Kunci Enkripsi Anda di $DATA_DIR akan TETAP DIKUNCI & TIDAK DIHAPUS."
+Backup Cloud: $SAVED_ENABLE_BACKUP ($SAVED_RCLONE_REMOTE)\n\n\
+Konfigurasi ini akan langsung DISAMBUNGKAN OTOMATIS tanpa perlu setup ulang.\n\
+Database & Kunci Enkripsi Anda di $DATA_DIR tetap aman."
 fi
 
 # 4. Tentukan Port Kustom
@@ -123,7 +130,7 @@ if [ "$IS_UPDATE" -eq 0 ]; then
     PORT=$(show_input "Konfigurasi Port Kustom" "Masukkan port untuk mengakses PWA di browser:" "8080")
 fi
 
-# 5. Deteksi Backup Cloud (rclone / rsync)
+# 5. Deteksi Backup & Pemulihan Cloud (rclone / rsync Recovery)
 RCLONE_INSTALLED=0
 RCLONE_REMOTES=""
 if command -v rclone >/dev/null 2>&1; then
@@ -131,14 +138,37 @@ if command -v rclone >/dev/null 2>&1; then
     RCLONE_REMOTES=$(rclone listremotes 2>/dev/null || echo "")
 fi
 
-ENABLE_BACKUP="no"
-SELECTED_REMOTE=""
-if [ -n "$RCLONE_REMOTES" ]; then
-    if show_yesno "Integrasi Cloud Backup Otomatis" \
+ENABLE_BACKUP="$SAVED_ENABLE_BACKUP"
+SELECTED_REMOTE="$SAVED_RCLONE_REMOTE"
+
+if [ "$IS_UPDATE" -eq 0 ] && [ -n "$RCLONE_REMOTES" ]; then
+    # Cek apakah pengguna ingin RECOVERY dari cloud backup yang sudah ada
+    if show_yesno "Pulihkan Data dari Cloud (Recovery)?" \
     "Terdeteksi rclone aktif di server Anda!\n\nRemote ditemukan:\n$RCLONE_REMOTES\n\
-Apakah Anda ingin mengaktifkan backup otomatis database & KUNCI ENKRIPSI ke cloud?"; then
+Apakah Anda memiliki cadangan lama di Cloud dan ingin MEMULIHKAN (Recovery) database & kunci enkripsi sekarang?"; then
+        SELECTED_REMOTE=$(show_input "Pilih Remote Cloud Recovery" "Ketik nama remote rclone tempat snapshot tersimpan (misal: gdrive:backup):" "$(echo "$RCLONE_REMOTES" | head -n1)")
+        
+        # Cari file snapshot terbaru di remote
+        LATEST_SNAPSHOT=$(rclone lsf "$SELECTED_REMOTE" 2>/dev/null | grep "keuangan_snapshot_" | sort -r | head -n1 || echo "")
+        if [ -n "$LATEST_SNAPSHOT" ]; then
+            if show_yesno "Ditemukan Snapshot Cadangan!" \
+            "Ditemukan berkas cadangan:\n$LATEST_SNAPSHOT\n\nIngin pulihkan database & kunci enkripsi dari berkas ini sekarang?"; then
+                mkdir -p "$DATA_DIR"
+                rclone copy "${SELECTED_REMOTE}/${LATEST_SNAPSHOT}" /tmp/
+                tar -xzf "/tmp/${LATEST_SNAPSHOT}" -C "$DATA_DIR"
+                rm -f "/tmp/${LATEST_SNAPSHOT}"
+                chmod 600 "$DATA_DIR"/* 2>/dev/null || true
+                show_msg "Pemulihan Berhasil!" "Database dan Kunci Enkripsi berhasil dipulihkan dari Cloud ke $DATA_DIR!"
+                ENABLE_BACKUP="yes"
+            fi
+        else
+            show_msg "Tidak Ada Snapshot Lama" "Tidak ditemukan file keuangan_snapshot_* di ${SELECTED_REMOTE}. Kami akan mengaktifkan remote ini untuk backup baru."
+            ENABLE_BACKUP="yes"
+        fi
+    elif show_yesno "Integrasi Cloud Backup Otomatis" \
+    "Apakah Anda ingin mengaktifkan pencadangan otomatis harian database & kunci enkripsi ke salah satu remote rclone?"; then
         ENABLE_BACKUP="yes"
-        SELECTED_REMOTE=$(show_input "Pilih Remote rclone" "Ketik nama remote rclone persis seperti di atas (misal: gdrive:backup):" "$(echo "$RCLONE_REMOTES" | head -n1)")
+        SELECTED_REMOTE=$(show_input "Pilih Remote rclone" "Ketik nama remote rclone:" "$(echo "$RCLONE_REMOTES" | head -n1)")
     fi
 fi
 
