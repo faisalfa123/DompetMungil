@@ -72,9 +72,72 @@ async function clearSyncedItem(clientTxId) {
   });
 }
 
-// State Aplikasi
-let authToken = localStorage.getItem('kk_token') || '';
-let currentTab = 'home';
+// State Karakter & Tema Kawaii
+let currentMascot = localStorage.getItem('dm_mascot') || 'icon-cat-mascot';
+let userRole = localStorage.getItem('dm_role') || 'personal';
+let accountMode = localStorage.getItem('dm_mode') || 'personal';
+
+function openThemeSelectorModal() {
+  document.getElementById('themeModal').classList.add('active');
+}
+
+function closeThemeModal() {
+  document.getElementById('themeModal').classList.remove('active');
+}
+
+function selectMascotTheme(mascotId, name, accentColor) {
+  currentMascot = mascotId;
+  localStorage.setItem('dm_mascot', mascotId);
+  document.getElementById('currentMascotUse').setAttribute('href', '#' + mascotId);
+  document.documentElement.style.setProperty('--pink-pastel', accentColor);
+}
+
+// Alur Pendaftaran Mode: Personal vs Keluarga (Suami/Istri/Anak)
+function checkUserOnboarding() {
+  if (!authToken) {
+    document.getElementById('onboardingModal').classList.add('active');
+  } else {
+    updateUserBadge();
+  }
+}
+
+function chooseAccountMode(mode) {
+  accountMode = mode;
+  document.getElementById('selectedMode').value = mode;
+  document.getElementById('stepSelectAccountType').style.display = 'none';
+  document.getElementById('onboardingForm').style.display = 'block';
+
+  if (mode === 'family') {
+    document.getElementById('groupFamilyRole').style.display = 'block';
+  } else {
+    document.getElementById('groupFamilyRole').style.display = 'none';
+  }
+}
+
+function updateUserBadge() {
+  const badge = document.getElementById('userRoleBadge');
+  if (accountMode === 'family') {
+    let icon = userRole === 'suami' ? '👨 Suami' : (userRole === 'istri' ? '👩 Istri' : '👧 Anak');
+    badge.innerText = `${icon} (Keluarga)`;
+  } else {
+    badge.innerText = `👤 Personal Mode`;
+  }
+}
+
+// Tab Selector Mutasi Bank: File vs Google Sign-In
+function switchBankTab(tab) {
+  if (tab === 'file') {
+    document.getElementById('bankSectionFile').style.display = 'block';
+    document.getElementById('bankSectionGoogle').style.display = 'none';
+    document.getElementById('tabBtnBankFile').className = 'btn-cute primary';
+    document.getElementById('tabBtnBankGoogle').className = 'btn-cute';
+  } else {
+    document.getElementById('bankSectionFile').style.display = 'none';
+    document.getElementById('bankSectionGoogle').style.display = 'block';
+    document.getElementById('tabBtnBankFile').className = 'btn-cute';
+    document.getElementById('tabBtnBankGoogle').className = 'btn-cute primary';
+  }
+}
 
 // UI Helpers & Format Currency
 function formatRupiah(num) {
@@ -244,6 +307,62 @@ function escapeHtml(text) {
 // Inisialisasi Event Listener
 document.addEventListener('DOMContentLoaded', async () => {
   await initIndexedDB();
+
+  // Pasang maskot tersimpan
+  if (currentMascot) {
+    document.getElementById('currentMascotUse').setAttribute('href', '#' + currentMascot);
+  }
+
+  checkUserOnboarding();
+
+  // Onboarding Form Submit (Inisialisasi akun)
+  document.getElementById('onboardingForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const username = document.getElementById('onboardUsername').value;
+    const password = document.getElementById('onboardPassword').value;
+    const mode = document.getElementById('selectedMode').value;
+    const role = mode === 'family' ? document.getElementById('userFamilyRoleSelect').value : 'personal';
+
+    try {
+      const res = await fetch('/api/v1/auth/init', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: username,
+          password: password,
+          account_mode: mode,
+          role: role
+        })
+      });
+
+      const data = await res.json();
+      if (res.ok && data.token) {
+        authToken = data.token;
+        userRole = role;
+        accountMode = mode;
+        localStorage.setItem('kk_token', authToken);
+        localStorage.setItem('dm_role', role);
+        localStorage.setItem('dm_mode', mode);
+        document.getElementById('onboardingModal').classList.remove('active');
+        updateUserBadge();
+        triggerSyncWithServer();
+      } else {
+        alert(data.message || 'Gagal mendaftar');
+      }
+    } catch (err) {
+      alert('Tidak dapat terhubung ke server STB.');
+    }
+  });
+
+  // Google OAuth2 Token Mock / Handler
+  document.getElementById('btnGoogleSignInOAuth').addEventListener('click', () => {
+    const clientId = document.getElementById('googleClientIdInput').value.trim();
+    if (!clientId) {
+      alert('💡 Masukkan Google Client ID di kolom atas untuk menyambungkan OAuth2 Gmail, atau gunakan opsi impor file e-Statement!');
+      return;
+    }
+    alert('🔗 Membuka jendela otorisasi token Google Mail. Notifikasi transaksi mutasi bank akan terbaca secara otomatis dan dienkripsi di server Odroid Anda!');
+  });
 
   document.getElementById('btnOpenAddExpense').onclick = () => openModal('expense');
   document.getElementById('btnOpenAddIncome').onclick = () => openModal('income');

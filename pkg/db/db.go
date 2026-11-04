@@ -62,7 +62,17 @@ func (d *Database) migrate() error {
 		id TEXT PRIMARY KEY,
 		username TEXT UNIQUE NOT NULL,
 		password_hash TEXT NOT NULL,
-		role TEXT NOT NULL DEFAULT 'member',
+		account_mode TEXT NOT NULL DEFAULT 'personal', -- 'personal' atau 'family'
+		role TEXT NOT NULL DEFAULT 'member', -- 'suami', 'istri', 'anak', atau 'personal'
+		created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+	);
+
+	CREATE TABLE IF NOT EXISTS salary_schedules (
+		id TEXT PRIMARY KEY,
+		user_id TEXT NOT NULL,
+		payday_date INTEGER NOT NULL, -- Tanggal gajian (misal 25)
+		amount REAL NOT NULL,
+		note_enc TEXT,
 		created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 	);
 

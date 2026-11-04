@@ -23,10 +23,17 @@ type ServerStatus struct {
 	Timestamp     int64  `json:"timestamp"`
 }
 
+type UserInfo struct {
+	ID          string `json:"id"`
+	Username    string `json:"username"`
+	AccountMode string `json:"account_mode"`
+	Role        string `json:"role"`
+}
+
 type APIHandler struct {
 	db         *db.Database
 	startTime  time.Time
-	tokens     map[string]string // token -> username
+	tokens     map[string]UserInfo // token -> UserInfo
 	tokenMu    sync.RWMutex
 	lastOOMTime int64
 }
@@ -35,7 +42,7 @@ func NewAPIHandler(database *db.Database) *APIHandler {
 	return &APIHandler{
 		db:        database,
 		startTime: time.Now(),
-		tokens:    make(map[string]string),
+		tokens:    make(map[string]UserInfo),
 	}
 }
 
@@ -79,7 +86,7 @@ func (h *APIHandler) authMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		}
 
 		h.tokenMu.RLock()
-		user, exists := h.tokens[token]
+		userInfo, exists := h.tokens[token]
 		h.tokenMu.RUnlock()
 
 		if !exists {
@@ -87,8 +94,10 @@ func (h *APIHandler) authMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		// Inject user info jika perlu
-		r.Header.Set("X-Authenticated-User", user)
+		// Inject user info ke header untuk dipakai handler
+		r.Header.Set("X-Authenticated-User", userInfo.Username)
+		r.Header.Set("X-Authenticated-Role", userInfo.Role)
+		r.Header.Set("X-Authenticated-Mode", userInfo.AccountMode)
 		next(w, r)
 	}
 }
@@ -114,27 +123,29 @@ func (h *APIHandler) handleHealth(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// POST /api/v1/auth/init (Inisialisasi akun admin jika baru pertama kali dipasang)
+// POST /api/v1/auth/init (Inisialisasi akun: Personal vs Keluarga)
 func (h *APIHandler) handleInitAdmin(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		respondError(w, http.StatusMethodNotAllowed, "ERR_METHOD_NOT_ALLOWED_405", "Metode tidak diizinkan")
 		return
 	}
 
-	var userCount int
-	_ = h.db.GetConn().QueryRow("SELECT COUNT(*) FROM users").Scan(&userCount)
-	if userCount > 0 {
-		respondError(w, http.StatusConflict, "ERR_ALREADY_INITIALIZED_409", "Server sudah diinisialisasi")
-		return
-	}
-
 	var req struct {
-		Username string `json:"username"`
-		Password string `json:"password"`
+		Username    string `json:"username"`
+		Password    string `json:"password"`
+		AccountMode string `json:"account_mode"` // 'personal' atau 'family'
+		Role        string `json:"role"`         // 'suami', 'istri', 'anak', atau 'personal'
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || len(req.Username) < 3 || len(req.Password) < 6 {
 		respondError(w, http.StatusBadRequest, "ERR_INVALID_PAYLOAD_400", "Username minimal 3 karakter, password minimal 6 karakter")
 		return
+	}
+
+	if req.AccountMode == "" {
+		req.AccountMode = "personal"
+	}
+	if req.Role == "" {
+		req.Role = "personal"
 	}
 
 	salt := make([]byte, 16)
@@ -143,7 +154,7 @@ func (h *APIHandler) handleInitAdmin(w http.ResponseWriter, r *http.Request) {
 	stored := fmt.Sprintf("%x$%x", salt, hash)
 
 	userId := fmt.Sprintf("usr_%d", time.Now().Unix())
-	_, err := h.db.GetConn().Exec("INSERT INTO users (id, username, password_hash, role) VALUES (?, ?, ?, 'admin')", userId, req.Username, stored)
+	_, err := h.db.GetConn().Exec("INSERT INTO users (id, username, password_hash, account_mode, role) VALUES (?, ?, ?, ?, ?)", userId, req.Username, stored, req.AccountMode, req.Role)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "ERR_DB_WRITE_500", "Gagal menyimpan akun: "+err.Error())
 		return
@@ -151,13 +162,20 @@ func (h *APIHandler) handleInitAdmin(w http.ResponseWriter, r *http.Request) {
 
 	token := generateRandomToken()
 	h.tokenMu.Lock()
-	h.tokens[token] = req.Username
+	h.tokens[token] = UserInfo{
+		ID:          userId,
+		Username:    req.Username,
+		AccountMode: req.AccountMode,
+		Role:        req.Role,
+	}
 	h.tokenMu.Unlock()
 
 	respondJSON(w, http.StatusCreated, map[string]interface{}{
-		"message":  "Akun keluarga berhasil dibuat!",
-		"username": req.Username,
-		"token":    token,
+		"message":      "Akun berhasil dibuat!",
+		"username":     req.Username,
+		"account_mode": req.AccountMode,
+		"role":         req.Role,
+		"token":        token,
 	})
 }
 
@@ -177,8 +195,8 @@ func (h *APIHandler) handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var storedHash string
-	err := h.db.GetConn().QueryRow("SELECT password_hash FROM users WHERE username = ?", req.Username).Scan(&storedHash)
+	var storedHash, mode, role, userId string
+	err := h.db.GetConn().QueryRow("SELECT id, password_hash, account_mode, role FROM users WHERE username = ?", req.Username).Scan(&userId, &storedHash, &mode, &role)
 	if err != nil {
 		respondError(w, http.StatusUnauthorized, "ERR_AUTH_FAILED_401", "Username atau password keliru")
 		return
@@ -195,12 +213,19 @@ func (h *APIHandler) handleLogin(w http.ResponseWriter, r *http.Request) {
 
 	token := generateRandomToken()
 	h.tokenMu.Lock()
-	h.tokens[token] = req.Username
+	h.tokens[token] = UserInfo{
+		ID:          userId,
+		Username:    req.Username,
+		AccountMode: mode,
+		Role:        role,
+	}
 	h.tokenMu.Unlock()
 
 	respondJSON(w, http.StatusOK, map[string]interface{}{
-		"token":    token,
-		"username": req.Username,
+		"token":        token,
+		"username":     req.Username,
+		"account_mode": mode,
+		"role":         role,
 	})
 }
 
@@ -226,14 +251,39 @@ func (h *APIHandler) handleOverview(w http.ResponseWriter, r *http.Request) {
 
 // GET & POST /api/v1/transactions
 func (h *APIHandler) handleTransactions(w http.ResponseWriter, r *http.Request) {
+	currentRole := r.Header.Get("X-Authenticated-Role")
+	currentUser := r.Header.Get("X-Authenticated-User")
+
 	if r.Method == http.MethodGet {
-		rows, err := h.db.GetConn().Query(`
-			SELECT t.id, t.client_tx_id, t.type, t.amount, t.date, t.note_enc, a.name, c.name, c.color, c.icon
-			FROM transactions t
-			LEFT JOIN accounts a ON t.account_id = a.id
-			LEFT JOIN categories c ON t.category_id = c.id
-			ORDER BY t.date DESC, t.created_at DESC LIMIT 100
-		`)
+		var query string
+		var args []interface{}
+
+		// Transparansi Terkontrol:
+		// Suami & Istri: melihat seluruh transaksi keluarga
+		// Anak: hanya melihat transaksi yang dicatat oleh dirinya sendiri
+		if currentRole == "anak" {
+			query = `
+				SELECT t.id, t.client_tx_id, t.type, t.amount, t.date, t.note_enc, a.name, c.name, c.color, c.icon, COALESCE(u.username, '')
+				FROM transactions t
+				LEFT JOIN accounts a ON t.account_id = a.id
+				LEFT JOIN categories c ON t.category_id = c.id
+				LEFT JOIN users u ON t.user_id = u.id
+				WHERE u.username = ?
+				ORDER BY t.date DESC, t.created_at DESC LIMIT 100
+			`
+			args = append(args, currentUser)
+		} else {
+			query = `
+				SELECT t.id, t.client_tx_id, t.type, t.amount, t.date, t.note_enc, a.name, c.name, c.color, c.icon, COALESCE(u.username, '')
+				FROM transactions t
+				LEFT JOIN accounts a ON t.account_id = a.id
+				LEFT JOIN categories c ON t.category_id = c.id
+				LEFT JOIN users u ON t.user_id = u.id
+				ORDER BY t.date DESC, t.created_at DESC LIMIT 100
+			`
+		}
+
+		rows, err := h.db.GetConn().Query(query, args...)
 		if err != nil {
 			respondError(w, http.StatusInternalServerError, "ERR_DB_READ_500", "Gagal membaca transaksi")
 			return
@@ -251,13 +301,14 @@ func (h *APIHandler) handleTransactions(w http.ResponseWriter, r *http.Request) 
 			CategoryName string  `json:"category_name"`
 			Color        string  `json:"color"`
 			Icon         string  `json:"icon"`
+			Author       string  `json:"author"`
 		}
 
 		list := make([]TxItem, 0)
 		for rows.Next() {
 			var item TxItem
 			var noteEnc, clientTxID sql.NullString
-			if err := rows.Scan(&item.ID, &clientTxID, &item.Type, &item.Amount, &item.Date, &noteEnc, &item.AccountName, &item.CategoryName, &item.Color, &item.Icon); err == nil {
+			if err := rows.Scan(&item.ID, &clientTxID, &item.Type, &item.Amount, &item.Date, &noteEnc, &item.AccountName, &item.CategoryName, &item.Color, &item.Icon, &item.Author); err == nil {
 				if clientTxID.Valid {
 					item.ClientTxID = clientTxID.String
 				}
