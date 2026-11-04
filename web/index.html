@@ -155,6 +155,9 @@
         </div>
       </div>
       <div style="display:flex; gap:8px;">
+        <button class="btn-cute" onclick="document.getElementById('onboardingModal').classList.add('active')" style="padding: 8px; font-size: 0.9rem;" title="Konfigurasi Akun / Peran">
+          ⚙️
+        </button>
         <button class="btn-cute" onclick="openThemeSelectorModal()" style="padding: 8px; font-size: 0.9rem;" title="Ganti Karakter Hewan">
           🐾
         </button>
@@ -291,8 +294,17 @@
     <main id="viewGuide" style="display:none; padding: 20px 20px 90px;">
       <div style="text-align:center; margin-bottom: 20px;">
         <svg style="width:60px; height:60px;"><use href="#icon-cat-mascot"></use></svg>
-        <h2 style="font-weight:800; font-size:1.3rem; margin-top:8px;">Buku Panduan Keluarga</h2>
+        <h2 style="font-weight:800; font-size:1.3rem; margin-top:8px;">Buku Panduan & Konfigurasi</h2>
         <p style="font-size:0.85rem; color:var(--text-muted);">Panduan ramah untuk mengelola keuangan rumah tangga</p>
+      </div>
+
+      <!-- Tombol Re-Konfigurasi Cepat Akun & Mode -->
+      <div style="background:#FFF0F5; border:1.5px dashed var(--pink-pastel); border-radius:18px; padding:16px; margin-bottom:16px; text-align:center;">
+        <h4 style="font-size:0.95rem; font-weight:700; color:#4A4A58;">⚙️ Konfigurasi Ulang Profil / Peran</h4>
+        <p style="font-size:0.8rem; color:var(--text-muted); margin:4px 0 12px;">Ingin mengganti mode akun antara Personal atau Keluarga (Suami/Istri/Anak)?</p>
+        <button class="btn-cute primary" onclick="document.getElementById('onboardingModal').classList.add('active')" style="margin:0 auto; padding:10px 18px;">
+          Buka Wizard Konfigurasi Akun 👨‍👩‍👧‍👦
+        </button>
       </div>
 
       <div style="display:flex; flex-direction:column; gap:16px;">

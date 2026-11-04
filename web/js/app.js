@@ -92,8 +92,22 @@ function selectMascotTheme(mascotId, name, accentColor) {
   document.documentElement.style.setProperty('--pink-pastel', accentColor);
 }
 
-// Alur Pendaftaran Mode: Personal vs Keluarga (Suami/Istri/Anak)
-function checkUserOnboarding() {
+// Alur Pendaftaran & Konfigurasi Mode (Personal vs Keluarga Suami/Istri/Anak)
+async function checkUserOnboarding() {
+  try {
+    const res = await fetch('/api/v1/health');
+    if (res.ok) {
+      const data = await res.json();
+      // Jika server belum diinisialisasi akun sama sekali, WAJIB munculkan wizard onboarding
+      if (!data.initialized || !authToken) {
+        document.getElementById('onboardingModal').classList.add('active');
+        return;
+      }
+    }
+  } catch (err) {
+    console.warn('Gagal cek status init server:', err);
+  }
+
   if (!authToken) {
     document.getElementById('onboardingModal').classList.add('active');
   } else {

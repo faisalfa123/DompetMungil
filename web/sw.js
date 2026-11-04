@@ -1,4 +1,4 @@
-const CACHE_NAME = 'keuangan-keluarga-v1';
+const CACHE_NAME = 'dompetmungil-v2';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
