@@ -1,0 +1,24 @@
+{
+  "name": "Catatan Keuangan Keluarga",
+  "short_name": "KeuanganCute",
+  "description": "Aplikasi Catatan Keuangan Keluarga Kawaii & Ultra-Lightweight",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFF9FB",
+  "theme_color": "#FFB7B2",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

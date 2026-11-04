@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Catatan Keuangan Keluarga (Cute & Ultra-Light)</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#FFB7B2">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Inline Cute SVG Icons Dictionary (100% Orisinal Tanpa Resource Eksternal) -->
+  <svg style="display:none;" version="2.0">
+    <!-- Maskot Kucing Finansial Lucu -->
+    <symbol id="icon-cat-mascot" viewBox="0 0 100 100">
+      <ellipse cx="50" cy="55" rx="38" ry="32" fill="#FFEAE8" stroke="#FFAAA6" stroke-width="4"/>
+      <!-- Telinga Kucing -->
+      <polygon points="20,35 12,12 38,25" fill="#FFB7B2" stroke="#FFAAA6" stroke-width="4"/>
+      <polygon points="22,30 16,18 34,24" fill="#FFD1DC"/>
+      <polygon points="80,35 88,12 62,25" fill="#FFB7B2" stroke="#FFAAA6" stroke-width="4"/>
+      <polygon points="78,30 84,18 66,24" fill="#FFD1DC"/>
+      <!-- Mata Lucu -->
+      <ellipse cx="38" cy="52" rx="4" ry="5" fill="#4A4A58"/>
+      <circle cx="39" cy="50" r="1.5" fill="#FFFFFF"/>
+      <ellipse cx="62" cy="52" rx="4" ry="5" fill="#4A4A58"/>
+      <circle cx="63" cy="50" r="1.5" fill="#FFFFFF"/>
+      <!-- Pipi Merona Pastel -->
+      <ellipse cx="28" cy="60" rx="6" ry="4" fill="#FF9AA2" opacity="0.6"/>
+      <ellipse cx="72" cy="60" rx="6" ry="4" fill="#FF9AA2" opacity="0.6"/>
+      <!-- Hidung & Mulut Kucing -->
+      <polygon points="48,58 52,58 50,61" fill="#FF8E99"/>
+      <path d="M 45,63 Q 50,68 50,63 Q 50,68 55,63" fill="none" stroke="#4A4A58" stroke-width="2.5" stroke-linecap="round"/>
+      <!-- Koin Emas Kecil di Kepala -->
+      <circle cx="50" cy="22" r="10" fill="#FFD166" stroke="#E0A458" stroke-width="2"/>
+      <text x="50" y="26" font-size="11" font-weight="bold" fill="#B27B00" text-anchor="middle">Rp</text>
+    </symbol>
+
+    <!-- Ikon Dompet Manis -->
+    <symbol id="icon-wallet" viewBox="0 0 24 24">
+      <rect x="2" y="5" width="20" height="15" rx="4" fill="none" stroke="currentColor" stroke-width="2"/>
+      <path d="M2 9h20" stroke="currentColor" stroke-width="2"/>
+      <circle cx="17" cy="13" r="1.5" fill="currentColor"/>
+    </symbol>
+
+    <!-- Ikon Transaksi / Daftar -->
+    <symbol id="icon-list" viewBox="0 0 24 24">
+      <path d="M4 6h16M4 12h16M4 18h10" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+    </symbol>
+
+    <!-- Ikon Bank / Mutasi -->
+    <symbol id="icon-bank" viewBox="0 0 24 24">
+      <path d="M3 9l9-6 9 6v2H3V9zm2 4h3v6H5v-6zm5 0h4v6h-4v-6zm6 0h3v6h-3v-6zm-14 8h18v2H2v-2z" fill="currentColor"/>
+    </symbol>
+
+    <!-- Ikon Buku Panduan -->
+    <symbol id="icon-book" viewBox="0 0 24 24">
+      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </symbol>
+
+    <!-- Ikon Pengaturan Server -->
+    <symbol id="icon-settings" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2"/>
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" fill="none" stroke="currentColor" stroke-width="2"/>
+    </symbol>
+
+    <!-- Ikon Makanan & Belanja Lucu -->
+    <symbol id="cute-cat-food" viewBox="0 0 24 24">
+      <path d="M18 6h-2c0-2.21-1.79-4-4-4S8 3.79 8 6H6c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6-2c1.1 0 2 .9 2 2h-4c0-1.1.9-2 2-2zm6 16H6V8h2v2c0 .55.45 1 1 1s1-.45 1-1V8h4v2c0 .55.45 1 1 1s1-.45 1-1V8h2v12z" fill="currentColor"/>
+    </symbol>
+  </svg>
+
+  <div class="app-container">
+    <!-- Header Aplikasi -->
+    <header class="app-header">
+      <div class="brand-section">
+        <div class="mascot-avatar">
+          <svg style="width:36px; height:36px;"><use href="#icon-cat-mascot"></use></svg>
+        </div>
+        <div>
+          <h1 class="brand-title">Keuangan Keluarga</h1>
+          <p class="brand-subtitle" id="serverStatusBadge">🟢 Terhubung ke Odroid STB</p>
+        </div>
+      </div>
+      <div>
+        <button class="btn-cute mint" id="btnSyncNow" style="padding: 8px 12px; font-size: 0.75rem;">
+          🔄 Sync
+        </button>
+      </div>
+    </header>
+
+    <!-- OOM / Offline Recovery Banner -->
+    <div id="recoveryBanner" class="recovery-banner hidden">
+      <span style="font-size: 1.4rem;">💡</span>
+      <div style="flex:1;">
+        <strong id="recoveryTitle">Pemulihan Transaksi</strong>
+        <p id="recoveryDesc" style="font-size:0.75rem; color:#6D4C41;">Ada transaksi tersimpan di memori HP. Sedang disinkronisasi ke server...</p>
+      </div>
+    </div>
+
+    <!-- Main View: Beranda / Dashboard -->
+    <main id="viewHome">
+      <!-- Kartu Dompet & Ringkasan -->
+      <section class="card-wallet">
+        <div class="wallet-balance-label">Total Saldo Terkelola</div>
+        <div class="wallet-balance-val" id="totalBalanceDisplay">Rp 0</div>
+        <div class="wallet-stats-grid">
+          <div>
+            <div class="stat-item-label">Pemasukan (Bulan ini)</div>
+            <div class="stat-item-val" id="totalIncomeDisplay" style="color:#2E7D32;">+Rp 0</div>
+          </div>
+          <div>
+            <div class="stat-item-label">Pengeluaran (Bulan ini)</div>
+            <div class="stat-item-val" id="totalExpenseDisplay" style="color:#C62828;">-Rp 0</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Tombol Aksi Cepat -->
+      <section class="quick-actions-bar">
+        <button class="btn-cute primary" id="btnOpenAddExpense">
+          <span>➖</span> Catat Keluar
+        </button>
+        <button class="btn-cute mint" id="btnOpenAddIncome">
+          <span>➕</span> Catat Masuk
+        </button>
+      </section>
+
+      <!-- Riwayat Transaksi -->
+      <section>
+        <div class="section-title">
+          <span>Riwayat Transaksi</span>
+          <span style="font-size: 0.8rem; color: var(--text-muted);" id="txCounter">0 Catatan</span>
+        </div>
+        <div class="tx-list" id="txContainer">
+          <!-- Transaksi akan dimuat dinamis dari IndexedDB & Server -->
+          <div style="text-align:center; padding: 40px; color: var(--text-muted);">
+            <svg style="width:64px; height:64px; opacity:0.6;"><use href="#icon-cat-mascot"></use></svg>
+            <p style="margin-top:10px; font-weight:600;">Belum ada catatan transaksi.<br>Tekan tombol di atas untuk menambah!</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- View: Integrasi Bank Indonesia -->
+    <main id="viewBank" style="display:none; padding: 20px;">
+      <h2 style="font-size:1.2rem; font-weight:800; margin-bottom:12px;">🏦 Impor Mutasi Bank Indonesia</h2>
+      <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:20px;">
+        Data Anda dienkripsi lokal dengan kunci AES-256 di server STB pribadi. Tidak ada data yang dikirim ke cloud pihak ketiga!
+      </p>
+
+      <div style="background:#fff; border-radius:18px; padding:20px; box-shadow:var(--shadow-soft);">
+        <label class="form-label">Pilih Bank / E-Wallet</label>
+        <select class="form-select" id="bankSelect">
+          <option value="BCA">BCA (KlikBCA / myBCA)</option>
+          <option value="Mandiri">Bank Mandiri (Livin')</option>
+          <option value="BRI">BRI (BRImo)</option>
+          <option value="BNI">BNI Mobile Banking</option>
+          <option value="JAGO">Bank Jago / GoPay</option>
+        </select>
+
+        <label class="form-label" style="margin-top:16px;">Tempel Teks Mutasi / e-Statement</label>
+        <textarea id="bankRawText" class="form-input" style="height:120px; resize:none;" placeholder="Contoh: 04/11/2026 TRSF E-BANKING DB 50.000,00 INDOMARET..."></textarea>
+
+        <button class="btn-cute primary" id="btnProcessBankImport" style="width:100%; margin-top:16px; padding:14px;">
+          ✨ Proses Mutasi Aman & Enkripsi
+        </button>
+      </div>
+    </main>
+
+    <!-- View: Panduan Penggunaan Interaktif (In-App Guide) -->
+    <main id="viewGuide" style="display:none; padding: 20px 20px 90px;">
+      <div style="text-align:center; margin-bottom: 20px;">
+        <svg style="width:60px; height:60px;"><use href="#icon-cat-mascot"></use></svg>
+        <h2 style="font-weight:800; font-size:1.3rem; margin-top:8px;">Buku Panduan Keluarga</h2>
+        <p style="font-size:0.85rem; color:var(--text-muted);">Panduan ramah untuk mengelola keuangan rumah tangga</p>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:16px;">
+        <div style="background:#fff; padding:18px; border-radius:18px; box-shadow:var(--shadow-soft);">
+          <h3 style="font-size:0.95rem; font-weight:700; color:var(--pink-pastel); margin-bottom:6px;">1. Offline-First & Keamanan STB</h3>
+          <p style="font-size:0.82rem; line-height:1.5; color:#555;">
+            Jika server Odroid/HG680P Anda sedang mati atau terhenti oleh OOM killer karena beban berat, aplikasi tetap bisa dipakai mencatat. Data disimpan aman di HP Anda dan otomatis disinkronkan saat server santai kembali.
+          </p>
+        </div>
+
+        <div style="background:#fff; padding:18px; border-radius:18px; box-shadow:var(--shadow-soft);">
+          <h3 style="font-size:0.95rem; font-weight:700; color:var(--mint-dark); margin-bottom:6px;">2. Enkripsi Database Khusus</h3>
+          <p style="font-size:0.82rem; line-height:1.5; color:#555;">
+            Catatan pengeluaran, pemasukan, dan mutasi bank Anda dienkripsi secara penuh dengan standar AES-256 menggunakan kunci rahasia per-perangkat. Aplikasi luar di STB tidak akan dapat membaca isi catatan keuangan Anda.
+          </p>
+        </div>
+
+        <div style="background:#fff; padding:18px; border-radius:18px; box-shadow:var(--shadow-soft);">
+          <h3 style="font-size:0.95rem; font-weight:700; color:#FF9800; margin-bottom:6px;">3. Cara Pasang di HP (PWA)</h3>
+          <p style="font-size:0.82rem; line-height:1.5; color:#555;">
+            Buka menu browser Chrome/Safari Anda, lalu pilih <strong>"Tambahkan ke Layar Utama" (Add to Home Screen)</strong> untuk mendapatkan pengalaman seperti aplikasi bawaan toko aplikasi.
+          </p>
+        </div>
+      </div>
+    </main>
+
+    <!-- Bottom Navigation Bar -->
+    <nav class="bottom-nav">
+      <div class="nav-item active" onclick="switchTab('home')">
+        <svg class="cute-icon"><use href="#icon-wallet"></use></svg>
+        <span>Dompet</span>
+      </div>
+      <div class="nav-item" onclick="switchTab('bank')">
+        <svg class="cute-icon"><use href="#icon-bank"></use></svg>
+        <span>Bank Mutasi</span>
+      </div>
+      <div class="nav-item" onclick="switchTab('guide')">
+        <svg class="cute-icon"><use href="#icon-book"></use></svg>
+        <span>Panduan</span>
+      </div>
+    </nav>
+  </div>
+
+  <!-- Modal Tambah Transaksi -->
+  <div class="modal-overlay" id="txModal">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modalFormTitle">Catat Transaksi</h3>
+        <button onclick="closeModal()" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">✕</button>
+      </div>
+      <form id="txForm">
+        <input type="hidden" id="formType" value="expense">
+        <div class="form-group">
+          <label class="form-label">Nominal (Rp)</label>
+          <input type="number" id="formAmount" class="form-input" placeholder="0" required min="100">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Kategori Lucu</label>
+          <select id="formCategory" class="form-select" required>
+            <option value="cat_makan">🍱 Makanan & Minuman</option>
+            <option value="cat_belanja">🛒 Belanja Harian</option>
+            <option value="cat_tagihan">💡 Listrik & Tagihan</option>
+            <option value="cat_pendidikan">📚 Pendidikan</option>
+            <option value="cat_gaji">💰 Gaji / Pemasukan</option>
+            <option value="cat_bonus">🎁 Bonus / Hadiah</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Sumber Dana</label>
+          <select id="formAccount" class="form-select" required>
+            <option value="acc_dompet">👛 Dompet Tunai</option>
+            <option value="acc_bank">🏦 Rekening Bank</option>
+            <option value="acc_ewallet">📱 E-Wallet</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Catatan Pribadi (Terenkripsi)</label>
+          <input type="text" id="formNote" class="form-input" placeholder="Contoh: Beli sayur & susu anak">
+        </div>
+        <button type="submit" class="btn-cute primary" style="width:100%; padding:14px; margin-top:8px;">
+          Simpan Transaksi Aman ✨
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Script Logika PWA, IndexedDB & Sync -->
+  <script src="/js/app.js"></script>
+</body>
+</html>

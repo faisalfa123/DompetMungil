@@ -1,0 +1,430 @@
+:root {
+  --bg-primary: #FFF8FA;
+  --bg-card: #FFFFFF;
+  --pink-pastel: #FFB7B2;
+  --pink-hover: #FFAAA6;
+  --mint-pastel: #B5EAD7;
+  --mint-dark: #84C5B0;
+  --lavender: #C7CEEA;
+  --peach: #FFDAC1;
+  --yellow-pastel: #E2F0CB;
+  --text-primary: #4A4A58;
+  --text-muted: #8E8E9F;
+  --border-radius-card: 20px;
+  --border-radius-pill: 999px;
+  --shadow-soft: 0 8px 24px rgba(255, 183, 178, 0.15);
+  --shadow-hover: 0 12px 28px rgba(255, 183, 178, 0.25);
+  --danger-pastel: #FF9AA2;
+  --success-pastel: #7BDCB5;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: 'Quicksand', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Container Layout */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  max-width: 520px;
+  margin: 0 auto;
+  width: 100%;
+  min-height: 100vh;
+  position: relative;
+  background: var(--bg-primary);
+}
+
+/* Desktop Mode Responsive */
+@media (min-width: 992px) {
+  body {
+    background: linear-gradient(135deg, #FFF0F5 0%, #E8F5E9 100%);
+  }
+  .app-container {
+    max-width: 900px;
+    margin: 30px auto;
+    border-radius: 28px;
+    box-shadow: 0 20px 60px rgba(74, 74, 88, 0.08);
+    overflow: hidden;
+    min-height: 850px;
+    border: 2px solid rgba(255, 183, 178, 0.3);
+  }
+}
+
+/* Cute Header */
+.app-header {
+  padding: 20px 24px 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.brand-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mascot-avatar {
+  width: 44px;
+  height: 44px;
+  background: var(--pink-pastel);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-soft);
+  animation: bounce 3s infinite ease-in-out;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+.brand-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #4A4A58;
+}
+
+.brand-subtitle {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* Recovery Banner (OOM & Offline) */
+.recovery-banner {
+  margin: 10px 20px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #FFF3E0, #FFE0B2);
+  border-radius: 16px;
+  border-left: 5px solid #FF9800;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.85rem;
+  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.recovery-banner.hidden {
+  display: none;
+}
+
+/* Cute Cards */
+.card-wallet {
+  margin: 14px 20px;
+  background: linear-gradient(135deg, #FFB7B2 0%, #FFDAC1 100%);
+  border-radius: var(--border-radius-card);
+  padding: 24px;
+  color: #FFFFFF;
+  box-shadow: var(--shadow-soft);
+  position: relative;
+  overflow: hidden;
+}
+
+.card-wallet::after {
+  content: "";
+  position: absolute;
+  top: -20px;
+  right: -20px;
+  width: 120px;
+  height: 120px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 50%;
+}
+
+.wallet-balance-label {
+  font-size: 0.85rem;
+  opacity: 0.9;
+  font-weight: 600;
+}
+
+.wallet-balance-val {
+  font-size: 2rem;
+  font-weight: 800;
+  margin: 6px 0 16px;
+  letter-spacing: -0.5px;
+}
+
+.wallet-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.25);
+  padding: 12px 16px;
+  border-radius: 14px;
+  backdrop-filter: blur(8px);
+}
+
+.stat-item-label {
+  font-size: 0.75rem;
+  opacity: 0.9;
+}
+
+.stat-item-val {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+/* Quick Action Buttons */
+.quick-actions-bar {
+  display: flex;
+  gap: 12px;
+  padding: 0 20px;
+  margin-bottom: 16px;
+}
+
+.btn-cute {
+  flex: 1;
+  padding: 12px;
+  border-radius: 16px;
+  border: none;
+  background: var(--bg-card);
+  box-shadow: var(--shadow-soft);
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-cute:active {
+  transform: scale(0.96);
+}
+
+.btn-cute.primary {
+  background: var(--pink-pastel);
+  color: #fff;
+}
+
+.btn-cute.mint {
+  background: var(--mint-pastel);
+  color: #2D5F52;
+}
+
+/* Transactions Feed */
+.section-title {
+  padding: 8px 20px 12px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tx-list {
+  padding: 0 20px 90px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+}
+
+.tx-card {
+  background: var(--bg-card);
+  padding: 14px 16px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03);
+  transition: transform 0.2s ease;
+}
+
+.tx-card:hover {
+  transform: translateY(-2px);
+}
+
+.tx-info-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.tx-icon-circle {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tx-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.tx-meta {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.tx-amount {
+  font-weight: 800;
+  font-size: 0.95rem;
+}
+
+.tx-amount.income {
+  color: #4CAF50;
+}
+
+.tx-amount.expense {
+  color: #E57373;
+}
+
+/* Bottom Navigation Bar for Mobile */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-width: 520px;
+  margin: 0 auto;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  padding: 10px 16px;
+  border-radius: 24px 24px 0 0;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  z-index: 100;
+}
+
+@media (min-width: 992px) {
+  .bottom-nav {
+    position: static;
+    border-radius: 0;
+    max-width: 100%;
+    margin-top: auto;
+  }
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.nav-item.active {
+  color: var(--pink-pastel);
+}
+
+/* Modal Popup */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 200;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+@media (min-width: 576px) {
+  .modal-overlay {
+    align-items: center;
+  }
+}
+
+.modal-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-sheet {
+  background: var(--bg-card);
+  width: 100%;
+  max-width: 480px;
+  border-radius: 28px 28px 0 0;
+  padding: 24px;
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.1);
+  transform: translateY(100%);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (min-width: 576px) {
+  .modal-sheet {
+    border-radius: 28px;
+    transform: translateY(20px);
+  }
+}
+
+.modal-overlay.active .modal-sheet {
+  transform: translateY(0);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.modal-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.form-input, .form-select {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 14px;
+  border: 1.5px solid #F0E6EA;
+  background: #FFFDFE;
+  font-family: inherit;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.form-input:focus, .form-select:focus {
+  border-color: var(--pink-pastel);
+}
+
+/* Cute SVG Icons Helper */
+.cute-icon {
+  width: 22px;
+  height: 22px;
+  fill: currentColor;
+}

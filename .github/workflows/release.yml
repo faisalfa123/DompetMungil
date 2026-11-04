@@ -1,0 +1,65 @@
+name: Build & Release Ultra-Light Binary
+
+on:
+  push:
+    tags:
+      - 'v*'
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build Multi-Arch Binaries (Odroid C2 ARM64 / ARMv7 / AMD64)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+          cache: true
+
+      - name: Build Binary ARM64 (Odroid C2 / STB HG680P Amlogic S905X 64-bit)
+        env:
+          CGO_ENABLED: 0
+          GOOS: linux
+          GOARCH: arm64
+        run: |
+          go build -ldflags="-s -w" -o dist/keuangan-server-linux-aarch64 main.go
+
+      - name: Build Binary ARMv7 (STB 32-bit / Raspberry Pi 32-bit)
+        env:
+          CGO_ENABLED: 0
+          GOOS: linux
+          GOARCH: arm
+          GOARM: 7
+        run: |
+          go build -ldflags="-s -w" -o dist/keuangan-server-linux-armv7l main.go
+
+      - name: Build Binary AMD64 (x86_64 Desktop / VPS)
+        env:
+          CGO_ENABLED: 0
+          GOOS: linux
+          GOARCH: amd64
+        run: |
+          go build -ldflags="-s -w" -o dist/keuangan-server-linux-x86_64 main.go
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: keuangan-keluarga-binaries
+          path: dist/*
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

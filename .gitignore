@@ -1,0 +1,29 @@
+# Binaries
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+keuangan-keluarga-server
+
+# Local sensitive data & DB (JANGAN PERNAH DI-COMMIT)
+*.db
+*.db-wal
+*.db-shm
+*.key
+*.secret
+data/
+config.json
+secret.key
+
+# OS & IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Node / Frontend temporary
+web/dist/
+node_modules/
