@@ -230,7 +230,7 @@ fi
 cat << 'EOF' > /usr/local/bin/keuangan-backup.sh
 #!/bin/bash
 set -e
-CONFIG_FILE="/etc/keuangan-keluarga/config.env"
+CONFIG_FILE="/etc/dompetmungil/config.env"
 if [ ! -f "$CONFIG_FILE" ]; then exit 0; fi
 source "$CONFIG_FILE"
 
@@ -266,22 +266,18 @@ fi
 cat <<EOF > "$SYSTEMD_FILE"
 [Unit]
 Description=Catatan Keuangan Keluarga (Cute & Ultra-Light PWA)
-After=network.target
+After=network.target network-online.target
+Wants=network-online.target
 
 [Service]
 Type=simple
 EnvironmentFile=$CONFIG_DIR/config.env
 ExecStart=$BIN_PATH -port \${PORT} -data-dir \${DATA_DIR}
 Restart=always
-RestartSec=5s
+RestartSec=3s
 
-# Perlindungan OOM Killer: Berikan prioritas agar tidak dibunuh duluan saat server berat
+# Perlindungan OOM Killer
 OOMScoreAdjust=-500
-
-# Pengamanan sandbox Linux
-ProtectSystem=full
-ProtectHome=true
-NoNewPrivileges=true
 
 [Install]
 WantedBy=multi-user.target
