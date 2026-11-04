@@ -15,12 +15,12 @@ BLUE='\033[0;34m'
 CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
-APP_NAME="keuangan-keluarga"
+APP_NAME="dompetmungil"
 CONFIG_DIR="/etc/${APP_NAME}"
 DATA_DIR="/var/lib/${APP_NAME}"
 BIN_PATH="/usr/local/bin/${APP_NAME}"
 SYSTEMD_FILE="/etc/systemd/system/${APP_NAME}.service"
-GITHUB_REPO="keuangan-keluarga/server"
+GITHUB_REPO="faisalfa123/DompetMungil"
 
 # Deteksi ketersediaan TUI engine
 TUI_BIN=""

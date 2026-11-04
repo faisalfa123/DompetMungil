@@ -12,9 +12,9 @@ import (
 	"path/filepath"
 	"syscall"
 
-	"github.com/keuangan-keluarga/server/pkg/api"
-	"github.com/keuangan-keluarga/server/pkg/crypto"
-	"github.com/keuangan-keluarga/server/pkg/db"
+	"github.com/faisalfa123/DompetMungil/pkg/api"
+	"github.com/faisalfa123/DompetMungil/pkg/crypto"
+	"github.com/faisalfa123/DompetMungil/pkg/db"
 )
 
 // Embed seluruh direktori web statis PWA langsung ke dalam binary Go

@@ -1,4 +1,4 @@
-module github.com/keuangan-keluarga/server
+module github.com/faisalfa123/DompetMungil
 
 go 1.27.0
 

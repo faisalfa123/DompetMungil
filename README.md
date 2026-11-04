@@ -1,4 +1,4 @@
-# 🌸 Catatan Keuangan Keluarga (Cute & Ultra-Lightweight PWA)
+# 🌸 DompetMungil (Cute & Ultra-Lightweight Family Finance PWA)
 
 Aplikasi pencatatan keuangan keluarga orisinal, bertema manis (*kawaii pastel*), dan dirancang khusus untuk berjalan super ringan pada server hemat daya seperti **Odroid C2 / STB HG680P (Amlogic S905X / RAM 1-2GB)** dengan lisensi terbuka **GNU GPL v3.0**.
 
@@ -36,8 +36,8 @@ Frontend PWA di-embed langsung ke dalam *single static binary* Go sehingga **tid
 Login ke terminal Odroid/STB Anda melalui SSH, lalu jalankan:
 
 ```bash
-git clone https://github.com/keuangan-keluarga/server.git /tmp/keuangan-keluarga
-cd /tmp/keuangan-keluarga
+git clone https://github.com/faisalfa123/DompetMungil.git /tmp/dompetmungil
+cd /tmp/dompetmungil
 sudo bash install.sh
 ```
 
