@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dompetmungil-v8';
+const CACHE_NAME = 'dompetmungil-v9';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',

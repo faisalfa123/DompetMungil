@@ -455,8 +455,24 @@ body {
   font-weight: 600;
 }
 
+.nav-item svg {
+  width: 24px;
+  height: 24px;
+  max-width: 24px;
+  max-height: 24px;
+}
+
 .nav-item.active {
   color: var(--pink-pastel);
+}
+
+/* Cute SVG Icons Helper */
+.cute-icon {
+  width: 24px !important;
+  height: 24px !important;
+  max-width: 24px !important;
+  max-height: 24px !important;
+  fill: currentColor;
 }
 
 /* Modal Popup */

@@ -131,6 +131,12 @@ function disconnectGoogleAccount() {
     alert('Akun Google berhasil diputuskan.');
   }
 }
+let authToken = localStorage.getItem('kk_token') || '';
+let userRole = localStorage.getItem('dm_role') || 'personal';
+let accountMode = localStorage.getItem('dm_mode') || 'personal';
+let currentMascot = localStorage.getItem('dm_mascot') || 'icon-cat-mascot';
+let currentTab = 'home';
+
 // Tema & Karakter Maskot Kawaii dengan Palet Warna Lengkap
 const MASCOT_THEMES = {
   'icon-cat-mascot': {
@@ -271,10 +277,6 @@ async function recallMonthlySalary() {
   triggerSyncWithServer();
   alert('🎉 Pemasukan rutin bulan ini berhasil diterapkan ke pencatatan keluarga!');
 }
-
-let currentMascot = localStorage.getItem('dm_mascot') || 'icon-cat-mascot';
-let userRole = localStorage.getItem('dm_role') || 'personal';
-let accountMode = localStorage.getItem('dm_mode') || 'personal';
 
 function openThemeSelectorModal() {
   document.getElementById('themeModal').classList.add('active');
@@ -621,8 +623,10 @@ async function triggerSyncWithServer() {
     const healthRes = await fetch('/api/v1/health');
     if (!healthRes.ok) throw new Error('Server not reachable');
 
-    badge.innerText = '🟢 Terhubung ke Odroid STB';
-    badge.style.color = '#2E7D32';
+    if (badge) {
+      badge.innerText = '🟢 Terhubung ke Odroid STB';
+      badge.style.color = '#2E7D32';
+    }
 
     if (pending.length > 0) {
       const syncRes = await fetch('/api/v1/sync', {
@@ -646,8 +650,10 @@ async function triggerSyncWithServer() {
     await loadServerData();
   } catch (err) {
     console.warn('Server offline atau terkena OOM:', err);
-    badge.innerText = '🟡 Mode Offline / Server Istirahat';
-    badge.style.color = '#F57C00';
+    if (badge) {
+      badge.innerText = '🟡 Mode Offline / Server Istirahat';
+      badge.style.color = '#F57C00';
+    }
     if (pending.length > 0) {
       banner.classList.remove('hidden');
       document.getElementById('recoveryTitle').innerText = 'Mode Offline Aktif';
