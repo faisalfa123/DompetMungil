@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#FFB7B2">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <link rel="stylesheet" href="/css/style.css?v=20261105_10">
+  <link rel="stylesheet" href="/css/style.css?v=20261105_11">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -240,10 +240,10 @@
         Pilih metode pembacaan mutasi rekening yang Anda sukai. Semua data dienkripsi dengan AES-256 lokal di Odroid STB.
       </p>
 
-      <!-- Selector Tab: File Import vs Sign In Google -->
+      <!-- Selector Tab: File Import vs Sinkronisasi Email Bank -->
       <div style="display:flex; gap:8px; margin-bottom:16px;">
         <button class="btn-cute primary" id="tabBtnBankFile" onclick="switchBankTab('file')">📄 Unggah e-Statement / CSV</button>
-        <button class="btn-cute" id="tabBtnBankGoogle" onclick="switchBankTab('google')">🌐 Sign In with Google</button>
+        <button class="btn-cute" id="tabBtnBankGoogle" onclick="switchBankTab('google')">📬 Sinkronisasi Notifikasi Email (Gmail)</button>
       </div>
 
       <!-- Opsi 1: File CSV / e-Statement Import -->
@@ -265,71 +265,70 @@
         </button>
       </div>
 
-      <!-- Opsi 2: Login Google OAuth2 Resmi dengan Redirect Browser (Seperti GitHub/App Modern) -->
+      <!-- Opsi 2: Sinkronisasi Notifikasi Bank via Gmail App Password (100% Bebas Kendala Domain/IP) -->
       <div id="bankSectionGoogle" style="display:none; background:#fff; border-radius:18px; padding:20px; box-shadow:var(--shadow-soft);">
         <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
           <div style="width:44px; height:44px; border-radius:12px; background:#F1F3F4; display:flex; align-items:center; justify-content:center; font-size:1.5rem;">
             📬
           </div>
           <div>
-            <h3 style="font-size:0.95rem; font-weight:700;">Google Sign-In Redirect</h3>
-            <p style="font-size:0.75rem; color:var(--text-muted);">Masuk langsung melalui halaman resmi Google</p>
+            <h3 style="font-size:0.95rem; font-weight:700;">Integrasi Email Mutasi Bank</h3>
+            <p style="font-size:0.75rem; color:var(--text-muted);">Membaca notifikasi transfer masuk/keluar dari bank secara otomatis</p>
           </div>
         </div>
 
-        <div style="background:#E8F5E9; border-left:4px solid #4CAF50; padding:12px; border-radius:10px; font-size:0.8rem; margin-bottom:14px; color:#2E7D32; line-height:1.4;">
-          ✨ <strong>Alur Seperti GitHub / SSO:</strong><br>
-          Saat Anda menekan tombol di bawah, browser akan dialihkan (redirect) langsung ke halaman login resmi Google (accounts.google.com). Setelah Anda menyetujui izin pembacaan notifikasi bank, Anda akan kembali ke DompetMungil secara otomatis!
+        <div style="background:#E3F2FD; border-left:4px solid #1E88E5; padding:12px; border-radius:10px; font-size:0.8rem; margin-bottom:14px; color:#1565C0; line-height:1.45;">
+          💡 <strong>Kenapa Pakai Sandi Aplikasi (App Password)?</strong><br>
+          Google Cloud Console menolak IP lokal/Tailscale karena mewajibkan domain publik (.com/.org). Dengan <strong>Sandi Aplikasi Resmi Google</strong>, server Odroid/STB Anda dapat membaca email mutasi bank tanpa perlu domain publik, tanpa bayar, dan 100% aman!
         </div>
 
-        <!-- Google OAuth Client ID Setup Input & Helper -->
-        <div style="background:#FFF8E1; border:1px solid #FFE082; border-radius:14px; padding:14px; margin-bottom:14px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-            <label class="form-label" style="margin-bottom:0; font-weight:700; color:#5D4037;">🔑 Google OAuth Client ID Pribadi</label>
-            <span style="font-size:0.75rem; background:#FFECB3; padding:2px 8px; border-radius:8px; color:#6D4C41; font-weight:600;">Wajib untuk Google Login</span>
+        <!-- Formulir Gmail App Password -->
+        <div style="background:#F8F9FA; border:1px solid #E0E0E0; border-radius:14px; padding:16px; margin-bottom:14px;">
+          <div class="form-group" style="margin-bottom:12px;">
+            <label class="form-label">Alamat Gmail Anda</label>
+            <input type="email" id="gmailAccountInput" class="form-input" placeholder="contoh: keuangan.keluarga@gmail.com">
           </div>
-          <p style="font-size:0.76rem; color:#666; line-height:1.4; margin-bottom:8px;">
-            Google mewajibkan setiap aplikasi memiliki Client ID sendiri dengan domain/IP Anda (<code>http://100.79.122.76:1234</code>) terdaftar di Google Cloud Console.
-          </p>
-          <div style="display:flex; gap:8px;">
-            <input type="text" id="customGoogleClientId" class="form-input" placeholder="contoh: 12345-xxx.apps.googleusercontent.com" style="font-size:0.8rem;">
-            <button class="btn-cute mint" onclick="saveGoogleClientId()" style="white-space:nowrap; padding:8px 12px; font-size:0.8rem;">Simpan ID</button>
+          <div class="form-group" style="margin-bottom:12px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+              <label class="form-label" style="margin-bottom:0;">Sandi Aplikasi Google (16 Huruf)</label>
+              <a href="https://myaccount.google.com/apppasswords" target="_blank" style="font-size:0.75rem; color:#1976D2; text-decoration:underline; font-weight:700;">Buat Sandi di Google ↗</a>
+            </div>
+            <input type="password" id="gmailAppPasswordInput" class="form-input" placeholder="xxxx xxxx xxxx xxxx" maxlength="19">
           </div>
-          <details style="margin-top:10px; font-size:0.75rem; color:#555;">
-            <summary style="cursor:pointer; color:#1976D2; font-weight:700;">📘 Cara buat Google Client ID gratis (1 Menit)</summary>
-            <ol style="padding-left:18px; margin-top:6px; line-height:1.5;">
-              <li>Buka <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color:#1976D2; text-decoration:underline;">Google Cloud Console</a>.</li>
-              <li>Buat Proyek baru &raquo; Masuk ke menu <strong>Credentials</strong>.</li>
-              <li>Klik <strong>Create Credentials</strong> &raquo; Pilih <strong>OAuth client ID</strong>.</li>
-              <li>Pilih tipe <strong>Web application</strong>.</li>
-              <li>Pada bagian <em>Authorized JavaScript origins</em> & <em>Authorized redirect URIs</em>, tambahkan alamat web ini: <br><strong id="currentAppUrlDisplay">http://100.79.122.76:1234</strong></li>
-              <li>Salin Client ID yang didapat dan tempelkan ke kolom di atas lalu klik <strong>Simpan ID</strong>.</li>
+
+          <button type="button" onclick="saveGmailAppPassword()" class="btn-cute mint" style="width:100%; padding:12px; font-weight:700; margin-top:4px;">
+            🔒 Simpan & Hubungkan Notifikasi Bank
+          </button>
+
+          <!-- Langkah Demi Langkah Bergambar/Teks -->
+          <details style="margin-top:14px; font-size:0.78rem; color:#444;" open>
+            <summary style="cursor:pointer; color:#1565C0; font-weight:700; padding:4px 0;">📖 Langkah 1 Menit Membuat Sandi Aplikasi (Bebas Error):</summary>
+            <ol style="padding-left:18px; margin-top:8px; line-height:1.6;">
+              <li>Pastikan <strong>Verifikasi 2 Langkah (2-Step Verification)</strong> di akun Google Anda sudah aktif.</li>
+              <li>Buka tautan resmi ini: <a href="https://myaccount.google.com/apppasswords" target="_blank" style="color:#1976D2; font-weight:700; text-decoration:underline;">myaccount.google.com/apppasswords</a></li>
+              <li>Beri nama aplikasi, ketik: <strong>DompetMungil</strong> lalu klik <strong>Buat (Create)</strong>.</li>
+              <li>Google akan menampilkan <strong>16 huruf kuning</strong> (contoh: <code>abcd efgh ijkl mnop</code>).</li>
+              <li>Salin 16 huruf tersebut dan tempelkan ke kolom <strong>Sandi Aplikasi Google</strong> di atas. Selesai! ✨</li>
             </ol>
           </details>
         </div>
 
-        <!-- Status Kolaborasi Akun Google -->
-        <div id="googleConnectedCard" style="display:none; background:#F8F9FA; border-radius:14px; padding:14px; margin-bottom:14px; border:1px solid #E0E0E0;">
+        <!-- Status Terhubung -->
+        <div id="googleConnectedCard" style="display:none; background:#F0FFF4; border-radius:14px; padding:14px; margin-bottom:14px; border:1px solid #A5D6A7;">
           <div style="display:flex; align-items:center; justify-content:space-between;">
             <div style="display:flex; align-items:center; gap:10px;">
               <span style="font-size:1.4rem;">✅</span>
               <div>
-                <strong id="connectedGoogleEmail" style="font-size:0.85rem; color:#333;">user@gmail.com</strong>
-                <p style="font-size:0.75rem; color:#4CAF50; font-weight:600;">Status: Terhubung via Google OAuth2</p>
+                <strong id="connectedGoogleEmail" style="font-size:0.85rem; color:#2E7D32;">user@gmail.com</strong>
+                <p style="font-size:0.75rem; color:#388E3C; font-weight:600;">Status: Terhubung & Aktif Sinkronisasi Mutasi</p>
               </div>
             </div>
             <button onclick="disconnectGoogleAccount()" class="btn-cute" style="padding:6px 10px; font-size:0.75rem; color:#D32F2F;">Putuskan</button>
           </div>
         </div>
 
-        <button type="button" id="btnRedirectGoogleOAuth" class="btn-cute primary" style="width:100%; padding:14px; font-weight:700; font-size:0.9rem; justify-content:center;">
-          <svg style="width:20px; height:20px; vertical-align:middle; margin-right:8px;" viewBox="0 0 24 24">
-            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-          </svg>
-          Lanjutkan dengan Akun Google (Redirect)
+        <button type="button" id="btnSyncGmailMutasi" onclick="triggerGmailBankSync()" class="btn-cute primary" style="width:100%; padding:14px; font-weight:700; font-size:0.9rem; justify-content:center;">
+          ⚡ Sinkronkan & Periksa Email Mutasi Sekarang
         </button>
       </div>
     </main>
@@ -626,6 +625,6 @@
   </div>
 
   <!-- Script Logika PWA, IndexedDB & Sync dengan cache busting dinamis -->
-  <script src="/js/app.js?v=20261105_10"></script>
+  <script src="/js/app.js?v=20261105_11"></script>
 </body>
 </html>
