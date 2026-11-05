@@ -85,6 +85,8 @@ function checkGoogleAuthRedirectCallback() {
     }
   }
 }
+
+function showGoogleConnected(email) {
   const card = document.getElementById('googleConnectedCard');
   const emailText = document.getElementById('connectedGoogleEmail');
   const btn = document.getElementById('btnGoogleSignInDirect');
