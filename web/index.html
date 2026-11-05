@@ -265,21 +265,21 @@
         </button>
       </div>
 
-      <!-- Opsi 2: Login Google IMAP App Password Resmi & Aman -->
+      <!-- Opsi 2: Login Google OAuth2 Resmi dengan Redirect Browser (Seperti GitHub/App Modern) -->
       <div id="bankSectionGoogle" style="display:none; background:#fff; border-radius:18px; padding:20px; box-shadow:var(--shadow-soft);">
         <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
           <div style="width:44px; height:44px; border-radius:12px; background:#F1F3F4; display:flex; align-items:center; justify-content:center; font-size:1.5rem;">
             📬
           </div>
           <div>
-            <h3 style="font-size:0.95rem; font-weight:700;">Google Mail Notifikasi Mutasi</h3>
-            <p style="font-size:0.75rem; color:var(--text-muted);">Pembacaan resmi & aman via Sandi Aplikasi (App Password)</p>
+            <h3 style="font-size:0.95rem; font-weight:700;">Google Sign-In Redirect</h3>
+            <p style="font-size:0.75rem; color:var(--text-muted);">Masuk langsung melalui halaman resmi Google</p>
           </div>
         </div>
 
-        <div style="background:#FFF9E6; border-left:4px solid #FFC107; padding:12px; border-radius:10px; font-size:0.8rem; margin-bottom:14px; color:#6D4C41; line-height:1.4;">
-          🔒 <strong>Mengapa Butuh Sandi Aplikasi?</strong><br>
-          Google mewajibkan izin nyata untuk membaca isi email notifikasi bank. Untuk server mandiri STB, cara paling aman dan resmi adalah menggunakan <strong>Google App Password (16 digit)</strong> tanpa membagikan kata sandi utama akun Anda!
+        <div style="background:#E8F5E9; border-left:4px solid #4CAF50; padding:12px; border-radius:10px; font-size:0.8rem; margin-bottom:14px; color:#2E7D32; line-height:1.4;">
+          ✨ <strong>Alur Seperti GitHub / SSO:</strong><br>
+          Saat Anda menekan tombol di bawah, browser akan dialihkan (redirect) langsung ke halaman login resmi Google (accounts.google.com). Setelah Anda menyetujui izin pembacaan notifikasi bank, Anda akan kembali ke DompetMungil secara otomatis!
         </div>
 
         <!-- Status Kolaborasi Akun Google -->
@@ -289,29 +289,22 @@
               <span style="font-size:1.4rem;">✅</span>
               <div>
                 <strong id="connectedGoogleEmail" style="font-size:0.85rem; color:#333;">user@gmail.com</strong>
-                <p style="font-size:0.75rem; color:#4CAF50; font-weight:600;">Status: Terhubung & Memantau Mutasi Bank</p>
+                <p style="font-size:0.75rem; color:#4CAF50; font-weight:600;">Status: Terhubung via Google OAuth2</p>
               </div>
             </div>
             <button onclick="disconnectGoogleAccount()" class="btn-cute" style="padding:6px 10px; font-size:0.75rem; color:#D32F2F;">Putuskan</button>
           </div>
         </div>
 
-        <form id="googleAppPasswordForm">
-          <div class="form-group">
-            <label class="form-label">Alamat Gmail Notifikasi Bank</label>
-            <input type="email" id="googleEmailInput" class="form-input" placeholder="keluarga@gmail.com" required>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Sandi Aplikasi Google (16 Huruf dari myaccount.google.com)</label>
-            <input type="password" id="googleAppPasswordInput" class="form-input" placeholder="xxxx xxxx xxxx xxxx" required>
-            <small style="display:block; font-size:0.72rem; color:var(--text-muted); margin-top:4px;">
-              Dibuat di: <em>Akun Google > Keamanan > Verifikasi 2 Langkah > Sandi Aplikasi</em>
-            </small>
-          </div>
-          <button type="submit" class="btn-cute mint" style="width:100%; padding:14px; font-weight:700; font-size:0.9rem;">
-            🔐 Sambungkan Pembacaan Mutasi Bank
-          </button>
-        </form>
+        <button type="button" id="btnRedirectGoogleOAuth" class="btn-cute primary" style="width:100%; padding:14px; font-weight:700; font-size:0.9rem; justify-content:center;">
+          <svg style="width:20px; height:20px; vertical-align:middle; margin-right:8px;" viewBox="0 0 24 24">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+          </svg>
+          Lanjutkan dengan Akun Google (Redirect)
+        </button>
       </div>
     </main>
 
@@ -329,6 +322,15 @@
         <p style="font-size:0.8rem; color:var(--text-muted); margin:4px 0 12px;">Ingin mengganti mode akun antara Personal atau Keluarga (Suami/Istri/Anak)?</p>
         <button class="btn-cute primary" onclick="document.getElementById('onboardingModal').classList.add('active')" style="margin:0 auto; padding:10px 18px;">
           Buka Wizard Konfigurasi Akun 👨‍👩‍👧‍👦
+        </button>
+      </div>
+
+      <!-- Tombol Mengulang Panduan Interaktif Langkah Demi Langkah -->
+      <div style="background:#F0FFF4; border:1.5px dashed var(--mint-dark); border-radius:18px; padding:16px; margin-bottom:16px; text-align:center;">
+        <h4 style="font-size:0.95rem; font-weight:700; color:#2D5F52;">📖 Tur Panduan Penggunaan</h4>
+        <p style="font-size:0.8rem; color:var(--text-muted); margin:4px 0 12px;">Ingin melihat kembali langkah demi langkah cara mencatat keuangan keluarga?</p>
+        <button class="btn-cute mint" onclick="openStepGuideModal()" style="margin:0 auto; padding:10px 18px;">
+          Putar Ulang Panduan Langkah Demi Langkah ✨
         </button>
       </div>
 
@@ -441,6 +443,26 @@
         </div>
       </div>
       <button onclick="closeThemeModal()" class="btn-cute primary" style="width:100%; padding:12px;">Terapkan Tema Manis ✨</button>
+    </div>
+  </div>
+
+  <!-- Modal Langkah Demi Langkah (Interactive Step Guide) -->
+  <div class="modal-overlay" id="stepGuideModal">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3 class="modal-title">📖 Panduan Langkah Demi Langkah</h3>
+        <button onclick="closeStepGuideModal()" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">✕</button>
+      </div>
+      
+      <div id="guideStepContent" style="padding:10px 0;">
+        <!-- Konten Langkah Dimuat Dinamis -->
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px;">
+        <button class="btn-cute" id="btnGuidePrev" onclick="prevGuideStep()">⬅️ Sebelumnya</button>
+        <span id="guideStepIndicator" style="font-size:0.8rem; font-weight:700; color:var(--text-muted);">1 dari 4</span>
+        <button class="btn-cute primary" id="btnGuideNext" onclick="nextGuideStep()">Lanjut ➡️</button>
+      </div>
     </div>
   </div>
 

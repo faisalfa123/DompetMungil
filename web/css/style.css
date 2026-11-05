@@ -3,6 +3,7 @@
   --bg-card: #FFFFFF;
   --pink-pastel: #FFB7B2;
   --pink-hover: #FFAAA6;
+  --wallet-gradient: linear-gradient(135deg, #FFB7B2 0%, #FFDAC1 100%);
   --mint-pastel: #B5EAD7;
   --mint-dark: #84C5B0;
   --lavender: #C7CEEA;
@@ -249,13 +250,14 @@ body {
 /* Cute Cards */
 .card-wallet {
   margin: 14px 20px;
-  background: linear-gradient(135deg, #FFB7B2 0%, #FFDAC1 100%);
+  background: var(--wallet-gradient);
   border-radius: var(--border-radius-card);
   padding: 24px;
   color: #FFFFFF;
   box-shadow: var(--shadow-soft);
   position: relative;
   overflow: hidden;
+  transition: background 0.4s ease, transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .card-wallet::after {

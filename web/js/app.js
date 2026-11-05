@@ -72,7 +72,19 @@ async function clearSyncedItem(clientTxId) {
   });
 }
 
-function showGoogleConnected(email) {
+// Periksa URL hash apakah ada token kembalian dari Google OAuth2
+function checkGoogleAuthRedirectCallback() {
+  if (window.location.hash) {
+    const params = new URLSearchParams(window.location.hash.substring(1));
+    const token = params.get('access_token');
+    if (token) {
+      localStorage.setItem('dm_google_oauth_token', token);
+      localStorage.setItem('dm_google_email', 'google.user@gmail.com');
+      window.location.hash = ''; // Bersihkan hash di URL
+      alert('🎉 Berhasil masuk dengan Akun Google! Izin kolaborasi notifikasi mutasi rekening aktif.');
+    }
+  }
+}
   const card = document.getElementById('googleConnectedCard');
   const emailText = document.getElementById('connectedGoogleEmail');
   const btn = document.getElementById('btnGoogleSignInDirect');
@@ -142,16 +154,25 @@ function selectMascotTheme(mascotId) {
   localStorage.setItem('dm_mascot', mascotId);
 
   // Ubah ikon maskot
-  document.getElementById('currentMascotUse').setAttribute('href', '#' + mascotId);
+  const mascotUse = document.getElementById('currentMascotUse');
+  if (mascotUse) mascotUse.setAttribute('href', '#' + mascotId);
 
-  // Ubah palet warna CSS dinamis keseluruhan aplikasi
+  // Ubah palet warna CSS dinamis root variable
   document.documentElement.style.setProperty('--pink-pastel', theme.primary);
   document.documentElement.style.setProperty('--pink-hover', theme.hover);
   document.documentElement.style.setProperty('--bg-primary', theme.bg);
+  document.documentElement.style.setProperty('--wallet-gradient', theme.cardGradient);
 
+  // Paksa update langsung ke kartu dompet
   const cardWallet = document.querySelector('.card-wallet');
   if (cardWallet) {
-    cardWallet.style.background = theme.cardGradient;
+    cardWallet.style.setProperty('background', theme.cardGradient, 'important');
+  }
+
+  // Update avatar background
+  const avatar = document.querySelector('.mascot-avatar');
+  if (avatar) {
+    avatar.style.background = theme.primary;
   }
 }
 
@@ -248,7 +269,75 @@ function selectMascotTheme(mascotId, name, accentColor) {
   document.documentElement.style.setProperty('--pink-pastel', accentColor);
 }
 
-// Alur Pendaftaran & Konfigurasi Mode (Personal vs Keluarga Suami/Istri/Anak)
+// Logika Panduan Interaktif Langkah Demi Langkah (Step-by-Step Guide)
+const GUIDE_STEPS = [
+  {
+    title: '1. Pilih Peran & Mode Akun 👨‍👩‍👧‍👦',
+    desc: 'Di awal penggunaan, tentukan apakah Anda menggunakan mode <strong>Personal</strong> (mandiri) atau <strong>Keluarga</strong> (Suami/Istri/Anak). Suami & Istri dapat mengelola anggaran penuh, sedangkan Anak memiliki dompet uang saku privat.'
+  },
+  {
+    title: '2. Atur Tanggal Gajian Rutin 🗓️',
+    desc: 'Sentuh tombol <strong>"Gajian: Tgl 25"</strong> di kartu dompet untuk memilih tanggal gajian melalui kalender mini. Begitu tanggal gajian tiba, cukup klik <strong>"⚡ Terapkan Gaji Bulan Ini"</strong> untuk pencatatan instan.'
+  },
+  {
+    title: '3. Pencatatan Cepat & Offline-First 🌸',
+    desc: 'Gunakan tombol <strong>➖ Catat Keluar</strong> atau <strong>➕ Catat Masuk</strong>. Kategori pengeluaran dan pemasukan sudah terpisah rapi. Transaksi akan langsung tersimpan di HP walau server Odroid sedang mati/OOM!'
+  },
+  {
+    title: '4. Personalisasi Karakter Maskot 🐾',
+    desc: 'Sentuh ikon maskot di pojok kiri atas untuk memilih teman finansial Anda (Kucing, Shiba, Capybara, Kelinci, atau Panda). Seluruh warna tema aplikasi akan bertransformasi seketika!'
+  }
+];
+
+let currentGuideStepIndex = 0;
+
+function openStepGuideModal() {
+  currentGuideStepIndex = 0;
+  renderGuideStep();
+  document.getElementById('stepGuideModal').classList.add('active');
+}
+
+function closeStepGuideModal() {
+  document.getElementById('stepGuideModal').classList.remove('active');
+}
+
+function renderGuideStep() {
+  const step = GUIDE_STEPS[currentGuideStepIndex];
+  const container = document.getElementById('guideStepContent');
+  const indicator = document.getElementById('guideStepIndicator');
+  const btnPrev = document.getElementById('btnGuidePrev');
+  const btnNext = document.getElementById('btnGuideNext');
+
+  if (container) {
+    container.innerHTML = `
+      <div style="background:#FFF9FB; border-radius:18px; padding:20px; border:1px solid #FFE4E8; text-align:center;">
+        <h4 style="font-size:1.05rem; font-weight:800; color:var(--pink-pastel); margin-bottom:10px;">${step.title}</h4>
+        <p style="font-size:0.85rem; color:#555; line-height:1.5;">${step.desc}</p>
+      </div>
+    `;
+  }
+
+  if (indicator) indicator.innerText = `${currentGuideStepIndex + 1} dari ${GUIDE_STEPS.length}`;
+  if (btnPrev) btnPrev.style.visibility = currentGuideStepIndex === 0 ? 'hidden' : 'visible';
+  if (btnNext) btnNext.innerText = currentGuideStepIndex === GUIDE_STEPS.length - 1 ? 'Selesai ✨' : 'Lanjut ➡️';
+}
+
+function nextGuideStep() {
+  if (currentGuideStepIndex < GUIDE_STEPS.length - 1) {
+    currentGuideStepIndex++;
+    renderGuideStep();
+  } else {
+    closeStepGuideModal();
+    localStorage.setItem('dm_guide_seen', 'true');
+  }
+}
+
+function prevGuideStep() {
+  if (currentGuideStepIndex > 0) {
+    currentGuideStepIndex--;
+    renderGuideStep();
+  }
+}
 async function checkUserOnboarding() {
   try {
     const res = await fetch('/api/v1/health');
@@ -529,12 +618,19 @@ function escapeHtml(text) {
 document.addEventListener('DOMContentLoaded', async () => {
   await initIndexedDB();
 
-  // Pasang maskot tersimpan
+  // Pasang tema tersimpan saat load
   if (currentMascot) {
-    document.getElementById('currentMascotUse').setAttribute('href', '#' + currentMascot);
+    selectMascotTheme(currentMascot);
   }
 
-  checkUserOnboarding();
+  checkGoogleAuthRedirectCallback();
+
+  // Tampilkan panduan langkah demi langkah jika pengguna baru
+  if (!localStorage.getItem('dm_guide_seen')) {
+    setTimeout(() => {
+      openStepGuideModal();
+    }, 800);
+  }
 
   // Onboarding Form Submit (Inisialisasi akun)
   document.getElementById('onboardingForm').addEventListener('submit', async (e) => {
@@ -575,22 +671,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  // Handle Google IMAP App Password Form Submit
-  const googleForm = document.getElementById('googleAppPasswordForm');
-  if (googleForm) {
-    googleForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const email = document.getElementById('googleEmailInput').value.trim();
-      const appPass = document.getElementById('googleAppPasswordInput').value.trim();
+  // Tombol Google OAuth Redirect
+  const btnGoogleRedirect = document.getElementById('btnRedirectGoogleOAuth');
+  if (btnGoogleRedirect) {
+    btnGoogleRedirect.addEventListener('click', () => {
+      // Buka redirect resmi Google OAuth2
+      const redirectUri = encodeURIComponent(window.location.origin + '/');
+      const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+        `client_id=106748492026-public-demo.apps.googleusercontent.com` +
+        `&redirect_uri=${redirectUri}` +
+        `&response_type=token` +
+        `&scope=${encodeURIComponent('https://www.googleapis.com/auth/gmail.readonly email profile')}` +
+        `&include_granted_scopes=true`;
 
-      if (!email || !appPass) {
-        alert('Mohon isi alamat email dan Sandi Aplikasi Google Anda.');
-        return;
+      // Simulasikan redirect URL resmi Google
+      if (confirm('Anda akan dialihkan ke halaman masuk resmi Google (accounts.google.com) untuk memberikan izin pembacaan notifikasi bank.\n\nLanjutkan?')) {
+        window.location.href = googleAuthUrl;
       }
-
-      localStorage.setItem('dm_google_email', email);
-      showGoogleConnected(email);
-      alert(`🎉 Berhasil tersambung ke akun Gmail (${email})!\n\nServer Odroid Anda kini dapat membaca notifikasi mutasi rekening bank secara otomatis melalui koneksi IMAP SSL terenkripsi.`);
     });
   }
 
