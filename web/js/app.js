@@ -318,18 +318,21 @@ function formatRupiah(num) {
   return 'Rp ' + Number(num || 0).toLocaleString('id-ID');
 }
 
-function switchTab(tab) {
-  if (currentTab === tab) return;
-
+window.switchTab = function(tab) {
   const viewHome = document.getElementById('viewHome');
   const viewBank = document.getElementById('viewBank');
   const viewGuide = document.getElementById('viewGuide');
+
+  if (!viewHome || !viewBank || !viewGuide) {
+    console.error('View panel tidak ditemukan');
+    return;
+  }
 
   // Tentukan arah animasi geser (kiri atau kanan)
   const tabs = ['home', 'bank', 'guide'];
   const oldIndex = tabs.indexOf(currentTab);
   const newIndex = tabs.indexOf(tab);
-  const animClass = newIndex > oldIndex ? 'slide-from-right' : 'slide-from-left';
+  const animClass = newIndex >= oldIndex ? 'slide-from-right' : 'slide-from-left';
 
   currentTab = tab;
 
@@ -344,6 +347,8 @@ function switchTab(tab) {
   viewBank.style.display = tab === 'bank' ? 'block' : 'none';
   viewGuide.style.display = tab === 'guide' ? 'block' : 'none';
 
+  // Trigger animasi render
+  void targetView.offsetWidth;
   targetView.classList.add(animClass);
 
   document.querySelectorAll('.nav-item').forEach((item, index) => {
@@ -352,7 +357,7 @@ function switchTab(tab) {
       item.classList.add('active');
     }
   });
-}
+};
 
 // Daftar Kategori Lucu Terpisah (Pemasukan vs Pengeluaran)
 const CATEGORIES = {
