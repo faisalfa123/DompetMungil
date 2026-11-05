@@ -72,77 +72,79 @@ async function clearSyncedItem(clientTxId) {
   });
 }
 
-// Integrasi Gmail Bank Sync via App Password
-function saveGmailAppPassword() {
-  const email = document.getElementById('gmailAccountInput').value.trim();
-  const pass = document.getElementById('gmailAppPasswordInput').value.trim().replace(/\s+/g, '');
+// Konfigurasi Google Client ID (Desktop App)
+function getGoogleClientId() {
+  return localStorage.getItem('dm_google_client_id') || '';
+}
 
-  if (!email || !pass) {
-    alert('Harap isi alamat Gmail dan 16 huruf Sandi Aplikasi Google.');
+function saveGoogleClientId() {
+  const input = document.getElementById('customGoogleClientId');
+  if (!input) return;
+  const val = input.value.trim();
+  if (!val) {
+    alert('Silakan masukkan Google Client ID Anda terlebih dahulu.');
     return;
   }
+  localStorage.setItem('dm_google_client_id', val);
+  alert('✅ Google Client ID berhasil disimpan!');
+}
 
-  localStorage.setItem('dm_gmail_user', email);
-  localStorage.setItem('dm_gmail_app_pass', pass);
-  showGoogleConnected(email);
-  alert('🎉 Akun Gmail berhasil terhubung!\nSekarang Odroid/STB Anda dapat menyinkronkan notifikasi email mutasi bank secara otomatis.');
+// Periksa URL callback kembalian dari Google OAuth2
+function checkGoogleAuthRedirectCallback() {
+  const hash = window.location.hash;
+  const search = window.location.search;
+
+  if (hash) {
+    const params = new URLSearchParams(hash.substring(1));
+    const token = params.get('access_token');
+    if (token) {
+      localStorage.setItem('dm_google_oauth_token', token);
+      localStorage.setItem('dm_google_email', 'Akun Google Tertaut');
+      window.location.hash = '';
+      alert('🎉 Hore! DompetMungil sekarang resmi tertaut dengan Akun Google Anda!');
+      showGoogleConnected('Akun Google Tertaut');
+    }
+  } else if (search) {
+    const params = new URLSearchParams(search);
+    const code = params.get('code');
+    if (code) {
+      localStorage.setItem('dm_google_oauth_code', code);
+      localStorage.setItem('dm_google_email', 'Akun Google Tertaut');
+      alert('🎉 Hore! DompetMungil sekarang resmi tertaut dengan Akun Google Anda!');
+      showGoogleConnected('Akun Google Tertaut');
+    }
+  }
 }
 
 function showGoogleConnected(email) {
   const card = document.getElementById('googleConnectedCard');
   const emailText = document.getElementById('connectedGoogleEmail');
+  const btn = document.getElementById('btnRedirectGoogleOAuth');
   if (card && emailText) {
     emailText.innerText = email;
     card.style.display = 'block';
   }
+  if (btn) {
+    btn.innerHTML = '🔄 Tautkan Ulang / Ganti Akun Google';
+  }
 }
 
 function disconnectGoogleAccount() {
-  if (confirm('Yakin ingin memutuskan sinkronisasi email mutasi Gmail?')) {
-    localStorage.removeItem('dm_gmail_user');
-    localStorage.removeItem('dm_gmail_app_pass');
+  if (confirm('Yakin ingin memutuskan tautan akun Google?')) {
+    localStorage.removeItem('dm_google_email');
+    localStorage.removeItem('dm_google_oauth_token');
+    localStorage.removeItem('dm_google_oauth_code');
     document.getElementById('googleConnectedCard').style.display = 'none';
-    document.getElementById('gmailAppPasswordInput').value = '';
-    alert('Akun Gmail berhasil diputuskan.');
-  }
-}
-
-async function triggerGmailBankSync() {
-  const email = localStorage.getItem('dm_gmail_user');
-  const pass = localStorage.getItem('dm_gmail_app_pass');
-
-  if (!email || !pass) {
-    alert('Harap hubungkan akun Gmail dan Sandi Aplikasi Anda terlebih dahulu.');
-    return;
-  }
-
-  const btn = document.getElementById('btnSyncGmailMutasi');
-  if (btn) {
-    btn.disabled = true;
-    btn.innerText = '⏳ Sedang memeriksa notifikasi bank di Gmail...';
-  }
-
-  try {
-    const res = await fetch('/api/v1/bank-import', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Auth-Token': authToken
-      },
-      body: JSON.stringify({
-        bank_name: 'Gmail-Auto',
-        raw_text: `Gmail IMAP sync: ${email} checked at ${new Date().toISOString()}`
-      })
-    });
-    const data = await res.json();
-    alert('✨ Berhasil memeriksa email masuk!\nTidak ada mutasi baru yang belum dicatat, atau transaksi sudah sinkron.');
-  } catch (err) {
-    alert('⚠️ Server STB sedang sibuk atau offline.');
-  } finally {
+    const btn = document.getElementById('btnRedirectGoogleOAuth');
     if (btn) {
-      btn.disabled = false;
-      btn.innerText = '⚡ Sinkronkan & Periksa Email Mutasi Sekarang';
+      btn.innerHTML = `<svg style="width:20px; height:20px; vertical-align:middle; margin-right:8px;" viewBox="0 0 24 24">
+        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+      </svg> Tautkan Akun Google Sekarang (Redirect Resmi)`;
     }
+    alert('Tautan akun Google berhasil diputuskan.');
   }
 }
 let authToken = localStorage.getItem('kk_token') || '';
@@ -806,18 +808,45 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  // Inisialisasi formulir Gmail App Password jika sudah tersimpan
-  const savedGmailUser = localStorage.getItem('dm_gmail_user');
-  const savedGmailPass = localStorage.getItem('dm_gmail_app_pass');
-  if (savedGmailUser) {
-    const inputUser = document.getElementById('gmailAccountInput');
-    if (inputUser) inputUser.value = savedGmailUser;
-    showGoogleConnected(savedGmailUser);
+  // Inisialisasi formulir Google Client ID jika sudah tersimpan
+  const savedClientId = getGoogleClientId();
+  const inputClientId = document.getElementById('customGoogleClientId');
+  if (inputClientId && savedClientId) {
+    inputClientId.value = savedClientId;
   }
-  if (savedGmailPass) {
-    const inputPass = document.getElementById('gmailAppPasswordInput');
-    if (inputPass) inputPass.value = savedGmailPass;
+  const savedGoogleAcc = localStorage.getItem('dm_google_email');
+  if (savedGoogleAcc) {
+    showGoogleConnected(savedGoogleAcc);
   }
+
+  // Tombol Google OAuth Redirect Resmi
+  const btnGoogleRedirect = document.getElementById('btnRedirectGoogleOAuth');
+  if (btnGoogleRedirect) {
+    btnGoogleRedirect.addEventListener('click', () => {
+      const clientId = getGoogleClientId();
+      if (!clientId) {
+        alert('⚠️ Harap masukkan Google Client ID Anda terlebih dahulu.\n\nIkuti petunjuk 1 menit di bawah untuk membuatnya gratis di Google Cloud Console dengan tipe "Desktop app".');
+        if (inputClientId) inputClientId.focus();
+        return;
+      }
+
+      // Untuk Desktop app, Google mengizinkan loopback / custom redirect tanpa error domain
+      const redirectUri = encodeURIComponent(window.location.origin + '/');
+      const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+        `client_id=${encodeURIComponent(clientId)}` +
+        `&redirect_uri=${redirectUri}` +
+        `&response_type=token` +
+        `&scope=${encodeURIComponent('email profile https://www.googleapis.com/auth/gmail.readonly')}` +
+        `&include_granted_scopes=true`;
+
+      if (confirm('Anda akan dialihkan ke halaman resmi masuk Google untuk menautkan DompetMungil.\n\nLanjutkan?')) {
+        window.location.href = googleAuthUrl;
+      }
+    });
+  }
+
+  // Cek callback token OAuth di URL
+  checkGoogleAuthRedirectCallback();
 
   document.getElementById('btnOpenAddExpense').onclick = () => openModal('expense');
   document.getElementById('btnOpenAddIncome').onclick = () => openModal('income');
