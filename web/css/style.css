@@ -465,7 +465,7 @@ body {
   inset: 0;
   background: rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(4px);
-  display: flex;
+  display: none; /* Cegah memblokir klik saat tidak aktif */
   align-items: flex-end;
   justify-content: center;
   z-index: 200;
@@ -481,6 +481,7 @@ body {
 }
 
 .modal-overlay.active {
+  display: flex !important;
   opacity: 1;
   pointer-events: auto;
 }

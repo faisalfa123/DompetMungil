@@ -625,13 +625,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   checkGoogleAuthRedirectCallback();
 
-  // Tampilkan panduan langkah demi langkah jika pengguna baru
-  if (!localStorage.getItem('dm_guide_seen')) {
-    setTimeout(() => {
-      openStepGuideModal();
-    }, 800);
-  }
-
   // Onboarding Form Submit (Inisialisasi akun)
   document.getElementById('onboardingForm').addEventListener('submit', async (e) => {
     e.preventDefault();
