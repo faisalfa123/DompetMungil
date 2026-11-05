@@ -72,6 +72,23 @@ async function clearSyncedItem(clientTxId) {
   });
 }
 
+// Konfigurasi Google Client ID
+function getGoogleClientId() {
+  return localStorage.getItem('dm_google_client_id') || '';
+}
+
+function saveGoogleClientId() {
+  const input = document.getElementById('customGoogleClientId');
+  if (!input) return;
+  const val = input.value.trim();
+  if (!val) {
+    alert('Silakan masukkan Google Client ID Anda terlebih dahulu.');
+    return;
+  }
+  localStorage.setItem('dm_google_client_id', val);
+  alert('✅ Google Client ID berhasil disimpan!');
+}
+
 // Periksa URL hash apakah ada token kembalian dari Google OAuth2
 function checkGoogleAuthRedirectCallback() {
   if (window.location.hash) {
@@ -89,7 +106,7 @@ function checkGoogleAuthRedirectCallback() {
 function showGoogleConnected(email) {
   const card = document.getElementById('googleConnectedCard');
   const emailText = document.getElementById('connectedGoogleEmail');
-  const btn = document.getElementById('btnGoogleSignInDirect');
+  const btn = document.getElementById('btnRedirectGoogleOAuth');
   if (card && emailText && btn) {
     emailText.innerText = email;
     card.style.display = 'block';
@@ -100,14 +117,17 @@ function showGoogleConnected(email) {
 function disconnectGoogleAccount() {
   if (confirm('Yakin ingin memutuskan kolaborasi akun Google?')) {
     localStorage.removeItem('dm_google_email');
+    localStorage.removeItem('dm_google_oauth_token');
     document.getElementById('googleConnectedCard').style.display = 'none';
-    const btn = document.getElementById('btnGoogleSignInDirect');
-    btn.innerHTML = `<svg style="width:20px; height:20px; vertical-align:middle; margin-right:8px;" viewBox="0 0 24 24">
-      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-    </svg> Masuk dengan Akun Google`;
+    const btn = document.getElementById('btnRedirectGoogleOAuth');
+    if (btn) {
+      btn.innerHTML = `<svg style="width:20px; height:20px; vertical-align:middle; margin-right:8px;" viewBox="0 0 24 24">
+        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+      </svg> Lanjutkan dengan Akun Google (Redirect)`;
+    }
     alert('Akun Google berhasil diputuskan.');
   }
 }
@@ -269,6 +289,106 @@ function selectMascotTheme(mascotId, name, accentColor) {
   localStorage.setItem('dm_mascot', mascotId);
   document.getElementById('currentMascotUse').setAttribute('href', '#' + mascotId);
   document.documentElement.style.setProperty('--pink-pastel', accentColor);
+}
+
+// Logika Panduan Game Spotlight di Dashboard (RPG/Game-Style Tour)
+const TOUR_STEPS = [
+  {
+    target: '#mascotAvatarContainer',
+    title: 'Pilih Teman Finansialmu 🐾',
+    desc: 'Sentuh avatar ini kapan saja untuk memilih maskot (Kucing, Shiba, Capybara, Usagi, Panda). Seluruh warna tema aplikasi akan ikut berganti manis!'
+  },
+  {
+    target: '.card-wallet',
+    title: 'Kartu Dompet & Jadwal Gaji 💰',
+    desc: 'Di sini Anda dapat melihat total saldo, total pengeluaran, pemasukan, serta mengatur kalender tanggal gajian rutin dengan 1 sentuhan.'
+  },
+  {
+    target: '.quick-actions-bar',
+    title: 'Pencatatan Secepat Kilat 🌸',
+    desc: 'Klik Catat Keluar atau Catat Masuk. Data dienkripsi AES-256 dan tetap tersimpan aman di HP meski server STB sedang offline.'
+  },
+  {
+    target: '.bottom-nav',
+    title: 'Navigasi Lengkap 🧭',
+    desc: 'Pindah ke tab Bank Mutasi untuk impor rekening atau tab Panduan untuk membaca tips dan mengulang tur game ini kapan saja!'
+  }
+];
+
+let currentTourIndex = 0;
+
+function startDashboardTour() {
+  window.switchTab('home');
+  currentTourIndex = 0;
+  const overlay = document.getElementById('spotlightOverlay');
+  if (overlay) overlay.classList.add('active');
+  renderTourStep();
+}
+
+function stopDashboardTour() {
+  const overlay = document.getElementById('spotlightOverlay');
+  if (overlay) overlay.classList.remove('active');
+  localStorage.setItem('dm_tour_completed', 'true');
+}
+
+function nextTourStep() {
+  if (currentTourIndex < TOUR_STEPS.length - 1) {
+    currentTourIndex++;
+    renderTourStep();
+  } else {
+    stopDashboardTour();
+    alert('🎉 Hore! Anda sudah siap menjelajahi DompetMungil!');
+  }
+}
+
+function renderTourStep() {
+  const step = TOUR_STEPS[currentTourIndex];
+  const highlight = document.getElementById('spotlightHighlight');
+  const tooltip = document.getElementById('spotlightTooltip');
+  const title = document.getElementById('tourTooltipTitle');
+  const desc = document.getElementById('tourTooltipDesc');
+  const indicator = document.getElementById('tourStepIndicator');
+  const btnNext = document.getElementById('btnTourNext');
+
+  if (!highlight || !tooltip) return;
+
+  const targetEl = document.querySelector(step.target);
+  if (!targetEl) {
+    console.warn('Target tour tidak ditemukan:', step.target);
+    return;
+  }
+
+  // Gulir ke elemen target dengan halus
+  targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+  setTimeout(() => {
+    const rect = targetEl.getBoundingClientRect();
+    const padding = 8;
+    
+    // Posisikan highlight tepat di sekeliling elemen target
+    highlight.style.top = `${rect.top - padding + window.scrollY}px`;
+    highlight.style.left = `${rect.left - padding + window.scrollX}px`;
+    highlight.style.width = `${rect.width + padding * 2}px`;
+    highlight.style.height = `${rect.height + padding * 2}px`;
+
+    // Posisikan tooltip di bawah atau di atas elemen target tergantung ruang layar
+    const tooltipWidth = Math.min(320, window.innerWidth - 32);
+    let tooltipTop = rect.bottom + 16 + window.scrollY;
+    let tooltipLeft = Math.max(16, (window.innerWidth - tooltipWidth) / 2);
+
+    if (rect.bottom + 180 > window.innerHeight) {
+      tooltipTop = Math.max(10, rect.top - 170 + window.scrollY);
+    }
+
+    tooltip.style.top = `${tooltipTop}px`;
+    tooltip.style.left = `${tooltipLeft}px`;
+    tooltip.style.width = `${tooltipWidth}px`;
+
+    title.innerHTML = `<span>🐾</span> ${step.title}`;
+    desc.innerText = step.desc;
+    indicator.innerText = `${currentTourIndex + 1} / ${TOUR_STEPS.length}`;
+    btnNext.innerText = currentTourIndex === TOUR_STEPS.length - 1 ? 'Selesai ✨' : 'Lanjut ➡️';
+  }, 100);
 }
 
 // Logika Panduan Interaktif Langkah Demi Langkah (Step-by-Step Guide)
@@ -666,20 +786,35 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
+  // Setup tampilan URL saat ini di petunjuk Google Console
+  const urlDisplay = document.getElementById('currentAppUrlDisplay');
+  if (urlDisplay) {
+    urlDisplay.innerText = window.location.origin + '/';
+  }
+  const customIdInput = document.getElementById('customGoogleClientId');
+  if (customIdInput) {
+    customIdInput.value = getGoogleClientId();
+  }
+
   // Tombol Google OAuth Redirect
   const btnGoogleRedirect = document.getElementById('btnRedirectGoogleOAuth');
   if (btnGoogleRedirect) {
     btnGoogleRedirect.addEventListener('click', () => {
-      // Buka redirect resmi Google OAuth2
+      const clientId = getGoogleClientId();
+      if (!clientId) {
+        alert('⚠️ Google OAuth membutuhkan Google Client ID Anda.\n\nSilakan masukkan Client ID Anda pada kolom di atas (tersedia petunjuk 1 menit gratis), atau gunakan opsi "Unggah e-Statement / CSV" untuk langsung pakai 100% offline tanpa akun!');
+        document.getElementById('customGoogleClientId').focus();
+        return;
+      }
+
       const redirectUri = encodeURIComponent(window.location.origin + '/');
       const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
-        `client_id=106748492026-public-demo.apps.googleusercontent.com` +
+        `client_id=${encodeURIComponent(clientId)}` +
         `&redirect_uri=${redirectUri}` +
         `&response_type=token` +
         `&scope=${encodeURIComponent('https://www.googleapis.com/auth/gmail.readonly email profile')}` +
         `&include_granted_scopes=true`;
 
-      // Simulasikan redirect URL resmi Google
       if (confirm('Anda akan dialihkan ke halaman masuk resmi Google (accounts.google.com) untuk memberikan izin pembacaan notifikasi bank.\n\nLanjutkan?')) {
         window.location.href = googleAuthUrl;
       }

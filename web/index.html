@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#FFB7B2">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <link rel="stylesheet" href="/css/style.css?v=20261105_7">
+  <link rel="stylesheet" href="/css/style.css?v=20261105_9">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -282,6 +282,32 @@
           Saat Anda menekan tombol di bawah, browser akan dialihkan (redirect) langsung ke halaman login resmi Google (accounts.google.com). Setelah Anda menyetujui izin pembacaan notifikasi bank, Anda akan kembali ke DompetMungil secara otomatis!
         </div>
 
+        <!-- Google OAuth Client ID Setup Input & Helper -->
+        <div style="background:#FFF8E1; border:1px solid #FFE082; border-radius:14px; padding:14px; margin-bottom:14px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <label class="form-label" style="margin-bottom:0; font-weight:700; color:#5D4037;">🔑 Google OAuth Client ID Pribadi</label>
+            <span style="font-size:0.75rem; background:#FFECB3; padding:2px 8px; border-radius:8px; color:#6D4C41; font-weight:600;">Wajib untuk Google Login</span>
+          </div>
+          <p style="font-size:0.76rem; color:#666; line-height:1.4; margin-bottom:8px;">
+            Google mewajibkan setiap aplikasi memiliki Client ID sendiri dengan domain/IP Anda (<code>http://100.79.122.76:1234</code>) terdaftar di Google Cloud Console.
+          </p>
+          <div style="display:flex; gap:8px;">
+            <input type="text" id="customGoogleClientId" class="form-input" placeholder="contoh: 12345-xxx.apps.googleusercontent.com" style="font-size:0.8rem;">
+            <button class="btn-cute mint" onclick="saveGoogleClientId()" style="white-space:nowrap; padding:8px 12px; font-size:0.8rem;">Simpan ID</button>
+          </div>
+          <details style="margin-top:10px; font-size:0.75rem; color:#555;">
+            <summary style="cursor:pointer; color:#1976D2; font-weight:700;">📘 Cara buat Google Client ID gratis (1 Menit)</summary>
+            <ol style="padding-left:18px; margin-top:6px; line-height:1.5;">
+              <li>Buka <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color:#1976D2; text-decoration:underline;">Google Cloud Console</a>.</li>
+              <li>Buat Proyek baru &raquo; Masuk ke menu <strong>Credentials</strong>.</li>
+              <li>Klik <strong>Create Credentials</strong> &raquo; Pilih <strong>OAuth client ID</strong>.</li>
+              <li>Pilih tipe <strong>Web application</strong>.</li>
+              <li>Pada bagian <em>Authorized JavaScript origins</em> & <em>Authorized redirect URIs</em>, tambahkan alamat web ini: <br><strong id="currentAppUrlDisplay">http://100.79.122.76:1234</strong></li>
+              <li>Salin Client ID yang didapat dan tempelkan ke kolom di atas lalu klik <strong>Simpan ID</strong>.</li>
+            </ol>
+          </details>
+        </div>
+
         <!-- Status Kolaborasi Akun Google -->
         <div id="googleConnectedCard" style="display:none; background:#F8F9FA; border-radius:14px; padding:14px; margin-bottom:14px; border:1px solid #E0E0E0;">
           <div style="display:flex; align-items:center; justify-content:space-between;">
@@ -327,10 +353,10 @@
 
       <!-- Tombol Mengulang Panduan Interaktif Langkah Demi Langkah -->
       <div style="background:#F0FFF4; border:1.5px dashed var(--mint-dark); border-radius:18px; padding:16px; margin-bottom:16px; text-align:center;">
-        <h4 style="font-size:0.95rem; font-weight:700; color:#2D5F52;">📖 Tur Panduan Penggunaan</h4>
-        <p style="font-size:0.8rem; color:var(--text-muted); margin:4px 0 12px;">Ingin melihat kembali langkah demi langkah cara mencatat keuangan keluarga?</p>
-        <button class="btn-cute mint" onclick="openStepGuideModal()" style="margin:0 auto; padding:10px 18px;">
-          Putar Ulang Panduan Langkah Demi Langkah ✨
+        <h4 style="font-size:0.95rem; font-weight:700; color:#2D5F52;">🎮 Tur Interaktif (Game Spotlight)</h4>
+        <p style="font-size:0.8rem; color:var(--text-muted); margin:4px 0 12px;">Ingin melihat kembali sorotan langkah demi langkah di dashboard seperti tutorial game?</p>
+        <button class="btn-cute mint" onclick="startDashboardTour()" style="margin:0 auto; padding:10px 18px;">
+          Mulai Tur Game Dashboard ✨
         </button>
       </div>
 
@@ -373,6 +399,26 @@
         <span>Panduan</span>
       </button>
     </nav>
+  </div>
+
+  <!-- Spotlight Game-Style Interactive Tour Element -->
+  <div id="spotlightOverlay" class="spotlight-overlay">
+    <div id="spotlightHighlight" class="spotlight-highlight"></div>
+    <div id="spotlightTooltip" class="spotlight-tooltip">
+      <div class="spotlight-tooltip-title" id="tourTooltipTitle">
+        <span>🐾</span> Judul Langkah
+      </div>
+      <div class="spotlight-tooltip-desc" id="tourTooltipDesc">
+        Deskripsi panduan akan dijelaskan di sini.
+      </div>
+      <div class="spotlight-tooltip-footer">
+        <button class="btn-cute" onclick="stopDashboardTour()" style="padding:6px 10px; font-size:0.75rem;">Lewati</button>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span id="tourStepIndicator" style="font-size:0.75rem; font-weight:700; color:var(--text-muted);">1 / 5</span>
+          <button class="btn-cute primary" id="btnTourNext" onclick="nextTourStep()" style="padding:6px 14px; font-size:0.75rem;">Lanjut ➡️</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Modal Konfigurasi Pendapatan Pokok Rutin / Gaji -->
@@ -580,6 +626,6 @@
   </div>
 
   <!-- Script Logika PWA, IndexedDB & Sync dengan cache busting dinamis -->
-  <script src="/js/app.js?v=20261105_8"></script>
+  <script src="/js/app.js?v=20261105_9"></script>
 </body>
 </html>
