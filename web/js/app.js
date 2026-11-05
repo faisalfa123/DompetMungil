@@ -188,6 +188,10 @@ async function checkUserOnboarding() {
   }
 }
 
+function closeOnboardingModal() {
+  document.getElementById('onboardingModal').classList.remove('active');
+}
+
 function chooseAccountMode(mode) {
   accountMode = mode;
   document.getElementById('selectedMode').value = mode;

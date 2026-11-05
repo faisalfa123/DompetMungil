@@ -62,12 +62,66 @@ body {
   }
 }
 
-/* Cute Header */
-.app-header {
-  padding: 20px 24px 10px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+/* Cute Animations & Micro-interactions */
+@keyframes floatAnimation {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-6px) rotate(2deg); }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 8px 24px rgba(255, 183, 178, 0.2); }
+  50% { box-shadow: 0 12px 32px rgba(255, 183, 178, 0.45); }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.card-wallet {
+  animation: pulseGlow 4s infinite ease-in-out;
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.card-wallet:hover {
+  transform: translateY(-3px) scale(1.01);
+}
+
+.mascot-avatar {
+  animation: floatAnimation 3.5s infinite ease-in-out;
+  transition: transform 0.2s ease;
+}
+
+.mascot-avatar:active {
+  transform: scale(0.88) rotate(-10deg);
+}
+
+.btn-cute {
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.btn-cute:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+}
+
+.btn-cute:active {
+  transform: scale(0.94);
+}
+
+.tx-card {
+  animation: slideInUp 0.4s ease-out;
+}
+
+.modal-sheet {
+  animation: slideInUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
 }
 
 .brand-section {

@@ -434,7 +434,23 @@
     <div class="modal-sheet">
       <div class="modal-header">
         <h3 class="modal-title">🌸 Selamat Datang di DompetMungil</h3>
+        <!-- Tombol Silang / Batal -->
+        <button onclick="closeOnboardingModal()" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:var(--text-muted); padding:4px 8px;" title="Batal / Tutup">✕</button>
       </div>
+
+      <!-- Quick Interactive Guide / Langkah Penggunaan -->
+      <div style="background:#FFF9FB; border:1px solid #FFE4E8; border-radius:14px; padding:12px; margin-bottom:14px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+          <span style="font-size:1.1rem;">💡</span>
+          <strong style="font-size:0.8rem; color:#4A4A58;">Petunjuk Penggunaan Cepat:</strong>
+        </div>
+        <p style="font-size:0.75rem; color:#666; line-height:1.4;">
+          1. Pilih <strong>Mode Keluarga</strong> jika ingin berbagi & memantau keuangan bersama Suami, Istri, atau Anak.<br>
+          2. Pilih <strong>Mode Personal</strong> jika ingin mencatat keuangan pribadi secara mandiri.<br>
+          3. Anda bisa menutup jendela ini kapan saja (tombol ✕) dan mengaturnya nanti melalui menu <strong>⚙️</strong> di atas.
+        </p>
+      </div>
+
       <div id="stepSelectAccountType">
         <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:16px;">
           Pilih jenis penggunaan aplikasi ini untuk rumah tangga atau pribadi Anda:
