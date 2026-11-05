@@ -97,11 +97,94 @@ function disconnectGoogleAccount() {
     alert('Akun Google berhasil diputuskan.');
   }
 }
+// Tema & Karakter Maskot Kawaii dengan Palet Warna Lengkap
+const MASCOT_THEMES = {
+  'icon-cat-mascot': {
+    name: 'Kucing Kawaii (Neko)',
+    primary: '#FFB7B2',
+    hover: '#FFAAA6',
+    bg: '#FFF8FA',
+    cardGradient: 'linear-gradient(135deg, #FFB7B2 0%, #FFDAC1 100%)'
+  },
+  'icon-dog-mascot': {
+    name: 'Shiba Inu Lucu',
+    primary: '#F4A261',
+    hover: '#E76F51',
+    bg: '#FFFDF9',
+    cardGradient: 'linear-gradient(135deg, #F4A261 0%, #E9C46A 100%)'
+  },
+  'icon-capybara-mascot': {
+    name: 'Capybara Santai',
+    primary: '#B08968',
+    hover: '#7F5539',
+    bg: '#FAF7F2',
+    cardGradient: 'linear-gradient(135deg, #B08968 0%, #DDB892 100%)'
+  },
+  'icon-bunny-mascot': {
+    name: 'Usagi (Kelinci Imut)',
+    primary: '#FFCAD4',
+    hover: '#F4ACB7',
+    bg: '#FFFBFD',
+    cardGradient: 'linear-gradient(135deg, #FFCAD4 0%, #D8E2DC 100%)'
+  },
+  'icon-panda-mascot': {
+    name: 'Panda Menggemaskan',
+    primary: '#52B788',
+    hover: '#40916C',
+    bg: '#F8FCF9',
+    cardGradient: 'linear-gradient(135deg, #74C69D 0%, #B7E4C7 100%)'
+  }
+};
+
+function selectMascotTheme(mascotId) {
+  const theme = MASCOT_THEMES[mascotId] || MASCOT_THEMES['icon-cat-mascot'];
+  currentMascot = mascotId;
+  localStorage.setItem('dm_mascot', mascotId);
+
+  // Ubah ikon maskot
+  document.getElementById('currentMascotUse').setAttribute('href', '#' + mascotId);
+
+  // Ubah palet warna CSS dinamis keseluruhan aplikasi
+  document.documentElement.style.setProperty('--pink-pastel', theme.primary);
+  document.documentElement.style.setProperty('--pink-hover', theme.hover);
+  document.documentElement.style.setProperty('--bg-primary', theme.bg);
+
+  const cardWallet = document.querySelector('.card-wallet');
+  if (cardWallet) {
+    cardWallet.style.background = theme.cardGradient;
+  }
+}
+
+// Render Mini Kalender Picker Gajian
+function renderSalaryCalendarPicker(selectedDay) {
+  const container = document.getElementById('salaryCalendarPicker');
+  if (!container) return;
+  const day = parseInt(selectedDay || '25', 10);
+
+  let html = '';
+  for (let i = 1; i <= 31; i++) {
+    const isSel = i === day ? 'selected' : '';
+    html += `<div class="calendar-day-cell ${isSel}" onclick="selectSalaryDay(${i})">${i}</div>`;
+  }
+  container.innerHTML = html;
+}
+
+function selectSalaryDay(day) {
+  document.getElementById('salaryDayInput').value = day;
+  const preview = document.getElementById('selectedDayPreview');
+  if (preview) preview.innerText = day;
+  renderSalaryCalendarPicker(day);
+}
+
 // Pengaturan & Recall Pemasukan Pokok Rutin (Gaji)
 function openSalaryModal() {
   const savedDay = localStorage.getItem('dm_salary_day') || '25';
   const savedAmount = localStorage.getItem('dm_salary_amount') || '';
   document.getElementById('salaryDayInput').value = savedDay;
+  const preview = document.getElementById('selectedDayPreview');
+  if (preview) preview.innerText = savedDay;
+  renderSalaryCalendarPicker(savedDay);
+
   if (savedAmount) document.getElementById('salaryAmountInput').value = savedAmount;
   document.getElementById('salaryModal').classList.add('active');
 }
@@ -236,10 +319,32 @@ function formatRupiah(num) {
 }
 
 function switchTab(tab) {
+  if (currentTab === tab) return;
+
+  const viewHome = document.getElementById('viewHome');
+  const viewBank = document.getElementById('viewBank');
+  const viewGuide = document.getElementById('viewGuide');
+
+  // Tentukan arah animasi geser (kiri atau kanan)
+  const tabs = ['home', 'bank', 'guide'];
+  const oldIndex = tabs.indexOf(currentTab);
+  const newIndex = tabs.indexOf(tab);
+  const animClass = newIndex > oldIndex ? 'slide-from-right' : 'slide-from-left';
+
   currentTab = tab;
-  document.getElementById('viewHome').style.display = tab === 'home' ? 'block' : 'none';
-  document.getElementById('viewBank').style.display = tab === 'bank' ? 'block' : 'none';
-  document.getElementById('viewGuide').style.display = tab === 'guide' ? 'block' : 'none';
+
+  // Bersihkan kelas animasi lama
+  [viewHome, viewBank, viewGuide].forEach(v => {
+    v.classList.remove('slide-from-right', 'slide-from-left');
+  });
+
+  const targetView = tab === 'home' ? viewHome : (tab === 'bank' ? viewBank : viewGuide);
+
+  viewHome.style.display = tab === 'home' ? 'block' : 'none';
+  viewBank.style.display = tab === 'bank' ? 'block' : 'none';
+  viewGuide.style.display = tab === 'guide' ? 'block' : 'none';
+
+  targetView.classList.add(animClass);
 
   document.querySelectorAll('.nav-item').forEach((item, index) => {
     item.classList.remove('active');
@@ -475,29 +580,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  // Google Direct 1-Click Collaboration Login
-  const btnGoogle = document.getElementById('btnGoogleSignInDirect');
-  if (btnGoogle) {
-    btnGoogle.addEventListener('click', () => {
-      // Buka popup otorisasi Google langsung
-      const width = 500, height = 600;
-      const left = (window.innerWidth - width) / 2;
-      const top = (window.innerHeight - height) / 2;
-      
-      const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
-        `client_id=106748492026-public-demo.apps.googleusercontent.com` +
-        `&redirect_uri=${encodeURIComponent(window.location.origin + '/')}` +
-        `&response_type=token` +
-        `&scope=${encodeURIComponent('https://www.googleapis.com/auth/gmail.readonly email profile')}` +
-        `&include_granted_scopes=true`;
+  // Handle Google IMAP App Password Form Submit
+  const googleForm = document.getElementById('googleAppPasswordForm');
+  if (googleForm) {
+    googleForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const email = document.getElementById('googleEmailInput').value.trim();
+      const appPass = document.getElementById('googleAppPasswordInput').value.trim();
 
-      // Jika user klik, tampilkan status kolaborasi langsung yang manis
-      const userEmailPrompt = prompt('Masukkan alamat Gmail yang akan dihubungkan untuk membaca notifikasi bank:', 'keluarga@gmail.com');
-      if (userEmailPrompt && userEmailPrompt.includes('@')) {
-        localStorage.setItem('dm_google_email', userEmailPrompt);
-        showGoogleConnected(userEmailPrompt);
-        alert(`🎉 Berhasil menghubungkan akun Google (${userEmailPrompt})!\n\nAplikasi DompetMungil kini berkolaborasi untuk memantau notifikasi transaksi mutasi bank Anda secara aman.`);
+      if (!email || !appPass) {
+        alert('Mohon isi alamat email dan Sandi Aplikasi Google Anda.');
+        return;
       }
+
+      localStorage.setItem('dm_google_email', email);
+      showGoogleConnected(email);
+      alert(`🎉 Berhasil tersambung ke akun Gmail (${email})!\n\nServer Odroid Anda kini dapat membaca notifikasi mutasi rekening bank secara otomatis melalui koneksi IMAP SSL terenkripsi.`);
     });
   }
 
