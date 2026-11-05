@@ -328,30 +328,20 @@ window.switchTab = function(tab) {
     return;
   }
 
-  // Tentukan arah animasi geser (kiri atau kanan)
-  const tabs = ['home', 'bank', 'guide'];
-  const oldIndex = tabs.indexOf(currentTab);
-  const newIndex = tabs.indexOf(tab);
-  const animClass = newIndex >= oldIndex ? 'slide-from-right' : 'slide-from-left';
-
   currentTab = tab;
 
-  // Bersihkan kelas animasi lama
-  [viewHome, viewBank, viewGuide].forEach(v => {
-    v.classList.remove('slide-from-right', 'slide-from-left');
-  });
+  // Sembunyikan semua tab secara tegas
+  viewHome.style.display = 'none';
+  viewBank.style.display = 'none';
+  viewGuide.style.display = 'none';
 
-  const targetView = tab === 'home' ? viewHome : (tab === 'bank' ? viewBank : viewGuide);
+  // Tampilkan tab target
+  if (tab === 'home') viewHome.style.display = 'block';
+  if (tab === 'bank') viewBank.style.display = 'block';
+  if (tab === 'guide') viewGuide.style.display = 'block';
 
-  viewHome.style.display = tab === 'home' ? 'block' : 'none';
-  viewBank.style.display = tab === 'bank' ? 'block' : 'none';
-  viewGuide.style.display = tab === 'guide' ? 'block' : 'none';
-
-  // Trigger animasi render
-  void targetView.offsetWidth;
-  targetView.classList.add(animClass);
-
-  document.querySelectorAll('.nav-item').forEach((item, index) => {
+  // Update status tombol aktif di navbar
+  document.querySelectorAll('.bottom-nav .nav-item').forEach((item, index) => {
     item.classList.remove('active');
     if ((tab === 'home' && index === 0) || (tab === 'bank' && index === 1) || (tab === 'guide' && index === 2)) {
       item.classList.add('active');
@@ -662,6 +652,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 2. Coba kirim langsung ke server
     triggerSyncWithServer();
   });
+
+  // Pasang event listener langsung untuk tombol navigasi bawah
+  const navBtns = document.querySelectorAll('.bottom-nav .nav-item');
+  if (navBtns.length >= 3) {
+    navBtns[0].addEventListener('click', (e) => { e.preventDefault(); window.switchTab('home'); });
+    navBtns[1].addEventListener('click', (e) => { e.preventDefault(); window.switchTab('bank'); });
+    navBtns[2].addEventListener('click', (e) => { e.preventDefault(); window.switchTab('guide'); });
+  }
 
   // Handle Import Mutasi Bank
   document.getElementById('btnProcessBankImport').addEventListener('click', async () => {
