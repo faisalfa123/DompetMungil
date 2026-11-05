@@ -29,41 +29,21 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+// Bypass cache untuk file script utama agar selalu up to date di browser
 self.addEventListener('fetch', (event) => {
-  // Hanya cache request GET untuk asset statis
   if (event.request.method !== 'GET') return;
 
   const url = new URL(event.request.url);
 
-  // Jika request API, utamakan network, jangan simpan di service worker cache
-  if (url.pathname.startsWith('/api/')) {
+  // Jangan pernah cache file js / html / api agar klik dan update langsung aktif
+  if (url.pathname.endsWith('.js') || url.pathname.endsWith('.html') || url.pathname === '/' || url.pathname.startsWith('/api/')) {
     event.respondWith(
-      fetch(event.request).catch(() => {
-        return new Response(JSON.stringify({
-          error: true,
-          code: 'ERR_SERVER_OFFLINE_OOM_503',
-          message: 'Server sedang beristirahat atau terkena OOM. Transaksi Anda akan aman disimpan di HP dan di-sync otomatis!'
-        }), {
-          status: 503,
-          headers: { 'Content-Type': 'application/json' }
-        });
-      })
+      fetch(event.request).catch(() => caches.match(event.request))
     );
     return;
   }
 
-  // Stale-while-revalidate untuk file statis PWA
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      const fetchPromise = fetch(event.request).then((networkResponse) => {
-        if (networkResponse && networkResponse.status === 200) {
-          const clone = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-        }
-        return networkResponse;
-      }).catch(() => cachedResponse);
-
-      return cachedResponse || fetchPromise;
-    })
+    caches.match(event.request).then((cached) => cached || fetch(event.request))
   );
 });
