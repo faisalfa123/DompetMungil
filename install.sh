@@ -9,7 +9,7 @@ set -e
 
 CURRENT_VERSION="V2.00.1 BETA"
 
-# Warna ANSI untuk fallback jika dialog/whiptail tidak ada
+# Warna ANSI untuk terminal
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -18,20 +18,34 @@ CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
 APP_NAME="dompetmungil"
-# Folder instalasi terpusat di /opt/dompetmungil
-OPT_DIR="/opt/${APP_NAME}"
-DATA_DIR="${OPT_DIR}/data"
-BIN_PATH="${OPT_DIR}/${APP_NAME}"
-GLOBAL_BIN="/usr/local/bin/${APP_NAME}"
-VERSION_FILE="${OPT_DIR}/.version"
 CONFIG_DIR="/etc/${APP_NAME}"
 SYSTEMD_FILE="/etc/systemd/system/${APP_NAME}.service"
 GITHUB_REPO="faisalfa123/DompetMungil"
+GLOBAL_BIN="/usr/local/bin/${APP_NAME}"
 
-# Deteksi folder tempat script ini dijalankan
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# 1. Cek Hak Akses Root
+if [ "$(id -u)" -ne 0 ]; then
+    echo -e "${RED}[ERROR] Script instalasi ini wajib dijalankan sebagai root (sudo bash ...)!${NC}"
+    exit 1
+fi
 
-# Deteksi ketersediaan TUI engine
+# Pastikan git, curl, tar terpasang
+ensure_packages() {
+    local missing=()
+    if ! command -v git >/dev/null 2>&1; then missing+=("git"); fi
+    if ! command -v curl >/dev/null 2>&1; then missing+=("curl"); fi
+    if ! command -v tar >/dev/null 2>&1; then missing+=("tar"); fi
+    
+    if [ ${#missing[@]} -gt 0 ]; then
+        echo -e "${YELLOW}Menginstal paket yang dibutuhkan: ${missing[*]}...${NC}"
+        if command -v apt-get >/dev/null 2>&1; then
+            apt-get update -y && apt-get install -y "${missing[@]}"
+        fi
+    fi
+}
+ensure_packages
+
+# Deteksi ketersediaan TUI engine (whiptail / dialog)
 TUI_BIN=""
 if command -v whiptail >/dev/null 2>&1; then
     TUI_BIN="whiptail"
@@ -43,7 +57,7 @@ show_msg() {
     local title="$1"
     local msg="$2"
     if [ -n "$TUI_BIN" ]; then
-        $TUI_BIN --title "$title" --msgbox "$msg" 14 74
+        $TUI_BIN --title "$title" --msgbox "$msg" 15 76
     else
         echo -e "\n${CYAN}=== $title ===${NC}"
         echo -e "$msg"
@@ -56,7 +70,7 @@ show_yesno() {
     local title="$1"
     local msg="$2"
     if [ -n "$TUI_BIN" ]; then
-        $TUI_BIN --title "$title" --yesno "$msg" 13 74
+        $TUI_BIN --title "$title" --yesno "$msg" 14 76
         return $?
     else
         echo -e "\n${CYAN}=== $title ===${NC}"
@@ -74,7 +88,7 @@ show_input() {
     local prompt="$2"
     local default_val="$3"
     if [ -n "$TUI_BIN" ]; then
-        $TUI_BIN --title "$title" --inputbox "$prompt" 12 74 "$default_val" 3>&1 1>&2 2>&3
+        $TUI_BIN --title "$title" --inputbox "$prompt" 13 76 "$default_val" 3>&1 1>&2 2>&3
     else
         echo -e "\n${CYAN}$prompt [Default: $default_val]${NC}"
         read -r val
@@ -82,19 +96,15 @@ show_input() {
     fi
 }
 
-# 1. Cek Hak Akses Root
-if [ "$(id -u)" -ne 0 ]; then
-    echo -e "${RED}[ERROR] Script instalasi ini wajib dijalankan sebagai root (sudo ./install.sh)!${NC}"
-    exit 1
-fi
-
 clear
 show_msg "🌸 Catatan Keuangan Keluarga 🌸" \
 "Selamat datang di Wizard Instalasi Catatan Keuangan Keluarga (${CURRENT_VERSION})!\n\n\
-Aplikasi ini dioptimalkan khusus untuk server Odroid C2 / STB HG680P (Amlogic S905X).\n\
-- Lokasi Instalasi Utama: ${OPT_DIR}\n\
-- Database & Kunci: ${DATA_DIR}\n\
-- Konfigurasi Akun Pengguna / Admin diatur langsung lewat Web saat pertama dibuka."
+Aplikasi PWA ultra-ringan & efisien khusus STB / Odroid C2 / Linux Server.\n\
+Installer ini akan memandu Anda menentukan:\n\
+- Folder Tempat Aplikasi Di-Install\n\
+- Port Web Server\n\
+- Integrasi Cloud Backup (Opsional)\n\n\
+Seluruh akun Admin / Orang Tua langsung dibuat di Web saat pertama kali dibuka."
 
 # 2. Periksa Spesifikasi Hardware & RAM Bebas
 TOTAL_RAM_MB=$(free -m | awk '/^Mem:/{print $2}')
@@ -111,16 +121,34 @@ if [ "$AVAIL_RAM_MB" -lt 50 ]; then
 else
     HARDWARE_INFO+="${GREEN}Kondisi server memadai untuk menjalankan aplikasi Catatan Keuangan Keluarga.${NC}"
 fi
-
 show_msg "Pemeriksaan Sumber Daya Server" "$HARDWARE_INFO"
 
-# 3. Deteksi Versi & Penanganan Versi di Bawah V2.00.1 BETA (Wajib Install Ulang)
+# 3. Tentukan Lokasi Folder Instalasi (Ditanyakan ke Pengguna)
+DEFAULT_INSTALL_DIR="/opt/${APP_NAME}"
+if [ -f "$CONFIG_DIR/config.env" ]; then
+    # shellcheck disable=SC1091
+    source "$CONFIG_DIR/config.env" 2>/dev/null || true
+    if [ -n "$APP_DIR" ]; then
+        DEFAULT_INSTALL_DIR="$APP_DIR"
+    fi
+fi
+
+INSTALL_DIR=$(show_input "Folder Tempat Aplikasi Di-Install" \
+"Tentukan path folder absolut tempat aplikasi DompetMungil akan dipasang di server Anda:" \
+"$DEFAULT_INSTALL_DIR")
+
+# Normalisasi path (hilangkan trailing slash)
+INSTALL_DIR="${INSTALL_DIR%/}"
+DATA_DIR="${INSTALL_DIR}/data"
+BIN_PATH="${INSTALL_DIR}/${APP_NAME}"
+VERSION_FILE="${INSTALL_DIR}/.version"
+
+# 4. Deteksi Versi & Penanganan Versi di Bawah V2.00.1 BETA (Wajib Fresh Install)
 INSTALLED_VERSION=""
 if [ -f "$VERSION_FILE" ]; then
     INSTALLED_VERSION=$(cat "$VERSION_FILE" 2>/dev/null || echo "")
 fi
 
-# Cek apakah ada instalasi lama di sistem (baik via /etc/dompetmungil atau /var/lib/dompetmungil atau service systemd lama)
 LEGACY_DETECTED=0
 if [ -z "$INSTALLED_VERSION" ]; then
     if [ -f "$CONFIG_DIR/config.env" ] || [ -d "/var/lib/${APP_NAME}" ] || [ -f "/usr/local/bin/${APP_NAME}" ] || systemctl list-unit-files "${APP_NAME}.service" >/dev/null 2>&1; then
@@ -144,16 +172,16 @@ if [ -n "$INSTALLED_VERSION" ] && [ "$INSTALLED_VERSION" = "$CURRENT_VERSION" ] 
     SAVED_ENABLE_BACKUP="${ENABLE_BACKUP:-no}"
     SAVED_RCLONE_REMOTE="${RCLONE_REMOTE:-}"
     show_msg "Deteksi Instalasi Aktif (${INSTALLED_VERSION})" \
-    "Aplikasi terdeteksi sudah terpasang dengan versi ${INSTALLED_VERSION} di ${OPT_DIR}.\n\n\
+    "Aplikasi terdeteksi sudah terpasang dengan versi ${INSTALLED_VERSION} di ${INSTALL_DIR}.\n\n\
 Seluruh konfigurasi server sebelumnya otomatis digunakan:\n\
-- Port: ${SAVED_PORT}\n\
-- Cloud Backup: ${SAVED_ENABLE_BACKUP} (${SAVED_RCLONE_REMOTE})\n\n\
+- Folder Install: ${INSTALL_DIR}\n\
+- Port Server   : ${SAVED_PORT}\n\
+- Cloud Backup  : ${SAVED_ENABLE_BACKUP} (${SAVED_RCLONE_REMOTE})\n\n\
 Binary aplikasi akan diperbarui tanpa mengubah konfigurasi server."
 elif [ "$LEGACY_DETECTED" -eq 1 ]; then
-    # Penanganan khusus versi di bawah V2.00.1 BETA: Wajib Fresh Install
     show_msg "Pemberitahuan Wajib Install Ulang" \
     "Perhatian: Terdeteksi instalasi versi lama atau belum standar ${CURRENT_VERSION}.\n\n\
-Untuk mencegah bentrok dependensi & struktur folder baru di /opt/${APP_NAME},\n\
+Untuk mencegah bentrok dependensi & struktur folder baru di ${INSTALL_DIR},\n\
 sistem akan melakukan FRESH INSTALL (Instalasi Baru Bersih).\n\n\
 Catatan: Jika ada database lama di /var/lib/${APP_NAME}, cadangan akan disalin aman."
 
@@ -161,7 +189,7 @@ Catatan: Jika ada database lama di /var/lib/${APP_NAME}, cadangan akan disalin a
     systemctl stop "$APP_NAME" 2>/dev/null || true
     killall -9 "$APP_NAME" 2>/dev/null || true
 
-    # Salin database lama jika ada ke folder sementara agar tidak hilang
+    # Salin database lama jika ada ke folder baru agar data keuangan tetap utuh
     if [ -f "/var/lib/${APP_NAME}/data.db" ] && [ ! -f "${DATA_DIR}/data.db" ]; then
         mkdir -p "${DATA_DIR}"
         cp -a /var/lib/${APP_NAME}/* "${DATA_DIR}/" 2>/dev/null || true
@@ -178,13 +206,13 @@ Catatan: Jika ada database lama di /var/lib/${APP_NAME}, cadangan akan disalin a
     fi
 fi
 
-# 4. Konfigurasi Non-Settingan Server Minimalis (Port & Backup di TUI)
+# 5. Konfigurasi Port Web Server
 PORT="$SAVED_PORT"
 if [ "$IS_FRESH_INSTALL" -eq 1 ]; then
     PORT=$(show_input "Konfigurasi Port Web Server" "Tentukan nomor port untuk mengakses PWA di browser:" "$SAVED_PORT")
 fi
 
-# 5. Deteksi Backup & Pemulihan Cloud (rclone)
+# 6. Deteksi Backup & Pemulihan Cloud (rclone)
 RCLONE_INSTALLED=0
 RCLONE_REMOTES=""
 if command -v rclone >/dev/null 2>&1; then
@@ -207,11 +235,11 @@ Apakah Anda ingin mengaktifkan pencadangan otomatis harian database & kunci enkr
     fi
 fi
 
-# 6. Menyiapkan Folder Terpusat di /opt/dompetmungil
-mkdir -p "$OPT_DIR"
+# 7. Menyiapkan Folder Instalasi dan Mengunduh / Menyinkronkan Source
+mkdir -p "$INSTALL_DIR"
 mkdir -p "$DATA_DIR"
 mkdir -p "$CONFIG_DIR"
-chmod 755 "$OPT_DIR"
+chmod 755 "$INSTALL_DIR"
 chmod 700 "$DATA_DIR"
 chmod 700 "$CONFIG_DIR"
 
@@ -219,23 +247,40 @@ chmod 700 "$CONFIG_DIR"
 echo "${CURRENT_VERSION}" > "$VERSION_FILE"
 chmod 644 "$VERSION_FILE"
 
-# Salin source / assets ke /opt/dompetmungil jika dijalankan dari repo clone
-if [ "$SCRIPT_DIR" != "$OPT_DIR" ]; then
-    echo -e "${CYAN}Menyinkronkan file aplikasi ke ${OPT_DIR}...${NC}"
-    # Salin berkas utama, web static, dan bin
-    cp -r "$SCRIPT_DIR/web" "$OPT_DIR/" 2>/dev/null || true
-    if [ -d "$SCRIPT_DIR/pkg" ]; then cp -r "$SCRIPT_DIR/pkg" "$OPT_DIR/"; fi
-    if [ -f "$SCRIPT_DIR/main.go" ]; then cp "$SCRIPT_DIR/main.go" "$OPT_DIR/"; fi
-    if [ -f "$SCRIPT_DIR/go.mod" ]; then cp "$SCRIPT_DIR/go.mod" "$OPT_DIR/"; fi
-    if [ -f "$SCRIPT_DIR/go.sum" ]; then cp "$SCRIPT_DIR/go.sum" "$OPT_DIR/"; fi
-    if [ -d "$SCRIPT_DIR/bin" ]; then cp -r "$SCRIPT_DIR/bin" "$OPT_DIR/"; fi
-    cp "$SCRIPT_DIR/install.sh" "$OPT_DIR/" 2>/dev/null || true
+# Cek apakah script ini dijalankan dari folder source lokal atau dari curl pipe
+SCRIPT_DIR=""
+if [ -n "${BASH_SOURCE[0]}" ] && [ -f "${BASH_SOURCE[0]}" ]; then
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 fi
 
-# Simpan file konfigurasi server
+if [ -n "$SCRIPT_DIR" ] && [ -f "$SCRIPT_DIR/main.go" ] && [ "$SCRIPT_DIR" != "$INSTALL_DIR" ]; then
+    echo -e "${CYAN}Menyinkronkan file aplikasi dari folder lokal ke ${INSTALL_DIR}...${NC}"
+    cp -r "$SCRIPT_DIR/web" "$INSTALL_DIR/" 2>/dev/null || true
+    if [ -d "$SCRIPT_DIR/pkg" ]; then cp -r "$SCRIPT_DIR/pkg" "$INSTALL_DIR/"; fi
+    if [ -f "$SCRIPT_DIR/main.go" ]; then cp "$SCRIPT_DIR/main.go" "$INSTALL_DIR/"; fi
+    if [ -f "$SCRIPT_DIR/go.mod" ]; then cp "$SCRIPT_DIR/go.mod" "$INSTALL_DIR/"; fi
+    if [ -f "$SCRIPT_DIR/go.sum" ]; then cp "$SCRIPT_DIR/go.sum" "$INSTALL_DIR/"; fi
+    if [ -d "$SCRIPT_DIR/bin" ]; then cp -r "$SCRIPT_DIR/bin" "$INSTALL_DIR/"; fi
+    cp "$SCRIPT_DIR/install.sh" "$INSTALL_DIR/" 2>/dev/null || true
+elif [ ! -f "$INSTALL_DIR/main.go" ]; then
+    echo -e "${CYAN}Mengunduh source code Catatan Keuangan Keluarga dari GitHub (${GITHUB_REPO})...${NC}"
+    TMP_CLONE="/tmp/dompetmungil_clone_$$"
+    rm -rf "$TMP_CLONE"
+    git clone --depth 1 "https://github.com/${GITHUB_REPO}.git" "$TMP_CLONE"
+    cp -r "$TMP_CLONE/web" "$INSTALL_DIR/"
+    cp -r "$TMP_CLONE/pkg" "$INSTALL_DIR/"
+    cp "$TMP_CLONE/main.go" "$INSTALL_DIR/"
+    cp "$TMP_CLONE/go.mod" "$INSTALL_DIR/"
+    cp "$TMP_CLONE/go.sum" "$INSTALL_DIR/" 2>/dev/null || true
+    if [ -d "$TMP_CLONE/bin" ]; then cp -r "$TMP_CLONE/bin" "$INSTALL_DIR/"; fi
+    cp "$TMP_CLONE/install.sh" "$INSTALL_DIR/"
+    rm -rf "$TMP_CLONE"
+fi
+
+# Simpan konfigurasi server
 cat <<EOF > "$CONFIG_DIR/config.env"
 PORT=${PORT}
-APP_DIR=${OPT_DIR}
+APP_DIR=${INSTALL_DIR}
 DATA_DIR=${DATA_DIR}
 ENABLE_BACKUP=${ENABLE_BACKUP}
 RCLONE_REMOTE=${SELECTED_REMOTE}
@@ -243,21 +288,15 @@ VERSION=${CURRENT_VERSION}
 EOF
 chmod 600 "$CONFIG_DIR/config.env"
 
-# 7. Memasang Binary Aplikasi di /opt/dompetmungil/dompetmungil
+# 8. Memasang Binary Aplikasi di $BIN_PATH
 ARCH=$(uname -m)
 BINARY_SRC=""
-if [ -f "$OPT_DIR/bin/keuangan-server-linux-${ARCH}" ]; then
-    BINARY_SRC="$OPT_DIR/bin/keuangan-server-linux-${ARCH}"
-elif [ -f "$SCRIPT_DIR/bin/keuangan-server-linux-${ARCH}" ]; then
-    BINARY_SRC="$SCRIPT_DIR/bin/keuangan-server-linux-${ARCH}"
-elif [ -f "$OPT_DIR/bin/server" ]; then
-    BINARY_SRC="$OPT_DIR/bin/server"
-elif [ -f "$SCRIPT_DIR/bin/server" ]; then
-    BINARY_SRC="$SCRIPT_DIR/bin/server"
-elif [ -f "$OPT_DIR/dompetmungil" ]; then
-    BINARY_SRC="$OPT_DIR/dompetmungil"
-elif [ -f "$SCRIPT_DIR/dompetmungil" ]; then
-    BINARY_SRC="$SCRIPT_DIR/dompetmungil"
+if [ -f "$INSTALL_DIR/bin/keuangan-server-linux-${ARCH}" ]; then
+    BINARY_SRC="$INSTALL_DIR/bin/keuangan-server-linux-${ARCH}"
+elif [ -f "$INSTALL_DIR/bin/server" ]; then
+    BINARY_SRC="$INSTALL_DIR/bin/server"
+elif [ -f "$INSTALL_DIR/dompetmungil" ]; then
+    BINARY_SRC="$INSTALL_DIR/dompetmungil"
 fi
 
 # Hentikan service jika sedang berjalan
@@ -273,9 +312,9 @@ if [ -n "$BINARY_SRC" ] && [ "$BINARY_SRC" != "$BIN_PATH" ]; then
     chmod 755 "$BIN_PATH"
 elif [ ! -f "$BIN_PATH" ] || [ "$IS_FRESH_INSTALL" -eq 1 ]; then
     if command -v go >/dev/null 2>&1; then
-        echo -e "${YELLOW}Mengompilasi binary langsung dari source di ${OPT_DIR}...${NC}"
+        echo -e "${YELLOW}Mengompilasi binary langsung dari source di ${INSTALL_DIR}...${NC}"
         rm -f "$BIN_PATH" 2>/dev/null || true
-        (cd "$OPT_DIR" && go build -o "$BIN_PATH" main.go)
+        (cd "$INSTALL_DIR" && go build -o "$BIN_PATH" main.go)
         chmod 755 "$BIN_PATH"
     elif [ -f "$BINARY_SRC" ]; then
         cp "$BINARY_SRC" "$BIN_PATH"
@@ -286,10 +325,10 @@ elif [ ! -f "$BIN_PATH" ] || [ "$IS_FRESH_INSTALL" -eq 1 ]; then
     fi
 fi
 
-# Buat symlink global di /usr/local/bin agar bisa dipanggil langsung dari terminal
+# Pasang symlink global di /usr/local/bin
 ln -sf "$BIN_PATH" "$GLOBAL_BIN"
 
-# 8. Menyiapkan Skrip Backup & Recovery Berpasangan
+# 9. Skrip Backup & Recovery Berpasangan
 cat << 'EOF' > /usr/local/bin/keuangan-backup.sh
 #!/bin/bash
 set -e
@@ -320,7 +359,7 @@ if [ "$ENABLE_BACKUP" = "yes" ]; then
     (crontab -l 2>/dev/null | grep -v "keuangan-backup.sh" ; echo "0 3 * * * /usr/local/bin/keuangan-backup.sh >/dev/null 2>&1") | crontab -
 fi
 
-# 9. Konfigurasi Systemd Service
+# 10. Konfigurasi Systemd Service
 cat <<EOF > "$SYSTEMD_FILE"
 [Unit]
 Description=Catatan Keuangan Keluarga (Cute & Ultra-Light PWA)
@@ -329,7 +368,7 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-WorkingDirectory=$OPT_DIR
+WorkingDirectory=$INSTALL_DIR
 EnvironmentFile=$CONFIG_DIR/config.env
 ExecStart=$BIN_PATH -port \${PORT} -data-dir \${DATA_DIR}
 Restart=always
@@ -350,7 +389,7 @@ LOCAL_IP=$(hostname -I | awk '{print $1}')
 
 show_msg "Instalasi Berhasil! 🎉" \
 "Aplikasi Catatan Keuangan Keluarga (${CURRENT_VERSION}) telah aktif!\n\n\
-Folder Aplikasi : ${OPT_DIR}\n\
+Folder Aplikasi : ${INSTALL_DIR}\n\
 Database & Kunci: ${DATA_DIR}\n\
 Port Server     : ${PORT}\n\
 Cloud Backup    : ${ENABLE_BACKUP}\n\n\
