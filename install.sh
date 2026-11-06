@@ -29,6 +29,11 @@ if [ "$(id -u)" -ne 0 ]; then
     exit 1
 fi
 
+# Pastikan stdin terhubung ke terminal fisik (/dev/tty) jika dijalankan via pipe (curl | bash)
+if [ ! -t 0 ] && [ -e /dev/tty ]; then
+    exec < /dev/tty
+fi
+
 # Pastikan git, curl, tar terpasang
 ensure_packages() {
     local missing=()
@@ -57,12 +62,12 @@ show_msg() {
     local title="$1"
     local msg="$2"
     if [ -n "$TUI_BIN" ]; then
-        $TUI_BIN --title "$title" --msgbox "$msg" 15 76
+        $TUI_BIN --title "$title" --msgbox "$msg" 15 76 </dev/tty >/dev/tty
     else
         echo -e "\n${CYAN}=== $title ===${NC}"
         echo -e "$msg"
         echo -e "${YELLOW}Tekan Enter untuk melanjutkan...${NC}"
-        read -r
+        read -r </dev/tty
     fi
 }
 
@@ -70,12 +75,12 @@ show_yesno() {
     local title="$1"
     local msg="$2"
     if [ -n "$TUI_BIN" ]; then
-        $TUI_BIN --title "$title" --yesno "$msg" 14 76
+        $TUI_BIN --title "$title" --yesno "$msg" 14 76 </dev/tty >/dev/tty
         return $?
     else
         echo -e "\n${CYAN}=== $title ===${NC}"
         echo -e "$msg"
-        read -p "(y/n): " choice
+        read -p "(y/n): " choice </dev/tty
         case "$choice" in
             y|Y ) return 0;;
             * ) return 1;;
@@ -88,10 +93,10 @@ show_input() {
     local prompt="$2"
     local default_val="$3"
     if [ -n "$TUI_BIN" ]; then
-        $TUI_BIN --title "$title" --inputbox "$prompt" 13 76 "$default_val" 3>&1 1>&2 2>&3
+        $TUI_BIN --title "$title" --inputbox "$prompt" 13 76 "$default_val" </dev/tty 3>&1 1>&2 2>&3
     else
         echo -e "\n${CYAN}$prompt [Default: $default_val]${NC}"
-        read -r val
+        read -r val </dev/tty
         echo "${val:-$default_val}"
     fi
 }
