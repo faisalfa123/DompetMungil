@@ -7,7 +7,32 @@
 
 set -e
 
+# ------------------------------------------------------------------------------
+# 0. Penanganan Khusus Pipe Installer (curl -sSL ... | sudo bash)
+# Jika script dipanggil via pipe tanpa tty di stdin, unduh ke file sementara di /tmp
+# lalu jalankan ulang dengan stdin terhubung langsung ke terminal fisik (/dev/tty).
+# Hal ini menjamin Whiptail/Dialog menerima input tombol (Enter/Tab) secara normal.
+# ------------------------------------------------------------------------------
+if [ -z "$DOMPETMUNGIL_SELF_RUN" ] && [ ! -t 0 ]; then
+    TMP_INSTALLER="/tmp/dompetmungil_installer_$$.sh"
+    export DOMPETMUNGIL_SELF_RUN=1
+    if command -v curl >/dev/null 2>&1; then
+        curl -fsSL "https://raw.githubusercontent.com/faisalfa123/DompetMungil/main/install.sh" -o "$TMP_INSTALLER" 2>/dev/null || cat > "$TMP_INSTALLER"
+    else
+        cat > "$TMP_INSTALLER"
+    fi
+    chmod 755 "$TMP_INSTALLER"
+    if [ -e /dev/tty ]; then
+        exec bash "$TMP_INSTALLER" "$@" </dev/tty
+    else
+        exec bash "$TMP_INSTALLER" "$@"
+    fi
+fi
+
 CURRENT_VERSION="V2.00.1 BETA"
+
+# Bersihkan file installer sementara jika ada
+trap 'rm -f /tmp/dompetmungil_installer_*.sh 2>/dev/null || true' EXIT
 
 # Warna ANSI untuk terminal
 RED='\033[0;31m'
@@ -29,22 +54,21 @@ if [ "$(id -u)" -ne 0 ]; then
     exit 1
 fi
 
-# Pastikan stdin terhubung ke terminal fisik (/dev/tty) jika dijalankan via pipe (curl | bash)
-if [ ! -t 0 ] && [ -e /dev/tty ]; then
-    exec < /dev/tty
-fi
-
-# Pastikan git, curl, tar terpasang
+# Pastikan paket penting (git, curl, tar, whiptail/dialog, golang-go) terpasang
 ensure_packages() {
     local missing=()
     if ! command -v git >/dev/null 2>&1; then missing+=("git"); fi
     if ! command -v curl >/dev/null 2>&1; then missing+=("curl"); fi
     if ! command -v tar >/dev/null 2>&1; then missing+=("tar"); fi
+    if ! command -v whiptail >/dev/null 2>&1 && ! command -v dialog >/dev/null 2>&1; then missing+=("whiptail"); fi
+    if ! command -v go >/dev/null 2>&1; then missing+=("golang-go"); fi
     
     if [ ${#missing[@]} -gt 0 ]; then
-        echo -e "${YELLOW}Menginstal paket yang dibutuhkan: ${missing[*]}...${NC}"
+        echo -e "${CYAN}Menyiapkan paket sistem yang dibutuhkan: ${missing[*]}...${NC}"
         if command -v apt-get >/dev/null 2>&1; then
-            apt-get update -y && apt-get install -y "${missing[@]}"
+            export DEBIAN_FRONTEND=noninteractive
+            apt-get update -y -qq >/dev/null 2>&1 || true
+            apt-get install -y -qq "${missing[@]}" >/dev/null 2>&1 || true
         fi
     fi
 }
@@ -62,12 +86,12 @@ show_msg() {
     local title="$1"
     local msg="$2"
     if [ -n "$TUI_BIN" ]; then
-        $TUI_BIN --title "$title" --msgbox "$msg" 15 76 </dev/tty >/dev/tty
+        $TUI_BIN --title "$title" --msgbox "$msg" 15 76
     else
         echo -e "\n${CYAN}=== $title ===${NC}"
         echo -e "$msg"
         echo -e "${YELLOW}Tekan Enter untuk melanjutkan...${NC}"
-        read -r </dev/tty
+        read -r
     fi
 }
 
@@ -75,12 +99,12 @@ show_yesno() {
     local title="$1"
     local msg="$2"
     if [ -n "$TUI_BIN" ]; then
-        $TUI_BIN --title "$title" --yesno "$msg" 14 76 </dev/tty >/dev/tty
+        $TUI_BIN --title "$title" --yesno "$msg" 14 76
         return $?
     else
         echo -e "\n${CYAN}=== $title ===${NC}"
         echo -e "$msg"
-        read -p "(y/n): " choice </dev/tty
+        read -p "(y/n): " choice
         case "$choice" in
             y|Y ) return 0;;
             * ) return 1;;
@@ -93,10 +117,14 @@ show_input() {
     local prompt="$2"
     local default_val="$3"
     if [ -n "$TUI_BIN" ]; then
-        $TUI_BIN --title "$title" --inputbox "$prompt" 13 76 "$default_val" </dev/tty 3>&1 1>&2 2>&3
+        if [ "$TUI_BIN" = "dialog" ]; then
+            $TUI_BIN --title "$title" --inputbox "$prompt" 13 76 "$default_val" --stdout
+        else
+            $TUI_BIN --title "$title" --inputbox "$prompt" 13 76 "$default_val" 3>&1 1>&2 2>&3
+        fi
     else
         echo -e "\n${CYAN}$prompt [Default: $default_val]${NC}"
-        read -r val </dev/tty
+        read -r val
         echo "${val:-$default_val}"
     fi
 }
@@ -112,8 +140,8 @@ Installer ini akan memandu Anda menentukan:\n\
 Seluruh akun Admin / Orang Tua langsung dibuat di Web saat pertama kali dibuka."
 
 # 2. Periksa Spesifikasi Hardware & RAM Bebas
-TOTAL_RAM_MB=$(free -m | awk '/^Mem:/{print $2}')
-AVAIL_RAM_MB=$(free -m | awk '/^Mem:/{print $7}')
+TOTAL_RAM_MB=$(free -m 2>/dev/null | awk '/^Mem:/{print $2}' || echo "1024")
+AVAIL_RAM_MB=$(free -m 2>/dev/null | awk '/^Mem:/{print $7}' || echo "512")
 CPU_MODEL=$(lscpu 2>/dev/null | grep "Model name" | cut -d: -f2 | xargs || uname -m)
 
 HARDWARE_INFO="Spesifikasi Server Terdeteksi:\n\
@@ -325,7 +353,7 @@ elif [ ! -f "$BIN_PATH" ] || [ "$IS_FRESH_INSTALL" -eq 1 ]; then
         cp "$BINARY_SRC" "$BIN_PATH"
         chmod 755 "$BIN_PATH"
     else
-        echo -e "${RED}[ERROR] Binary untuk $ARCH tidak ditemukan. Kompilasi butuh 'go' terpasang.${NC}"
+        echo -e "${RED}[ERROR] Binary untuk $ARCH tidak ditemukan dan 'go' gagal disiapkan.${NC}"
         exit 1
     fi
 fi
@@ -390,7 +418,7 @@ systemctl daemon-reload
 systemctl enable "$APP_NAME"
 systemctl restart "$APP_NAME"
 
-LOCAL_IP=$(hostname -I | awk '{print $1}')
+LOCAL_IP=$(hostname -I 2>/dev/null | awk '{print $1}' || echo "localhost")
 
 show_msg "Instalasi Berhasil! 🎉" \
 "Aplikasi Catatan Keuangan Keluarga (${CURRENT_VERSION}) telah aktif!\n\n\
