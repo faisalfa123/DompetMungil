@@ -54,14 +54,13 @@ if [ "$(id -u)" -ne 0 ]; then
     exit 1
 fi
 
-# Pastikan paket penting (git, curl, tar, whiptail/dialog, golang-go) terpasang
+# Pastikan paket penting (git, curl, tar, whiptail/dialog) terpasang
 ensure_packages() {
     local missing=()
     if ! command -v git >/dev/null 2>&1; then missing+=("git"); fi
     if ! command -v curl >/dev/null 2>&1; then missing+=("curl"); fi
     if ! command -v tar >/dev/null 2>&1; then missing+=("tar"); fi
     if ! command -v whiptail >/dev/null 2>&1 && ! command -v dialog >/dev/null 2>&1; then missing+=("whiptail"); fi
-    if ! command -v go >/dev/null 2>&1; then missing+=("golang-go"); fi
     
     if [ ${#missing[@]} -gt 0 ]; then
         echo -e "${CYAN}Menyiapkan paket sistem yang dibutuhkan: ${missing[*]}...${NC}"
@@ -321,16 +320,23 @@ VERSION=${CURRENT_VERSION}
 EOF
 chmod 600 "$CONFIG_DIR/config.env"
 
-# 8. Memasang Binary Aplikasi di $BIN_PATH
+# 8. Memasang Binary Aplikasi Siap Pakai dari GitHub Release (Anti-Hang di STB)
 ARCH=$(uname -m)
-BINARY_SRC=""
-if [ -f "$INSTALL_DIR/bin/keuangan-server-linux-${ARCH}" ]; then
-    BINARY_SRC="$INSTALL_DIR/bin/keuangan-server-linux-${ARCH}"
-elif [ -f "$INSTALL_DIR/bin/server" ]; then
-    BINARY_SRC="$INSTALL_DIR/bin/server"
-elif [ -f "$INSTALL_DIR/dompetmungil" ]; then
-    BINARY_SRC="$INSTALL_DIR/dompetmungil"
-fi
+ASSET_NAME=""
+case "$ARCH" in
+    aarch64|arm64)
+        ASSET_NAME="keuangan-server-linux-aarch64"
+        ;;
+    armv7*|armhf)
+        ASSET_NAME="keuangan-server-linux-armv7l"
+        ;;
+    x86_64|amd64)
+        ASSET_NAME="keuangan-server-linux-x86_64"
+        ;;
+    *)
+        ASSET_NAME="keuangan-server-linux-aarch64"
+        ;;
+esac
 
 # Hentikan service jika sedang berjalan
 if systemctl is-active --quiet "$APP_NAME" 2>/dev/null; then
@@ -339,21 +345,41 @@ if systemctl is-active --quiet "$APP_NAME" 2>/dev/null; then
 fi
 killall -9 "$APP_NAME" 2>/dev/null || true
 
-if [ -n "$BINARY_SRC" ] && [ "$BINARY_SRC" != "$BIN_PATH" ]; then
-    rm -f "$BIN_PATH" 2>/dev/null || true
-    cp "$BINARY_SRC" "$BIN_PATH"
+echo -e "${CYAN}Mengunduh binary siap pakai (${ASSET_NAME}) dari GitHub Actions Release...${NC}"
+BINARY_DOWNLOADED=0
+RELEASE_URL="https://github.com/${GITHUB_REPO}/releases/download/latest/${ASSET_NAME}"
+
+# Coba download dari latest release GitHub
+if curl -fsSL -L "$RELEASE_URL" -o "${BIN_PATH}.tmp" 2>/dev/null; then
+    mv "${BIN_PATH}.tmp" "$BIN_PATH"
     chmod 755 "$BIN_PATH"
-elif [ ! -f "$BIN_PATH" ] || [ "$IS_FRESH_INSTALL" -eq 1 ]; then
+    BINARY_DOWNLOADED=1
+    echo -e "${GREEN}✔ Berhasil mengunduh binary ${ASSET_NAME} siap pakai dari GitHub!${NC}"
+fi
+
+# Jika download latest belum tersedia atau gagal, periksa apakah ada binary lokal di repo
+if [ "$BINARY_DOWNLOADED" -eq 0 ]; then
+    if [ -f "$INSTALL_DIR/bin/${ASSET_NAME}" ]; then
+        cp "$INSTALL_DIR/bin/${ASSET_NAME}" "$BIN_PATH"
+        chmod 755 "$BIN_PATH"
+        BINARY_DOWNLOADED=1
+    elif [ -f "$INSTALL_DIR/dompetmungil" ]; then
+        cp "$INSTALL_DIR/dompetmungil" "$BIN_PATH"
+        chmod 755 "$BIN_PATH"
+        BINARY_DOWNLOADED=1
+    fi
+fi
+
+# Fallback terakhir hanya jika Go terpasang secara eksplisit oleh pengguna
+if [ "$BINARY_DOWNLOADED" -eq 0 ]; then
     if command -v go >/dev/null 2>&1; then
         echo -e "${YELLOW}Mengompilasi binary langsung dari source di ${INSTALL_DIR}...${NC}"
         rm -f "$BIN_PATH" 2>/dev/null || true
         (cd "$INSTALL_DIR" && go build -o "$BIN_PATH" main.go)
         chmod 755 "$BIN_PATH"
-    elif [ -f "$BINARY_SRC" ]; then
-        cp "$BINARY_SRC" "$BIN_PATH"
-        chmod 755 "$BIN_PATH"
     else
-        echo -e "${RED}[ERROR] Binary untuk $ARCH tidak ditemukan dan 'go' gagal disiapkan.${NC}"
+        echo -e "${RED}[ERROR] Gagal mengunduh binary ${ASSET_NAME} dari GitHub.${NC}"
+        echo -e "${YELLOW}Pastikan server terhubung ke internet untuk mengunduh release.${NC}"
         exit 1
     fi
 fi

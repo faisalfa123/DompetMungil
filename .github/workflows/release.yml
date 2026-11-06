@@ -2,11 +2,11 @@ name: Build & Release Ultra-Light Binary
 
 on:
   push:
-    tags:
-      - 'v*'
     branches:
       - main
-  pull_request:
+    tags:
+      - 'v*'
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -31,6 +31,7 @@ jobs:
           GOOS: linux
           GOARCH: arm64
         run: |
+          mkdir -p dist
           go build -ldflags="-s -w" -o dist/keuangan-server-linux-aarch64 main.go
 
       - name: Build Binary ARMv7 (STB 32-bit / Raspberry Pi 32-bit)
@@ -40,6 +41,7 @@ jobs:
           GOARCH: arm
           GOARM: 7
         run: |
+          mkdir -p dist
           go build -ldflags="-s -w" -o dist/keuangan-server-linux-armv7l main.go
 
       - name: Build Binary AMD64 (x86_64 Desktop / VPS)
@@ -48,6 +50,7 @@ jobs:
           GOOS: linux
           GOARCH: amd64
         run: |
+          mkdir -p dist
           go build -ldflags="-s -w" -o dist/keuangan-server-linux-x86_64 main.go
 
       - name: Upload Build Artifacts
@@ -56,10 +59,14 @@ jobs:
           name: keuangan-keluarga-binaries
           path: dist/*
 
-      - name: Create GitHub Release
-        if: startsWith(github.ref, 'refs/tags/v')
+      - name: Release Latest Rolling Tag & Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: latest
+          name: "Dompet Mungil Latest Build"
+          body: "Automated continuous build for ARM64 (Amlogic/Odroid C2), ARMv7, and x86_64."
           files: dist/*
+          draft: false
+          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
