@@ -245,7 +245,10 @@
           <span>Riwayat Transaksi</span>
           <div style="display:flex; align-items:center; gap:6px;">
             <button onclick="exportTransactionsCSV()" class="btn-cute" style="padding:4px 8px; font-size:0.75rem;" title="Ekspor data ke CSV / Excel">
-              📥 Ekspor CSV
+              📥 CSV
+            </button>
+            <button onclick="printFinancialReport()" class="btn-cute primary" style="padding:4px 8px; font-size:0.75rem;" title="Cetak struk laporan bulanan / Simpan sebagai PDF">
+              🖨️ Cetak / PDF
             </button>
             <span style="font-size: 0.8rem; color: var(--text-muted);" id="txCounter">0 Catatan</span>
           </div>
@@ -452,6 +455,41 @@
       </div>
     </main>
 
+    <!-- View: Target Menabung / Celengan Impian (Savings Goals) -->
+    <main id="viewSavings" class="view-panel" style="display:none; padding: 20px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <div>
+          <h2 style="font-size:1.2rem; font-weight:800; color:var(--text-primary);">🐷 Celengan Impian</h2>
+          <p style="font-size:0.8rem; color:var(--text-muted);">Wujudkan impian keluarga & target tabungan</p>
+        </div>
+        <button class="btn-cute primary" onclick="openAddGoalModal()" style="padding:6px 12px; font-size:0.75rem;">
+          ➕ Target Baru
+        </button>
+      </div>
+
+      <!-- Ringkasan Total Tabungan Impian -->
+      <div style="background:linear-gradient(135deg, #FFE4E8 0%, #FFF5EB 100%); border-radius:18px; padding:18px; margin-bottom:16px; border:1px solid #FFD1DC; box-shadow:var(--shadow-soft);">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <div style="font-size:0.78rem; color:#8E6E75; font-weight:600;">Total Terkumpul di Celengan</div>
+            <div style="font-size:1.4rem; font-weight:800; color:#4A4A58;" id="totalSavingsSavedDisplay">Rp 0</div>
+          </div>
+          <div style="font-size:2.2rem; animation: floatAnimation 3s infinite ease-in-out;">
+            🏺
+          </div>
+        </div>
+        <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:#8E6E75; margin-top:8px; border-top:1px dashed rgba(255,183,178,0.4); padding-top:6px;">
+          <span>Target Seluruhnya: <strong id="totalSavingsTargetDisplay">Rp 0</strong></span>
+          <span id="totalSavingsPercentDisplay" style="font-weight:700; color:#E76F51;">0%</span>
+        </div>
+      </div>
+
+      <!-- Daftar Kartu Celengan Impian -->
+      <div id="savingsGoalsListContainer" style="display:flex; flex-direction:column; gap:14px;">
+        <!-- Dimuat dinamis -->
+      </div>
+    </main>
+
     <!-- Bottom Navigation Bar -->
     <nav class="bottom-nav">
       <button type="button" class="nav-item active" onclick="switchTab('home')" style="background:none; border:none;">
@@ -464,6 +502,10 @@
           <path d="M12 6v6l4 2"></path>
         </svg>
         <span>Anggaran</span>
+      </button>
+      <button type="button" class="nav-item" onclick="switchTab('savings')" style="background:none; border:none;">
+        <span style="font-size:1.3rem; line-height:1; display:block;">🐷</span>
+        <span>Celengan</span>
       </button>
       <button type="button" class="nav-item" onclick="switchTab('bank')" style="background:none; border:none;">
         <svg class="cute-icon"><use href="#icon-bank"></use></svg>
@@ -725,7 +767,12 @@
           <input type="number" id="formAmount" class="form-input" placeholder="0" required min="100">
         </div>
         <div class="form-group">
-          <label class="form-label">Kategori Lucu</label>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <label class="form-label" style="margin-bottom:0;">Kategori Lucu</label>
+            <button type="button" onclick="openCategoryManagerModal()" style="background:none; border:none; color:#E76F51; font-size:0.75rem; font-weight:700; cursor:pointer;">
+              ➕ Kustom Kategori
+            </button>
+          </div>
           <select id="formCategory" class="form-select" required>
             <option value="cat_makan">🍱 Makanan & Minuman</option>
             <option value="cat_belanja">🛒 Belanja Harian</option>
@@ -753,6 +800,118 @@
       </form>
     </div>
   </div>
+
+  <!-- Modal Buat/Edit Target Menabung Celengan -->
+  <div class="modal-overlay" id="goalModal">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3 class="modal-title">🐷 Target Celengan Baru</h3>
+        <button onclick="closeGoalModal()" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">✕</button>
+      </div>
+      <form id="goalForm">
+        <div class="form-group">
+          <label class="form-label">Nama Impian / Keinginan</label>
+          <input type="text" id="goalTitleInput" class="form-input" placeholder="contoh: Liburan Keluarga ke Bali 🏖️" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Pilih Ikon Celengan</label>
+          <div style="display:flex; gap:8px; flex-wrap:wrap; font-size:1.4rem;">
+            <label style="cursor:pointer;"><input type="radio" name="goalIcon" value="🏖️" checked> 🏖️</label>
+            <label style="cursor:pointer;"><input type="radio" name="goalIcon" value="🏍️"> 🏍️</label>
+            <label style="cursor:pointer;"><input type="radio" name="goalIcon" value="🏠"> 🏠</label>
+            <label style="cursor:pointer;"><input type="radio" name="goalIcon" value="💻"> 💻</label>
+            <label style="cursor:pointer;"><input type="radio" name="goalIcon" value="🎓"> 🎓</label>
+            <label style="cursor:pointer;"><input type="radio" name="goalIcon" value="💍"> 💍</label>
+            <label style="cursor:pointer;"><input type="radio" name="goalIcon" value="🚗"> 🚗</label>
+            <label style="cursor:pointer;"><input type="radio" name="goalIcon" value="📱"> 📱</label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Target Nominal (Rp)</label>
+          <input type="number" id="goalTargetInput" class="form-input" placeholder="contoh: 5000000" min="10000" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Saldo Awal Terkumpul (Rp)</label>
+          <input type="number" id="goalCurrentInput" class="form-input" placeholder="0" min="0" value="0">
+        </div>
+        <button type="submit" class="btn-cute primary" style="width:100%; padding:14px; margin-top:8px;">
+          Mulai Menabung Impian ✨
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Tambah Isi Celengan (Deposit) -->
+  <div class="modal-overlay" id="depositGoalModal">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3 class="modal-title">💰 Isi Celengan Impian</h3>
+        <button onclick="closeDepositGoalModal()" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">✕</button>
+      </div>
+      <form id="depositGoalForm">
+        <input type="hidden" id="depositGoalId">
+        <div style="background:#FFF9FB; border-radius:14px; padding:12px; margin-bottom:14px; border:1px solid #FFE4E8;">
+          <strong id="depositGoalTitle" style="font-size:0.95rem; color:#4A4A58;">Target</strong>
+          <p id="depositGoalProgress" style="font-size:0.8rem; color:#E76F51; margin-top:4px;">Terkumpul Rp 0 dari Rp 0</p>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nominal Tambahan (Rp)</label>
+          <input type="number" id="depositAmountInput" class="form-input" placeholder="contoh: 100000" min="1000" required>
+        </div>
+        <button type="submit" class="btn-cute mint" style="width:100%; padding:14px; margin-top:8px;">
+          🪙 Masukkan ke Celengan ✨
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Kelola / Kustomisasi Kategori -->
+  <div class="modal-overlay" id="categoryManagerModal">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3 class="modal-title">🎨 Kustom Kategori & Icon Picker</h3>
+        <button onclick="closeCategoryManagerModal()" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">✕</button>
+      </div>
+      <form id="newCategoryForm" style="margin-bottom:16px; background:#FFF8FA; padding:14px; border-radius:14px; border:1px dashed #FFAAA6;">
+        <strong style="font-size:0.85rem; display:block; margin-bottom:8px; color:#4A4A58;">➕ Tambah Kategori Baru</strong>
+        <div class="form-group" style="margin-bottom:8px;">
+          <label class="form-label">Jenis</label>
+          <select id="customCatType" class="form-select" style="padding:8px;">
+            <option value="expense">Pengeluaran</option>
+            <option value="income">Pemasukan</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom:8px;">
+          <label class="form-label">Pilih Ikon Emoji</label>
+          <div style="display:flex; gap:6px; flex-wrap:wrap; font-size:1.3rem;">
+            <label style="cursor:pointer;"><input type="radio" name="customCatIcon" value="☕" checked> ☕</label>
+            <label style="cursor:pointer;"><input type="radio" name="customCatIcon" value="🎮"> 🎮</label>
+            <label style="cursor:pointer;"><input type="radio" name="customCatIcon" value="💄"> 💄</label>
+            <label style="cursor:pointer;"><input type="radio" name="customCatIcon" value="🐾"> 🐾</label>
+            <label style="cursor:pointer;"><input type="radio" name="customCatIcon" value="🎁"> 🎁</label>
+            <label style="cursor:pointer;"><input type="radio" name="customCatIcon" value="👶"> 👶</label>
+            <label style="cursor:pointer;"><input type="radio" name="customCatIcon" value="🪴"> 🪴</label>
+            <label style="cursor:pointer;"><input type="radio" name="customCatIcon" value="🚴"> 🚴</label>
+            <label style="cursor:pointer;"><input type="radio" name="customCatIcon" value="📦"> 📦</label>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:8px;">
+          <label class="form-label">Nama Kategori</label>
+          <input type="text" id="customCatNameInput" class="form-input" placeholder="contoh: Kopi & Nongkrong" required>
+        </div>
+        <button type="submit" class="btn-cute primary" style="width:100%; padding:10px; font-size:0.85rem;">
+          Tambahkan Kategori Ini ✨
+        </button>
+      </form>
+      <div style="max-height:200px; overflow-y:auto;">
+        <strong style="font-size:0.8rem; color:#8E8E9F; display:block; margin-bottom:8px;">Kategori Saat Ini:</strong>
+        <div id="customCatListContainer" style="display:flex; flex-direction:column; gap:6px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Area Dokumen Cetak / Struk Laporan Keuangan (Hanya Tampil Saat Cetak/PDF) -->
+  <div id="printableReportSection" class="printable-report" style="display:none;"></div>
 
   <!-- Script Logika PWA, IndexedDB & Sync dengan cache busting dinamis -->
   <script src="js/app.js?v=20261105_13"></script>

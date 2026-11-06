@@ -700,6 +700,7 @@ function formatRupiah(num) {
 window.switchTab = function(tab) {
   const viewHome = document.getElementById('viewHome');
   const viewBudget = document.getElementById('viewBudget');
+  const viewSavings = document.getElementById('viewSavings');
   const viewBank = document.getElementById('viewBank');
   const viewGuide = document.getElementById('viewGuide');
 
@@ -713,6 +714,7 @@ window.switchTab = function(tab) {
   // Sembunyikan semua tab secara tegas
   viewHome.style.display = 'none';
   if (viewBudget) viewBudget.style.display = 'none';
+  if (viewSavings) viewSavings.style.display = 'none';
   viewBank.style.display = 'none';
   viewGuide.style.display = 'none';
 
@@ -722,11 +724,15 @@ window.switchTab = function(tab) {
     if (viewBudget) viewBudget.style.display = 'block';
     loadBudgets();
   }
+  if (tab === 'savings') {
+    if (viewSavings) viewSavings.style.display = 'block';
+    renderSavingsGoals();
+  }
   if (tab === 'bank') viewBank.style.display = 'block';
   if (tab === 'guide') viewGuide.style.display = 'block';
 
-  // Update status tombol aktif di navbar (Home, Budget, Bank, Guide)
-  const tabKeys = ['home', 'budget', 'bank', 'guide'];
+  // Update status tombol aktif di navbar (Home, Budget, Savings, Bank, Guide)
+  const tabKeys = ['home', 'budget', 'savings', 'bank', 'guide'];
   document.querySelectorAll('.bottom-nav .nav-item').forEach((item, index) => {
     item.classList.remove('active');
     if (tabKeys[index] === tab) {
@@ -736,7 +742,7 @@ window.switchTab = function(tab) {
 };
 
 // Daftar Kategori Lucu Terpisah (Pemasukan vs Pengeluaran)
-const CATEGORIES = {
+const DEFAULT_CATEGORIES = {
   expense: [
     { id: 'cat_makan', name: '🍱 Makanan & Minuman' },
     { id: 'cat_belanja', name: '🛒 Belanja Harian / Dapur' },
@@ -757,11 +763,60 @@ const CATEGORIES = {
   ]
 };
 
+function getStoredCategories() {
+  const custom = localStorage.getItem('dm_custom_categories');
+  if (custom) {
+    try {
+      return JSON.parse(custom);
+    } catch (e) {}
+  }
+  return JSON.parse(JSON.stringify(DEFAULT_CATEGORIES));
+}
+
+function saveStoredCategories(cats) {
+  localStorage.setItem('dm_custom_categories', JSON.stringify(cats));
+}
+
+let CATEGORIES = getStoredCategories();
+
 function populateCategoryOptions(type) {
   const select = document.getElementById('formCategory');
   if (!select) return;
+  CATEGORIES = getStoredCategories();
   const list = CATEGORIES[type] || CATEGORIES.expense;
   select.innerHTML = list.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+}
+
+function openCategoryManagerModal() {
+  renderCategoryManagerList();
+  document.getElementById('categoryManagerModal').classList.add('active');
+}
+
+function closeCategoryManagerModal() {
+  document.getElementById('categoryManagerModal').classList.remove('active');
+  const type = document.getElementById('formType') ? document.getElementById('formType').value : 'expense';
+  populateCategoryOptions(type);
+}
+
+function renderCategoryManagerList() {
+  const container = document.getElementById('customCatListContainer');
+  if (!container) return;
+  CATEGORIES = getStoredCategories();
+  const allCats = [...CATEGORIES.expense, ...CATEGORIES.income];
+  container.innerHTML = allCats.map(c => `
+    <div style="display:flex; justify-content:space-between; align-items:center; background:#FFF; border-radius:10px; padding:6px 10px; border:1px solid #F0F0F5; font-size:0.8rem;">
+      <span>${escapeHtml(c.name)}</span>
+      ${c.id.startsWith('cat_custom_') ? `<button onclick="deleteCustomCategory('${c.id}')" style="background:none; border:none; color:#FF9AA2; cursor:pointer; font-weight:700;">Hapus</button>` : '<small style="color:#CCC;">Bawaan</small>'}
+    </div>
+  `).join('');
+}
+
+function deleteCustomCategory(id) {
+  CATEGORIES = getStoredCategories();
+  CATEGORIES.expense = CATEGORIES.expense.filter(c => c.id !== id);
+  CATEGORIES.income = CATEGORIES.income.filter(c => c.id !== id);
+  saveStoredCategories(CATEGORIES);
+  renderCategoryManagerList();
 }
 
 function openModal(type) {
@@ -1079,6 +1134,207 @@ function closeBudgetModal() {
   document.getElementById('budgetModal').classList.remove('active');
 }
 
+// 🖨️ Cetak Struk / Laporan Keuangan Bulanan (Bisa Cetak Langsung / Save to PDF di HP & Komputer)
+async function printFinancialReport() {
+  const txs = currentTxList.length > 0 ? currentTxList : (await getAllLocalTx());
+  let totalIncome = 0;
+  let totalExpense = 0;
+  txs.forEach(t => {
+    if (t.type === 'income') totalIncome += Number(t.amount);
+    if (t.type === 'expense') totalExpense += Number(t.amount);
+  });
+
+  const section = document.getElementById('printableReportSection');
+  if (!section) return;
+
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+
+  let itemsHtml = txs.map(t => `
+    <tr>
+      <td style="padding:4px 8px; border-bottom:1px dashed #DDD;">${t.date}</td>
+      <td style="padding:4px 8px; border-bottom:1px dashed #DDD;">${escapeHtml(t.category_name || t.category_id || '-')}</td>
+      <td style="padding:4px 8px; border-bottom:1px dashed #DDD;">${escapeHtml(t.note || '-')}</td>
+      <td style="padding:4px 8px; border-bottom:1px dashed #DDD; text-align:right; color:${t.type === 'income' ? '#2E7D32' : '#C62828'};">
+        ${t.type === 'income' ? '+' : '-'}${formatRupiah(t.amount)}
+      </td>
+    </tr>
+  `).join('');
+
+  section.innerHTML = `
+    <div style="max-width:600px; margin:0 auto; padding:20px; font-family:'Courier New', monospace; border:1px solid #CCC;">
+      <div style="text-align:center; margin-bottom:16px;">
+        <h2 style="margin:0; font-size:1.3rem;">🌸 DOMPET MUNGIL 🌸</h2>
+        <p style="margin:4px 0; font-size:0.9rem;">Laporan Keuangan Keluarga Mandiri</p>
+        <p style="margin:2px 0; font-size:0.8rem; color:#666;">Dicetak: ${dateStr}</p>
+        <div style="border-bottom:2px dashed #000; margin:12px 0;"></div>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <table style="width:100%; font-size:0.9rem; line-height:1.6;">
+          <tr>
+            <td>Total Pemasukan:</td>
+            <td style="text-align:right; font-weight:bold; color:#2E7D32;">+${formatRupiah(totalIncome)}</td>
+          </tr>
+          <tr>
+            <td>Total Pengeluaran:</td>
+            <td style="text-align:right; font-weight:bold; color:#C62828;">-${formatRupiah(totalExpense)}</td>
+          </tr>
+          <tr style="border-top:1px solid #000;">
+            <td style="font-weight:bold;">Sisa Saldo Bersih:</td>
+            <td style="text-align:right; font-weight:bold;">${formatRupiah(totalIncome - totalExpense)}</td>
+          </tr>
+        </table>
+      </div>
+
+      <div style="border-bottom:1px dashed #000; margin:10px 0;"></div>
+
+      <h4 style="margin:10px 0 6px; font-size:0.95rem;">Rincian Transaksi:</h4>
+      <table style="width:100%; font-size:0.8rem; border-collapse:collapse;">
+        <thead>
+          <tr style="background:#F2F2F2;">
+            <th style="padding:4px 8px; text-align:left;">Tanggal</th>
+            <th style="padding:4px 8px; text-align:left;">Kategori</th>
+            <th style="padding:4px 8px; text-align:left;">Catatan</th>
+            <th style="padding:4px 8px; text-align:right;">Nominal</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${itemsHtml || '<tr><td colspan="4" style="text-align:center; padding:10px;">Tidak ada transaksi.</td></tr>'}
+        </tbody>
+      </table>
+
+      <div style="border-bottom:2px dashed #000; margin:18px 0 10px;"></div>
+      <p style="text-align:center; font-size:0.75rem; margin:0;">*** Terima kasih telah bijak mengelola keuangan keluarga! ***</p>
+    </div>
+  `;
+
+  window.print();
+}
+
+// 🐷 Celengan Impian / Target Menabung
+const DEFAULT_SAVINGS_GOALS = [
+  { id: 'goal_1', title: 'Liburan Santai ke Pantai', icon: '🏖️', target: 3500000, current: 1750000 },
+  { id: 'goal_2', title: 'Dana Darurat 3 Bulan', icon: '🏠', target: 10000000, current: 4200000 },
+  { id: 'goal_3', title: 'Upgrade Gadget / Laptop Edukasi', icon: '💻', target: 6000000, current: 5400000 }
+];
+
+function getStoredSavingsGoals() {
+  const g = localStorage.getItem('dm_savings_goals');
+  if (g) {
+    try { return JSON.parse(g); } catch (e) {}
+  }
+  return JSON.parse(JSON.stringify(DEFAULT_SAVINGS_GOALS));
+}
+
+function saveStoredSavingsGoals(goals) {
+  localStorage.setItem('dm_savings_goals', JSON.stringify(goals));
+}
+
+function renderSavingsGoals() {
+  const container = document.getElementById('savingsGoalsListContainer');
+  if (!container) return;
+
+  const goals = getStoredSavingsGoals();
+  let totalSaved = 0;
+  let totalTarget = 0;
+
+  if (goals.length === 0) {
+    container.innerHTML = `
+      <div style="text-align:center; padding:40px; color:var(--text-muted); background:#FFF; border-radius:18px;">
+        <span style="font-size:2.5rem; display:block; margin-bottom:8px;">🐷</span>
+        <strong>Belum ada target celengan</strong>
+        <p style="font-size:0.8rem; margin-top:4px;">Klik "+ Target Baru" untuk mulai menabung impianmu!</p>
+      </div>
+    `;
+    document.getElementById('totalSavingsSavedDisplay').innerText = 'Rp 0';
+    document.getElementById('totalSavingsTargetDisplay').innerText = 'Rp 0';
+    document.getElementById('totalSavingsPercentDisplay').innerText = '0%';
+    return;
+  }
+
+  container.innerHTML = goals.map(g => {
+    totalSaved += Number(g.current);
+    totalTarget += Number(g.target);
+    const percent = g.target > 0 ? Math.min(100, Math.round((g.current / g.target) * 100)) : 0;
+    const isCompleted = g.current >= g.target;
+
+    return `
+      <div class="goal-card">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div class="goal-icon-bubble">${g.icon || '🐷'}</div>
+            <div>
+              <strong style="font-size:0.95rem; color:#4A4A58;">${escapeHtml(g.title)}</strong>
+              <div style="font-size:0.75rem; color:#8E8E9F;">Target: ${formatRupiah(g.target)}</div>
+            </div>
+          </div>
+          <span style="font-size:0.85rem; font-weight:800; color:${isCompleted ? '#2E7D32' : '#E76F51'};">
+            ${isCompleted ? '🎉 Tercapai!' : percent + '%'}
+          </span>
+        </div>
+
+        <div>
+          <div style="display:flex; justify-content:space-between; font-size:0.78rem; font-weight:700; margin-bottom:6px;">
+            <span>Terkumpul: ${formatRupiah(g.current)}</span>
+            <span style="color:#8E8E9F; font-size:0.72rem;">Kurang: ${formatRupiah(Math.max(0, g.target - g.current))}</span>
+          </div>
+          <div style="width:100%; height:12px; background:#F0F0F5; border-radius:10px; overflow:hidden;">
+            <div style="width:${percent}%; height:100%; background:${isCompleted ? 'var(--mint-dark)' : 'linear-gradient(90deg, #FFAAA6, #FFB7B2)'}; border-radius:10px; transition:width 0.4s ease;"></div>
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px; padding-top:8px; border-top:1px dashed #F0F0F5;">
+          <button onclick="deleteSavingsGoal('${g.id}')" style="background:none; border:none; color:#FF9AA2; font-size:0.75rem; cursor:pointer;">
+            🗑️ Hapus Target
+          </button>
+          <button onclick="openDepositGoalModal('${g.id}')" class="btn-cute mint" style="padding:4px 10px; font-size:0.75rem;">
+            🪙 Isi Celengan
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  const overallPercent = totalTarget > 0 ? Math.min(100, Math.round((totalSaved / totalTarget) * 100)) : 0;
+  document.getElementById('totalSavingsSavedDisplay').innerText = formatRupiah(totalSaved);
+  document.getElementById('totalSavingsTargetDisplay').innerText = formatRupiah(totalTarget);
+  document.getElementById('totalSavingsPercentDisplay').innerText = `${overallPercent}%`;
+}
+
+function openAddGoalModal() {
+  document.getElementById('goalForm').reset();
+  document.getElementById('goalModal').classList.add('active');
+}
+
+function closeGoalModal() {
+  document.getElementById('goalModal').classList.remove('active');
+}
+
+function openDepositGoalModal(goalId) {
+  const goals = getStoredSavingsGoals();
+  const goal = goals.find(g => g.id === goalId);
+  if (!goal) return;
+
+  document.getElementById('depositGoalId').value = goal.id;
+  document.getElementById('depositGoalTitle').innerText = `${goal.icon || '🐷'} ${goal.title}`;
+  document.getElementById('depositGoalProgress').innerText = `Terkumpul ${formatRupiah(goal.current)} dari target ${formatRupiah(goal.target)}`;
+  document.getElementById('depositAmountInput').value = '';
+  document.getElementById('depositGoalModal').classList.add('active');
+}
+
+function closeDepositGoalModal() {
+  document.getElementById('depositGoalModal').classList.remove('active');
+}
+
+function deleteSavingsGoal(goalId) {
+  if (!confirm('Yakin ingin menghapus target celengan ini?')) return;
+  let goals = getStoredSavingsGoals();
+  goals = goals.filter(g => g.id !== goalId);
+  saveStoredSavingsGoals(goals);
+  renderSavingsGoals();
+}
+
 // Render data transaksi
 function renderTransactions(list) {
   const container = document.getElementById('txContainer');
@@ -1345,17 +1601,98 @@ document.addEventListener('DOMContentLoaded', async () => {
     triggerSyncWithServer();
   });
 
-  // Pasang event listener langsung untuk tombol navigasi bawah
+  // Pasang event listener langsung untuk tombol navigasi bawah (5 Tab: home, budget, savings, bank, guide)
   const navBtns = document.querySelectorAll('.bottom-nav .nav-item');
-  if (navBtns.length >= 4) {
+  if (navBtns.length >= 5) {
+    navBtns[0].addEventListener('click', (e) => { e.preventDefault(); window.switchTab('home'); });
+    navBtns[1].addEventListener('click', (e) => { e.preventDefault(); window.switchTab('budget'); });
+    navBtns[2].addEventListener('click', (e) => { e.preventDefault(); window.switchTab('savings'); });
+    navBtns[3].addEventListener('click', (e) => { e.preventDefault(); window.switchTab('bank'); });
+    navBtns[4].addEventListener('click', (e) => { e.preventDefault(); window.switchTab('guide'); });
+  } else if (navBtns.length >= 4) {
     navBtns[0].addEventListener('click', (e) => { e.preventDefault(); window.switchTab('home'); });
     navBtns[1].addEventListener('click', (e) => { e.preventDefault(); window.switchTab('budget'); });
     navBtns[2].addEventListener('click', (e) => { e.preventDefault(); window.switchTab('bank'); });
     navBtns[3].addEventListener('click', (e) => { e.preventDefault(); window.switchTab('guide'); });
-  } else if (navBtns.length >= 3) {
-    navBtns[0].addEventListener('click', (e) => { e.preventDefault(); window.switchTab('home'); });
-    navBtns[1].addEventListener('click', (e) => { e.preventDefault(); window.switchTab('bank'); });
-    navBtns[2].addEventListener('click', (e) => { e.preventDefault(); window.switchTab('guide'); });
+  }
+
+  // Handle Form Buat Target Celengan Baru
+  const goalForm = document.getElementById('goalForm');
+  if (goalForm) {
+    goalForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const title = document.getElementById('goalTitleInput').value.trim();
+      const target = parseFloat(document.getElementById('goalTargetInput').value);
+      const current = parseFloat(document.getElementById('goalCurrentInput').value || 0);
+      const iconRadio = document.querySelector('input[name="goalIcon"]:checked');
+      const icon = iconRadio ? iconRadio.value : '🐷';
+
+      if (!title || !target) return;
+
+      const goals = getStoredSavingsGoals();
+      goals.push({
+        id: 'goal_' + Date.now(),
+        title: title,
+        icon: icon,
+        target: target,
+        current: current
+      });
+      saveStoredSavingsGoals(goals);
+      closeGoalModal();
+      renderSavingsGoals();
+      alert(`🎉 Target celengan "${title}" berhasil ditambahkan! Semangat menabung!`);
+    });
+  }
+
+  // Handle Form Tambah Saldo Celengan (Deposit)
+  const depositForm = document.getElementById('depositGoalForm');
+  if (depositForm) {
+    depositForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const goalId = document.getElementById('depositGoalId').value;
+      const amt = parseFloat(document.getElementById('depositAmountInput').value);
+      if (!amt || amt <= 0) return;
+
+      const goals = getStoredSavingsGoals();
+      const g = goals.find(item => item.id === goalId);
+      if (g) {
+        g.current = (g.current || 0) + amt;
+        saveStoredSavingsGoals(goals);
+        closeDepositGoalModal();
+        renderSavingsGoals();
+        if (g.current >= g.target) {
+          alert(`🎊 HOREEE!! Impian celengan "${g.title}" SUDAH TERCAPAI! Selamat! 🎉`);
+        } else {
+          alert(`🪙 Berhasil memasukkan ${formatRupiah(amt)} ke celengan "${g.title}"!`);
+        }
+      }
+    });
+  }
+
+  // Handle Form Kategori Kustom Baru
+  const catForm = document.getElementById('newCategoryForm');
+  if (catForm) {
+    catForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const type = document.getElementById('customCatType').value;
+      const name = document.getElementById('customCatNameInput').value.trim();
+      const iconRadio = document.querySelector('input[name="customCatIcon"]:checked');
+      const icon = iconRadio ? iconRadio.value : '🌸';
+
+      if (!name) return;
+
+      const fullName = `${icon} ${name}`;
+      const newCatId = 'cat_custom_' + Date.now();
+
+      CATEGORIES = getStoredCategories();
+      CATEGORIES[type].push({ id: newCatId, name: fullName });
+      saveStoredCategories(CATEGORIES);
+
+      document.getElementById('customCatNameInput').value = '';
+      renderCategoryManagerList();
+      populateCategoryOptions(type);
+      alert(`✨ Kategori "${fullName}" berhasil dibuat!`);
+    });
   }
 
   // Handle Import Mutasi Bank
