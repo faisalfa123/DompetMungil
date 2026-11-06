@@ -762,4 +762,66 @@ body {
   justify-content: center;
 }
 
+/* 🌙 Cozy Dark Mode Variables & Overrides */
+body.dark-mode {
+  --bg-primary: #1E1E28;
+  --bg-card: #272736;
+  --text-primary: #F2F2FA;
+  --text-muted: #A3A3B8;
+  --shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.35);
+  background-color: #161620 !important;
+  color: #F2F2FA !important;
+}
+
+body.dark-mode .app-container {
+  background: #1E1E28;
+  border-color: rgba(255, 183, 178, 0.15);
+}
+
+body.dark-mode .app-header {
+  background: #272736;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+body.dark-mode .tx-card,
+body.dark-mode .goal-card,
+body.dark-mode .bill-card,
+body.dark-mode .debt-card,
+body.dark-mode .modal-sheet,
+body.dark-mode .custom-dialog-box {
+  background: #272736 !important;
+  color: #F2F2FA !important;
+  border-color: #38384E !important;
+}
+
+body.dark-mode .form-input,
+body.dark-mode .form-select {
+  background: #1A1A24;
+  color: #F2F2FA;
+  border-color: #38384E;
+}
+
+body.dark-mode .bottom-nav {
+  background: rgba(39, 39, 54, 0.95);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* 📌 Tagihan & 🤝 Hutang Cards */
+.bill-card, .debt-card {
+  background: #FFFFFF;
+  border-radius: 16px;
+  padding: 14px 16px;
+  box-shadow: var(--shadow-soft);
+  border: 1px solid #FFE4E8;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: transform 0.2s ease;
+}
+
+.bill-card:hover, .debt-card:hover {
+  transform: translateY(-2px);
+}
+
+
 

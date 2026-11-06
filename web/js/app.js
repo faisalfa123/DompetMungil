@@ -261,6 +261,18 @@ async function saveLocalTx(tx, isPendingSync = true) {
   });
 }
 
+// Hapus transaksi dari IndexedDB (Lokal HP)
+async function deleteLocalTx(clientTxId) {
+  if (!localDB) await initIndexedDB();
+  return new Promise((resolve, reject) => {
+    const txSession = localDB.transaction(['transactions', 'sync_queue'], 'readwrite');
+    txSession.objectStore('transactions').delete(clientTxId);
+    txSession.objectStore('sync_queue').delete(clientTxId);
+    txSession.oncomplete = () => resolve();
+    txSession.onerror = (err) => reject(err);
+  });
+}
+
 // Ambil seluruh transaksi dari IndexedDB
 async function getAllLocalTx() {
   if (!localDB) await initIndexedDB();
@@ -790,6 +802,8 @@ window.switchTab = function(tab) {
   const viewHome = document.getElementById('viewHome');
   const viewBudget = document.getElementById('viewBudget');
   const viewSavings = document.getElementById('viewSavings');
+  const viewBills = document.getElementById('viewBills');
+  const viewDebts = document.getElementById('viewDebts');
   const viewBank = document.getElementById('viewBank');
   const viewGuide = document.getElementById('viewGuide');
 
@@ -804,6 +818,8 @@ window.switchTab = function(tab) {
   viewHome.style.display = 'none';
   if (viewBudget) viewBudget.style.display = 'none';
   if (viewSavings) viewSavings.style.display = 'none';
+  if (viewBills) viewBills.style.display = 'none';
+  if (viewDebts) viewDebts.style.display = 'none';
   viewBank.style.display = 'none';
   viewGuide.style.display = 'none';
 
@@ -816,6 +832,14 @@ window.switchTab = function(tab) {
   if (tab === 'savings') {
     if (viewSavings) viewSavings.style.display = 'block';
     renderSavingsGoals();
+  }
+  if (tab === 'bills') {
+    if (viewBills) viewBills.style.display = 'block';
+    renderBillsList();
+  }
+  if (tab === 'debts') {
+    if (viewDebts) viewDebts.style.display = 'block';
+    renderDebtsList();
   }
   if (tab === 'bank') viewBank.style.display = 'block';
   if (tab === 'guide') viewGuide.style.display = 'block';
@@ -1022,26 +1046,60 @@ function filterTransactions(range) {
   applyTransactionFilter();
 }
 
+let currentTxSearchQuery = '';
+
+function onSearchTxInput() {
+  const input = document.getElementById('txSearchInput');
+  const btnClear = document.getElementById('btnClearSearch');
+  currentTxSearchQuery = (input ? input.value : '').trim().toLowerCase();
+  if (btnClear) btnClear.style.display = currentTxSearchQuery ? 'block' : 'none';
+  applyTransactionFilter();
+}
+
+function clearTxSearch() {
+  const input = document.getElementById('txSearchInput');
+  const btnClear = document.getElementById('btnClearSearch');
+  if (input) input.value = '';
+  if (btnClear) btnClear.style.display = 'none';
+  currentTxSearchQuery = '';
+  applyTransactionFilter();
+}
+
 function applyTransactionFilter() {
   const now = new Date();
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth(); // 0-indexed
 
   let filtered = currentTxList.filter(tx => {
-    if (currentFilter === 'all') return true;
-    if (!tx.date) return false;
-    const d = new Date(tx.date);
-    if (isNaN(d.getTime())) return false;
+    // 1. Filter Tanggal
+    let matchesDate = true;
+    if (currentFilter !== 'all') {
+      if (!tx.date) return false;
+      const d = new Date(tx.date);
+      if (isNaN(d.getTime())) return false;
 
-    if (currentFilter === 'this_month') {
-      return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
+      if (currentFilter === 'this_month') {
+        matchesDate = d.getFullYear() === currentYear && d.getMonth() === currentMonth;
+      } else if (currentFilter === 'last_month') {
+        const lastMonthDate = new Date(currentYear, currentMonth - 1, 1);
+        matchesDate = d.getFullYear() === lastMonthDate.getFullYear() && d.getMonth() === lastMonthDate.getMonth();
+      } else if (currentFilter === 'this_year') {
+        matchesDate = d.getFullYear() === currentYear;
+      }
     }
-    if (currentFilter === 'last_month') {
-      const lastMonthDate = new Date(currentYear, currentMonth - 1, 1);
-      return d.getFullYear() === lastMonthDate.getFullYear() && d.getMonth() === lastMonthDate.getMonth();
-    }
-    if (currentFilter === 'this_year') {
-      return d.getFullYear() === currentYear;
+    if (!matchesDate) return false;
+
+    // 2. Filter Pencarian Teks (Catatan, Kategori, Akun, Penulis)
+    if (currentTxSearchQuery) {
+      const q = currentTxSearchQuery;
+      const note = String(tx.note || '').toLowerCase();
+      const cat = String(tx.category_name || tx.category_id || '').toLowerCase();
+      const acc = String(tx.account_name || tx.account_id || '').toLowerCase();
+      const author = String(tx.author || '').toLowerCase();
+      const amt = String(tx.amount || '');
+      if (!note.includes(q) && !cat.includes(q) && !acc.includes(q) && !author.includes(q) && !amt.includes(q)) {
+        return false;
+      }
     }
     return true;
   });
@@ -1442,8 +1500,8 @@ function renderTransactions(list) {
   }
 
   container.innerHTML = list.map(tx => `
-    <div class="tx-card">
-      <div class="tx-info-left">
+    <div class="tx-card" style="position:relative;">
+      <div class="tx-info-left" style="flex:1;">
         <div class="tx-icon-circle" style="background: ${tx.type === 'income' ? '#B5EAD7' : '#FFB7B2'};">
           <span style="font-size:1.2rem;">${tx.type === 'income' ? '🌱' : '🌸'}</span>
         </div>
@@ -1452,11 +1510,50 @@ function renderTransactions(list) {
           <div class="tx-meta">${tx.date} • ${tx.account_name || 'Dompet'} ${tx.author ? '• 👤 ' + escapeHtml(tx.author) : ''}</div>
         </div>
       </div>
-      <div class="tx-amount ${tx.type}">
-        ${tx.type === 'income' ? '+' : '-'}${formatRupiah(tx.amount)}
+      <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
+        <div class="tx-amount ${tx.type}">
+          ${tx.type === 'income' ? '+' : '-'}${formatRupiah(tx.amount)}
+        </div>
+        <div style="display:flex; gap:6px;">
+          <button onclick="editTransactionItem('${tx.client_tx_id}')" style="background:none; border:none; cursor:pointer; font-size:0.75rem; color:#8E8E9F;" title="Edit Transaksi">✏️ Edit</button>
+          <button onclick="deleteTransactionItem('${tx.client_tx_id}')" style="background:none; border:none; cursor:pointer; font-size:0.75rem; color:#FF9AA2;" title="Hapus Transaksi">🗑️ Hapus</button>
+        </div>
       </div>
     </div>
   `).join('');
+}
+
+async function editTransactionItem(clientTxId) {
+  const localList = await getAllLocalTx();
+  const tx = localList.find(t => t.client_tx_id === clientTxId);
+  if (!tx) {
+    alert('Transaksi tidak ditemukan.');
+    return;
+  }
+
+  // Isi modal transaksi dengan data lama
+  document.getElementById('txEditClientTxId').value = tx.client_tx_id;
+  document.getElementById('formType').value = tx.type;
+  document.getElementById('formAmount').value = tx.amount;
+  document.getElementById('formNote').value = tx.note || '';
+  if (document.getElementById('formAccount')) {
+    document.getElementById('formAccount').value = tx.account_id || 'acc_dompet';
+  }
+  document.getElementById('modalFormTitle').innerText = tx.type === 'expense' ? '✏️ Edit Pengeluaran' : '✏️ Edit Pemasukan';
+  populateCategoryOptions(tx.type);
+  if (document.getElementById('formCategory')) {
+    document.getElementById('formCategory').value = tx.category_id || '';
+  }
+  document.getElementById('txModal').classList.add('active');
+}
+
+async function deleteTransactionItem(clientTxId) {
+  const ok = await showCuteConfirm('Yakin ingin menghapus catatan transaksi ini?', 'Hapus Transaksi 🗑️', 'Ya, Hapus', 'Batal');
+  if (!ok) return;
+
+  await deleteLocalTx(clientTxId);
+  await renderLocalTransactions();
+  alert('✨ Catatan transaksi berhasil dihapus!');
 }
 
 async function renderLocalTransactions() {
@@ -1666,29 +1763,48 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // Handle Form Submit Transaksi
+  // Handle Form Submit Transaksi (Tambah atau Edit)
   document.getElementById('txForm').addEventListener('submit', async (e) => {
     e.preventDefault();
+    const editId = document.getElementById('txEditClientTxId').value;
     const type = document.getElementById('formType').value;
     const amount = parseFloat(document.getElementById('formAmount').value);
     const category = document.getElementById('formCategory').value;
     const account = document.getElementById('formAccount').value;
     const note = document.getElementById('formNote').value;
 
-    const newTx = {
-      client_tx_id: 'ctx_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+    let targetTxId = editId;
+    let targetDate = new Date().toISOString().split('T')[0];
+
+    if (editId) {
+      const localList = await getAllLocalTx();
+      const existing = localList.find(t => t.client_tx_id === editId);
+      if (existing && existing.date) {
+        targetDate = existing.date;
+      }
+    } else {
+      targetTxId = 'ctx_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+    }
+
+    const txItem = {
+      client_tx_id: targetTxId,
       type: type,
       amount: amount,
       category_id: category,
       account_id: account,
-      date: new Date().toISOString().split('T')[0],
+      date: targetDate,
       note: note
     };
 
-    // 1. Simpan selalu ke IndexedDB lokal terlebih dahulu (Offline-First)
-    await saveLocalTx(newTx, true);
+    // 1. Simpan ke IndexedDB lokal
+    await saveLocalTx(txItem, true);
     closeModal();
+    document.getElementById('txEditClientTxId').value = '';
     await renderLocalTransactions();
+
+    if (editId) {
+      alert('✨ Perubahan transaksi berhasil disimpan!');
+    }
 
     // 2. Coba kirim langsung ke server
     triggerSyncWithServer();
@@ -1821,6 +1937,70 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
+  // 🌙 Inisialisasi Cozy Dark Mode
+  initDarkMode();
+
+  // 🔐 Inisialisasi App Lock PIN
+  initPinLock();
+
+  // Handle Form Tagihan Rutin
+  const billForm = document.getElementById('billForm');
+  if (billForm) {
+    billForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = document.getElementById('billNameInput').value.trim();
+      const amount = parseFloat(document.getElementById('billAmountInput').value);
+      const day = parseInt(document.getElementById('billDayInput').value);
+      const iconRadio = document.querySelector('input[name="billIcon"]:checked');
+      const icon = iconRadio ? iconRadio.value : '💡';
+
+      if (!name || !amount) return;
+
+      const bills = getStoredBills();
+      bills.push({
+        id: 'bill_' + Date.now(),
+        name: name,
+        amount: amount,
+        day: day,
+        icon: icon,
+        paid_month: '' // 'YYYY-MM' saat ditandai lunas
+      });
+      saveStoredBills(bills);
+      closeBillModal();
+      renderBillsList();
+      alert(`📌 Tagihan "${name}" berhasil ditambahkan!`);
+    });
+  }
+
+  // Handle Form Hutang / Piutang
+  const debtForm = document.getElementById('debtForm');
+  if (debtForm) {
+    debtForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const type = document.getElementById('debtTypeSelect').value;
+      const person = document.getElementById('debtPersonInput').value.trim();
+      const amount = parseFloat(document.getElementById('debtAmountInput').value);
+      const note = document.getElementById('debtNoteInput').value.trim();
+
+      if (!person || !amount) return;
+
+      const debts = getStoredDebts();
+      debts.push({
+        id: 'debt_' + Date.now(),
+        type: type, // 'my_debt' atau 'others_debt'
+        person: person,
+        amount: amount,
+        note: note,
+        date: new Date().toISOString().split('T')[0],
+        status: 'unpaid' // 'unpaid' atau 'paid'
+      });
+      saveStoredDebts(debts);
+      closeDebtModal();
+      renderDebtsList();
+      alert(`🤝 Catatan pinjaman dengan ${person} berhasil disimpan!`);
+    });
+  }
+
   // Periodic heartbeat sync (setiap 30 detik coba hubungkan ke server jika pulih dari OOM)
   setInterval(() => {
     triggerSyncWithServer();
@@ -1829,3 +2009,355 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Jalankan sync pertama saat buka aplikasi
   triggerSyncWithServer();
 });
+
+// 📌 Manajemen Tagihan Rutin & Checklist Bulanan
+const DEFAULT_BILLS = [
+  { id: 'bill_1', name: 'Listrik PLN Rumah', amount: 350000, day: 5, icon: '💡', paid_month: '' },
+  { id: 'bill_2', name: 'WiFi Internet Rumah', amount: 280000, day: 15, icon: '📶', paid_month: '' },
+  { id: 'bill_3', name: 'Iuran Air PDAM', amount: 95000, day: 20, icon: '💧', paid_month: '' }
+];
+
+function getStoredBills() {
+  const b = localStorage.getItem('dm_stored_bills');
+  if (b) {
+    try { return JSON.parse(b); } catch (e) {}
+  }
+  return JSON.parse(JSON.stringify(DEFAULT_BILLS));
+}
+
+function saveStoredBills(bills) {
+  localStorage.setItem('dm_stored_bills', JSON.stringify(bills));
+}
+
+function openAddBillModal() {
+  document.getElementById('billForm').reset();
+  document.getElementById('billModal').classList.add('active');
+}
+
+function closeBillModal() {
+  document.getElementById('billModal').classList.remove('active');
+}
+
+function renderBillsList() {
+  const container = document.getElementById('billsListContainer');
+  if (!container) return;
+
+  const bills = getStoredBills();
+  const currentMonthKey = new Date().toISOString().slice(0, 7); // 'YYYY-MM'
+
+  let unpaidTotal = 0;
+  let paidTotal = 0;
+
+  if (bills.length === 0) {
+    container.innerHTML = `
+      <div style="text-align:center; padding:30px; color:var(--text-muted); background:#FFF; border-radius:16px;">
+        <span style="font-size:2rem; display:block; margin-bottom:6px;">📌</span>
+        <strong>Belum ada tagihan rutin</strong>
+        <p style="font-size:0.75rem; margin-top:4px;">Klik "+ Tagihan Baru" untuk membuat checklist langganan.</p>
+      </div>
+    `;
+    document.getElementById('unpaidBillsTotalDisplay').innerText = 'Rp 0';
+    document.getElementById('paidBillsTotalDisplay').innerText = 'Rp 0';
+    return;
+  }
+
+  container.innerHTML = bills.map(b => {
+    const isPaid = b.paid_month === currentMonthKey;
+    if (isPaid) {
+      paidTotal += Number(b.amount);
+    } else {
+      unpaidTotal += Number(b.amount);
+    }
+
+    return `
+      <div class="bill-card" style="opacity:${isPaid ? '0.75' : '1'};">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div style="font-size:1.6rem; width:40px; height:40px; border-radius:12px; background:${isPaid ? '#E8F5E9' : '#FFF0F3'}; display:flex; align-items:center; justify-content:center;">
+            ${b.icon || '📌'}
+          </div>
+          <div>
+            <strong style="font-size:0.9rem; color:var(--text-primary); text-decoration:${isPaid ? 'line-through' : 'none'};">${escapeHtml(b.name)}</strong>
+            <div style="font-size:0.72rem; color:var(--text-muted);">
+              Jatuh Tempo: Tgl ${b.day} tiap bulan • <span style="font-weight:700; color:${isPaid ? '#2E7D32' : '#C62828'};">${isPaid ? 'Sudah Lunas Bulan Ini' : 'Belum Bayar'}</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px;">
+          <div style="font-weight:800; font-size:0.95rem; color:var(--text-primary);">${formatRupiah(b.amount)}</div>
+          <div style="display:flex; gap:6px;">
+            <button onclick="toggleBillPaid('${b.id}')" class="btn-cute ${isPaid ? '' : 'mint'}" style="padding:4px 8px; font-size:0.72rem;">
+              ${isPaid ? '↩️ Batal' : '✅ Bayar'}
+            </button>
+            <button onclick="deleteBillItem('${b.id}')" style="background:none; border:none; color:#FF9AA2; font-size:0.75rem; cursor:pointer;">
+              🗑️
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  document.getElementById('unpaidBillsTotalDisplay').innerText = formatRupiah(unpaidTotal);
+  document.getElementById('paidBillsTotalDisplay').innerText = formatRupiah(paidTotal);
+}
+
+async function toggleBillPaid(billId) {
+  const bills = getStoredBills();
+  const bill = bills.find(b => b.id === billId);
+  if (!bill) return;
+
+  const currentMonthKey = new Date().toISOString().slice(0, 7);
+  if (bill.paid_month === currentMonthKey) {
+    bill.paid_month = '';
+    saveStoredBills(bills);
+    renderBillsList();
+    alert(`Status pembayaran "${bill.name}" dibatalkan.`);
+  } else {
+    const ok = await showCuteConfirm(`Tandai "${bill.name}" (${formatRupiah(bill.amount)}) sudah dibayar dan otomatis catat ke pengeluaran dompet?`, 'Bayar Tagihan 📌', 'Ya, Bayar & Catat ✨', 'Hanya Tandai');
+    bill.paid_month = currentMonthKey;
+    saveStoredBills(bills);
+    if (ok) {
+      const newTx = {
+        client_tx_id: `ctx_bill_${Date.now()}`,
+        type: 'expense',
+        amount: bill.amount,
+        category_id: 'cat_tagihan',
+        account_id: 'acc_bank',
+        date: new Date().toISOString().split('T')[0],
+        note: `Pembayaran ${bill.name} (${currentMonthKey})`
+      };
+      await saveLocalTx(newTx, true);
+      await renderLocalTransactions();
+      triggerSyncWithServer();
+    }
+    renderBillsList();
+    alert(`🎉 Tagihan "${bill.name}" berhasil dilunasi!`);
+  }
+}
+
+async function deleteBillItem(billId) {
+  const ok = await showCuteConfirm('Yakin ingin menghapus tagihan rutin ini?', 'Hapus Tagihan 📌', 'Ya, Hapus', 'Batal');
+  if (!ok) return;
+  let bills = getStoredBills();
+  bills = bills.filter(b => b.id !== billId);
+  saveStoredBills(bills);
+  renderBillsList();
+}
+
+// 🤝 Manajemen Hutang & Piutang
+const DEFAULT_DEBTS = [
+  { id: 'debt_1', type: 'others_debt', person: 'Rian (Teman Kantor)', amount: 200000, note: 'Pinjam uang makan siang', date: '2026-11-01', status: 'unpaid' }
+];
+
+function getStoredDebts() {
+  const d = localStorage.getItem('dm_stored_debts');
+  if (d) {
+    try { return JSON.parse(d); } catch (e) {}
+  }
+  return JSON.parse(JSON.stringify(DEFAULT_DEBTS));
+}
+
+function saveStoredDebts(debts) {
+  localStorage.setItem('dm_stored_debts', JSON.stringify(debts));
+}
+
+function openAddDebtModal() {
+  document.getElementById('debtForm').reset();
+  document.getElementById('debtModal').classList.add('active');
+}
+
+function closeDebtModal() {
+  document.getElementById('debtModal').classList.remove('active');
+}
+
+function renderDebtsList() {
+  const container = document.getElementById('debtsListContainer');
+  if (!container) return;
+
+  const debts = getStoredDebts();
+  let myDebtTotal = 0;
+  let othersDebtTotal = 0;
+
+  if (debts.length === 0) {
+    container.innerHTML = `
+      <div style="text-align:center; padding:30px; color:var(--text-muted); background:#FFF; border-radius:16px;">
+        <span style="font-size:2rem; display:block; margin-bottom:6px;">🤝</span>
+        <strong>Tidak ada catatan hutang / piutang</strong>
+        <p style="font-size:0.75rem; margin-top:4px;">Keuangan bebas dari tanggungan pinjaman!</p>
+      </div>
+    `;
+    document.getElementById('totalMyDebtDisplay').innerText = 'Rp 0';
+    document.getElementById('totalOthersDebtDisplay').innerText = 'Rp 0';
+    return;
+  }
+
+  container.innerHTML = debts.map(d => {
+    const isPaid = d.status === 'paid';
+    const isMyDebt = d.type === 'my_debt';
+
+    if (!isPaid) {
+      if (isMyDebt) myDebtTotal += Number(d.amount);
+      else othersDebtTotal += Number(d.amount);
+    }
+
+    return `
+      <div class="debt-card" style="opacity:${isPaid ? '0.7' : '1'};">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div style="font-size:1.5rem; width:40px; height:40px; border-radius:12px; background:${isMyDebt ? '#FFEBEE' : '#E8F5E9'}; display:flex; align-items:center; justify-content:center;">
+            ${isMyDebt ? '🔴' : '🟢'}
+          </div>
+          <div>
+            <strong style="font-size:0.9rem; color:var(--text-primary); text-decoration:${isPaid ? 'line-through' : 'none'};">${escapeHtml(d.person)}</strong>
+            <div style="font-size:0.72rem; color:var(--text-muted);">
+              ${isMyDebt ? 'Saya Berhutang' : 'Orang Berhutang'} • ${d.date} ${d.note ? '• ' + escapeHtml(d.note) : ''}
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px;">
+          <div style="font-weight:800; font-size:0.95rem; color:${isMyDebt ? '#C62828' : '#2E7D32'};">
+            ${formatRupiah(d.amount)}
+          </div>
+          <div style="display:flex; gap:6px;">
+            <button onclick="toggleDebtPaid('${d.id}')" class="btn-cute ${isPaid ? '' : 'mint'}" style="padding:4px 8px; font-size:0.72rem;">
+              ${isPaid ? 'Belum Lunas' : '✅ Lunas'}
+            </button>
+            <button onclick="deleteDebtItem('${d.id}')" style="background:none; border:none; color:#FF9AA2; font-size:0.75rem; cursor:pointer;">
+              🗑️
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  document.getElementById('totalMyDebtDisplay').innerText = formatRupiah(myDebtTotal);
+  document.getElementById('totalOthersDebtDisplay').innerText = formatRupiah(othersDebtTotal);
+}
+
+async function toggleDebtPaid(debtId) {
+  const debts = getStoredDebts();
+  const d = debts.find(item => item.id === debtId);
+  if (!d) return;
+
+  d.status = d.status === 'paid' ? 'unpaid' : 'paid';
+  saveStoredDebts(debts);
+  renderDebtsList();
+  alert(`✨ Status catatan ${d.person} berhasil diubah menjadi: ${d.status === 'paid' ? 'LUNAS 🎉' : 'Belum Lunas'}`);
+}
+
+async function deleteDebtItem(debtId) {
+  const ok = await showCuteConfirm('Yakin ingin menghapus catatan pinjaman ini?', 'Hapus Catatan 🤝', 'Ya, Hapus', 'Batal');
+  if (!ok) return;
+  let debts = getStoredDebts();
+  debts = debts.filter(item => item.id !== debtId);
+  saveStoredDebts(debts);
+  renderDebtsList();
+}
+
+// 🌙 Cozy Dark Mode Manager
+function initDarkMode() {
+  const isDark = localStorage.getItem('dm_dark_mode') === 'true';
+  applyDarkMode(isDark);
+}
+
+function toggleDarkMode() {
+  const isCurrentlyDark = document.body.classList.contains('dark-mode');
+  const nextMode = !isCurrentlyDark;
+  localStorage.setItem('dm_dark_mode', String(nextMode));
+  applyDarkMode(nextMode);
+}
+
+function applyDarkMode(isDark) {
+  const btn = document.getElementById('btnToggleDarkMode');
+  if (isDark) {
+    document.body.classList.add('dark-mode');
+    if (btn) btn.innerText = '☀️';
+  } else {
+    document.body.classList.remove('dark-mode');
+    if (btn) btn.innerText = '🌙';
+  }
+}
+
+// 🔐 Kunci PIN Layar (App Lock)
+function initPinLock() {
+  const savedPin = localStorage.getItem('dm_app_pin');
+  const lockScreen = document.getElementById('appLockScreen');
+  if (savedPin && lockScreen) {
+    lockScreen.style.display = 'flex';
+    setTimeout(() => {
+      const inp = document.getElementById('unlockPinInput');
+      if (inp) inp.focus();
+    }, 100);
+  }
+}
+
+function openPinConfigModal() {
+  const savedPin = localStorage.getItem('dm_app_pin');
+  const statusText = document.getElementById('pinStatusText');
+  const btnDisable = document.getElementById('btnDisablePin');
+  const inp = document.getElementById('newPinInput');
+
+  if (statusText) {
+    statusText.innerText = savedPin ? 'Status: Aktif 🔒 (Terproteksi PIN)' : 'Status: Tidak Aktif (Bebas Kunci)';
+    statusText.style.color = savedPin ? '#2E7D32' : '#888';
+  }
+  if (btnDisable) {
+    btnDisable.style.display = savedPin ? 'block' : 'none';
+  }
+  if (inp) inp.value = '';
+
+  document.getElementById('pinConfigModal').classList.add('active');
+}
+
+function closePinConfigModal() {
+  document.getElementById('pinConfigModal').classList.remove('active');
+}
+
+function saveNewPin() {
+  const inp = document.getElementById('newPinInput');
+  const val = inp ? inp.value.trim() : '';
+  if (!val || val.length !== 4 || isNaN(Number(val))) {
+    alert('Harap masukkan tepat 4 angka PIN (misal: 1234).');
+    return;
+  }
+  localStorage.setItem('dm_app_pin', val);
+  closePinConfigModal();
+  alert('🎉 Kunci PIN 4 digit berhasil diaktifkan! Aplikasi aman terlindungi.');
+}
+
+async function disablePin() {
+  const ok = await showCuteConfirm('Yakin ingin menonaktifkan kunci PIN aplikasi?', 'Nonaktifkan PIN 🔐', 'Ya, Hapus PIN', 'Batal');
+  if (!ok) return;
+  localStorage.removeItem('dm_app_pin');
+  closePinConfigModal();
+  alert('Kunci PIN dinonaktifkan.');
+}
+
+function checkUnlockPin(val) {
+  if (val && val.length === 4) {
+    verifyUnlockPin(val);
+  }
+}
+
+function verifyUnlockPinBtn() {
+  const inp = document.getElementById('unlockPinInput');
+  if (inp) verifyUnlockPin(inp.value);
+}
+
+function verifyUnlockPin(inputVal) {
+  const savedPin = localStorage.getItem('dm_app_pin');
+  const lockScreen = document.getElementById('appLockScreen');
+  if (inputVal === savedPin) {
+    if (lockScreen) lockScreen.style.display = 'none';
+  } else {
+    alert('❌ PIN salah! Silakan coba lagi.');
+    const inp = document.getElementById('unlockPinInput');
+    if (inp) {
+      inp.value = '';
+      inp.focus();
+    }
+  }
+}
+

@@ -154,14 +154,17 @@
           <p class="brand-subtitle" id="userRoleBadge">🌸 Suami (Keluarga)</p>
         </div>
       </div>
-      <div style="display:flex; gap:8px;">
-        <button class="btn-cute" onclick="document.getElementById('onboardingModal').classList.add('active')" style="padding: 8px; font-size: 0.9rem;" title="Konfigurasi Akun / Peran">
-          ⚙️
+      <div style="display:flex; gap:6px; align-items:center;">
+        <button class="btn-cute" id="btnToggleDarkMode" onclick="toggleDarkMode()" style="padding: 6px 8px; font-size: 0.9rem;" title="Mode Malam / Siang">
+          🌙
         </button>
-        <button class="btn-cute" onclick="openThemeSelectorModal()" style="padding: 8px; font-size: 0.9rem;" title="Ganti Karakter Hewan">
+        <button class="btn-cute" onclick="openPinConfigModal()" style="padding: 6px 8px; font-size: 0.9rem;" title="Kunci PIN Layar (App Lock)">
+          🔐
+        </button>
+        <button class="btn-cute" onclick="openThemeSelectorModal()" style="padding: 6px 8px; font-size: 0.9rem;" title="Ganti Karakter Hewan">
           🐾
         </button>
-        <button class="btn-cute mint" id="btnSyncNow" style="padding: 8px 12px; font-size: 0.75rem;">
+        <button class="btn-cute mint" id="btnSyncNow" style="padding: 6px 10px; font-size: 0.75rem;">
           🔄 Sync
         </button>
       </div>
@@ -217,6 +220,16 @@
         </button>
       </section>
 
+      <!-- Mini Shortcut Fitur Pintar -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px;">
+        <button type="button" class="btn-cute" onclick="switchTab('bills')" style="padding:8px 10px; font-size:0.75rem; justify-content:center; gap:6px;">
+          <span>📌</span> Tagihan Bulanan
+        </button>
+        <button type="button" class="btn-cute" onclick="switchTab('debts')" style="padding:8px 10px; font-size:0.75rem; justify-content:center; gap:6px;">
+          <span>🤝</span> Hutang & Piutang
+        </button>
+      </div>
+
       <!-- Ringkasan Komposisi Pengeluaran (Pie Chart SVG Murni) -->
       <section style="background:#fff; border-radius:18px; padding:16px; margin-bottom:16px; box-shadow:var(--shadow-soft);">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
@@ -252,6 +265,13 @@
             </button>
             <span style="font-size: 0.8rem; color: var(--text-muted);" id="txCounter">0 Catatan</span>
           </div>
+        </div>
+
+        <!-- Kolom Pencarian Cepat Transaksi -->
+        <div style="position:relative; margin-bottom:10px;">
+          <input type="text" id="txSearchInput" class="form-input" placeholder="🔍 Cari transaksi (nama, toko, catatan)..." style="padding:8px 12px 8px 36px; font-size:0.8rem; border-radius:14px;" oninput="onSearchTxInput()">
+          <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:0.9rem; pointer-events:none;">🔍</span>
+          <button id="btnClearSearch" onclick="clearTxSearch()" style="display:none; position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:#888; font-size:1rem; cursor:pointer;">✕</button>
         </div>
 
         <!-- Filter Rentang Tanggal -->
@@ -486,6 +506,68 @@
 
       <!-- Daftar Kartu Celengan Impian -->
       <div id="savingsGoalsListContainer" style="display:flex; flex-direction:column; gap:14px;">
+        <!-- Dimuat dinamis -->
+      </div>
+    </main>
+
+    <!-- View: Tagihan Rutin & Langganan Bulanan (Bills & Subscriptions) -->
+    <main id="viewBills" class="view-panel" style="display:none; padding: 20px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <div>
+          <h2 style="font-size:1.2rem; font-weight:800; color:var(--text-primary);">📌 Tagihan Rutin</h2>
+          <p style="font-size:0.8rem; color:var(--text-muted);">Checklist pembayaran listrik, wifi, SPP & langganan</p>
+        </div>
+        <button class="btn-cute primary" onclick="openAddBillModal()" style="padding:6px 12px; font-size:0.75rem;">
+          ➕ Tagihan Baru
+        </button>
+      </div>
+
+      <!-- Ringkasan Status Tagihan Bulan Ini -->
+      <div style="background:#FFF8FA; border-radius:18px; padding:16px; margin-bottom:16px; border:1px solid #FFE4E8; box-shadow:var(--shadow-soft);">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <div style="font-size:0.75rem; color:#8E8E9F;">Sisa Tagihan Belum Dibayar</div>
+            <div style="font-size:1.3rem; font-weight:800; color:#E76F51;" id="unpaidBillsTotalDisplay">Rp 0</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:0.75rem; color:#8E8E9F;">Sudah Dilunasi</div>
+            <div style="font-size:1.1rem; font-weight:800; color:#2E7D32;" id="paidBillsTotalDisplay">Rp 0</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- List Kartu Tagihan -->
+      <div id="billsListContainer" style="display:flex; flex-direction:column; gap:10px;">
+        <!-- Dimuat dinamis -->
+      </div>
+    </main>
+
+    <!-- View: Catatan Hutang & Piutang (Debts & Loans) -->
+    <main id="viewDebts" class="view-panel" style="display:none; padding: 20px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <div>
+          <h2 style="font-size:1.2rem; font-weight:800; color:var(--text-primary);">🤝 Hutang & Piutang</h2>
+          <p style="font-size:0.8rem; color:var(--text-muted);">Pantau pinjaman uang, kasbon, & uang yang dipinjam teman</p>
+        </div>
+        <button class="btn-cute primary" onclick="openAddDebtModal()" style="padding:6px 12px; font-size:0.75rem;">
+          ➕ Catat Hutang/Piutang
+        </button>
+      </div>
+
+      <!-- Ringkasan Hutang vs Piutang -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;">
+        <div style="background:#FFF5F5; border:1px solid #FFCDD2; border-radius:16px; padding:12px;">
+          <div style="font-size:0.75rem; color:#C62828; font-weight:600;">Saya Berhutang (Kewajiban)</div>
+          <div style="font-size:1.1rem; font-weight:800; color:#C62828;" id="totalMyDebtDisplay">Rp 0</div>
+        </div>
+        <div style="background:#F1F8E9; border:1px solid #C8E6C9; border-radius:16px; padding:12px;">
+          <div style="font-size:0.75rem; color:#2E7D32; font-weight:600;">Orang Berhutang (Piutang)</div>
+          <div style="font-size:1.1rem; font-weight:800; color:#2E7D32;" id="totalOthersDebtDisplay">Rp 0</div>
+        </div>
+      </div>
+
+      <!-- List Kartu Hutang / Piutang -->
+      <div id="debtsListContainer" style="display:flex; flex-direction:column; gap:10px;">
         <!-- Dimuat dinamis -->
       </div>
     </main>
@@ -762,6 +844,7 @@
       </div>
       <form id="txForm">
         <input type="hidden" id="formType" value="expense">
+        <input type="hidden" id="txEditClientTxId" value="">
         <div class="form-group">
           <label class="form-label">Nominal (Rp)</label>
           <input type="number" id="formAmount" class="form-input" placeholder="0" required min="100">
@@ -908,6 +991,118 @@
         <div id="customCatListContainer" style="display:flex; flex-direction:column; gap:6px;"></div>
       </div>
     </div>
+  </div>
+
+  <!-- Modal Tambah Tagihan Rutin -->
+  <div class="modal-overlay" id="billModal">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3 class="modal-title">📌 Tambah Tagihan Rutin</h3>
+        <button onclick="closeBillModal()" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">✕</button>
+      </div>
+      <form id="billForm">
+        <div class="form-group">
+          <label class="form-label">Nama Tagihan</label>
+          <input type="text" id="billNameInput" class="form-input" placeholder="contoh: Tagihan WiFi Indihome" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Perkiraan Nominal (Rp)</label>
+          <input type="number" id="billAmountInput" class="form-input" placeholder="contoh: 350000" min="1000" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Jatuh Tempo (Tanggal Tiap Bulan)</label>
+          <input type="number" id="billDayInput" class="form-input" placeholder="contoh: 15" min="1" max="31" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Ikon Tagihan</label>
+          <div style="display:flex; gap:8px; flex-wrap:wrap; font-size:1.4rem;">
+            <label style="cursor:pointer;"><input type="radio" name="billIcon" value="💡" checked> 💡</label>
+            <label style="cursor:pointer;"><input type="radio" name="billIcon" value="📶"> 📶</label>
+            <label style="cursor:pointer;"><input type="radio" name="billIcon" value="💧"> 💧</label>
+            <label style="cursor:pointer;"><input type="radio" name="billIcon" value="🎓"> 🎓</label>
+            <label style="cursor:pointer;"><input type="radio" name="billIcon" value="📺"> 📺</label>
+            <label style="cursor:pointer;"><input type="radio" name="billIcon" value="🏥"> 🏥</label>
+            <label style="cursor:pointer;"><input type="radio" name="billIcon" value="💳"> 💳</label>
+          </div>
+        </div>
+        <button type="submit" class="btn-cute primary" style="width:100%; padding:14px; margin-top:8px;">
+          Simpan Tagihan Rutin ✨
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Tambah Hutang / Piutang -->
+  <div class="modal-overlay" id="debtModal">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3 class="modal-title">🤝 Catat Hutang / Piutang</h3>
+        <button onclick="closeDebtModal()" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">✕</button>
+      </div>
+      <form id="debtForm">
+        <div class="form-group">
+          <label class="form-label">Jenis Catatan</label>
+          <select id="debtTypeSelect" class="form-select" required>
+            <option value="my_debt">🔴 Saya Berhutang (Saya Meminjam Uang)</option>
+            <option value="others_debt">🟢 Orang Berhutang (Piutang / Teman Meminjam)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nama Orang / Lembaga</label>
+          <input type="text" id="debtPersonInput" class="form-input" placeholder="contoh: Paman Budi / Toko Maju" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nominal Pinjaman (Rp)</label>
+          <input type="number" id="debtAmountInput" class="form-input" placeholder="contoh: 500000" min="1000" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Catatan / Alasan</label>
+          <input type="text" id="debtNoteInput" class="form-input" placeholder="contoh: Talangan belanja motor">
+        </div>
+        <button type="submit" class="btn-cute primary" style="width:100%; padding:14px; margin-top:8px;">
+          Simpan Catatan Pinjaman ✨
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Konfigurasi Kunci PIN 4 Digit -->
+  <div class="modal-overlay" id="pinConfigModal">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3 class="modal-title">🔐 Kunci Layar Aplikasi (PIN Lock)</h3>
+        <button onclick="closePinConfigModal()" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">✕</button>
+      </div>
+      <div style="background:#FFF8FA; border-radius:14px; padding:14px; margin-bottom:14px; border:1px solid #FFE4E8;">
+        <p style="font-size:0.82rem; color:#555; line-height:1.5; margin-bottom:10px;">
+          Kunci PIN 4 digit melindungi layar saat aplikasi dibuka di HP agar keluarga atau teman tidak sengaja melihat saldo privasi Anda.
+        </p>
+        <div id="pinStatusText" style="font-size:0.82rem; font-weight:700; color:#2E7D32; margin-bottom:10px;">
+          Status: Tidak Aktif
+        </div>
+        <div class="form-group">
+          <label class="form-label">Atur 4 Digit PIN Baru</label>
+          <input type="password" id="newPinInput" class="form-input" maxlength="4" pattern="[0-9]*" inputmode="numeric" placeholder="4 Angka (contoh: 1234)" style="letter-spacing:6px; font-size:1.2rem; text-align:center;">
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button type="button" onclick="saveNewPin()" class="btn-cute primary" style="flex:1; padding:10px; font-size:0.85rem;">Simpan PIN 🔐</button>
+          <button type="button" id="btnDisablePin" onclick="disablePin()" class="btn-cute" style="display:none; padding:10px; font-size:0.85rem; color:#C62828;">Hapus PIN</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Layar Penuh Lockscreen PIN (App Lock) -->
+  <div id="appLockScreen" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:linear-gradient(135deg, #FFB7B2 0%, #FFDAC1 100%); z-index:9999; flex-direction:column; align-items:center; justify-content:center; padding:20px; text-align:center;">
+    <div style="width:80px; height:80px; border-radius:50%; background:#FFF; display:flex; align-items:center; justify-content:center; font-size:2.5rem; box-shadow:0 8px 24px rgba(0,0,0,0.15); margin-bottom:16px;">
+      🔒
+    </div>
+    <h2 style="font-size:1.3rem; font-weight:800; color:#4A4A58; margin-bottom:6px;">DompetMungil Terkunci</h2>
+    <p style="font-size:0.85rem; color:#5D5D6D; margin-bottom:20px;">Masukkan 4 digit PIN Anda untuk membuka catatan keuangan:</p>
+    <div style="display:flex; gap:10px; margin-bottom:24px;">
+      <input type="password" id="unlockPinInput" maxlength="4" pattern="[0-9]*" inputmode="numeric" style="width:180px; padding:12px; font-size:1.5rem; text-align:center; border-radius:18px; border:2px solid #FFF; letter-spacing:10px; outline:none; box-shadow:0 4px 16px rgba(0,0,0,0.1);" autofocus onkeyup="checkUnlockPin(this.value)">
+    </div>
+    <button onclick="verifyUnlockPinBtn()" class="btn-cute primary" style="padding:12px 28px; font-size:0.95rem; font-weight:700;">Buka Kunci ✨</button>
   </div>
 
   <!-- Area Dokumen Cetak / Struk Laporan Keuangan (Hanya Tampil Saat Cetak/PDF) -->
