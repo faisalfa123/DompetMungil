@@ -3,6 +3,143 @@ const DB_NAME = 'KeuanganKeluargaLocalDB';
 const DB_VERSION = 1;
 let localDB = null;
 
+// Deteksi lingkungan GitHub Pages / Static Hosting (tanpa backend Go aktif)
+const IS_STATIC_DEMO_HOST = window.location.hostname.includes('github.io') || window.location.protocol === 'file:';
+
+if (IS_STATIC_DEMO_HOST) {
+  // Aktifkan sesi demo otomatis di browser
+  if (!localStorage.getItem('kk_token')) {
+    localStorage.setItem('kk_token', 'demo_token_gh_pages');
+    localStorage.setItem('dm_role', 'suami');
+    localStorage.setItem('dm_mode', 'family');
+  }
+
+  // Intersep fetch agar demo di GitHub Pages berfungsi penuh layaknya terhubung ke server Go
+  (function() {
+    const originalFetch = window.fetch;
+    let mockBudgets = JSON.parse(localStorage.getItem('dm_mock_budgets') || 'null') || [
+      { category_id: 'cat_makan', name: '🍱 Makanan & Minuman', icon: 'cute-cat-food', color: '#FFB7B2', budget: 2500000, spent: 1100000 },
+      { category_id: 'cat_belanja', name: '🛒 Belanja Harian', icon: 'cute-shopping-basket', color: '#B5EAD7', budget: 1500000, spent: 450000 },
+      { category_id: 'cat_tagihan', name: '💡 Listrik & Wifi', icon: 'cute-bill-light', color: '#E2F0CB', budget: 1000000, spent: 850000 },
+      { category_id: 'cat_pendidikan', name: '📚 Pendidikan Anak', icon: 'cute-book-pencil', color: '#C7CEEA', budget: 2500000, spent: 1200000 },
+      { category_id: 'cat_hiburan', name: '🎡 Rekreasi & Liburan', icon: 'cute-ticket-star', color: '#FFDAC1', budget: 1000000, spent: 1150000 }
+    ];
+
+    window.fetch = async function(url, options = {}) {
+      const urlStr = String(url);
+      const method = (options.method || 'GET').toUpperCase();
+
+      if (urlStr.includes('/api/v1/health')) {
+        return new Response(JSON.stringify({
+          status: 'operational (GitHub Pages Demo)',
+          version: '1.0.0-ghpages',
+          uptime_seconds: 7200,
+          memory_footprint: '< 20MB',
+          oom_recovered: true,
+          initialized: true
+        }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      }
+
+      if (urlStr.includes('/api/v1/overview')) {
+        const localList = await getAllLocalTx();
+        let income = 18000000, expense = 4750000;
+        localList.forEach(t => {
+          if (t.type === 'income') income += Number(t.amount);
+          if (t.type === 'expense') expense += Number(t.amount);
+        });
+        return new Response(JSON.stringify({
+          total_balance: income - expense,
+          total_income: income,
+          total_expense: expense,
+          net_savings: income - expense,
+          updated_at: new Date().toISOString()
+        }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      }
+
+      if (urlStr.includes('/api/v1/budgets')) {
+        if (method === 'POST') {
+          const body = JSON.parse(options.body || '{}');
+          const existing = mockBudgets.find(b => b.category_id === body.category_id);
+          if (existing) {
+            existing.budget = Number(body.amount);
+          } else {
+            mockBudgets.push({ category_id: body.category_id, name: body.category_id, icon: '', color: '#FFB7B2', budget: Number(body.amount), spent: 0 });
+          }
+          localStorage.setItem('dm_mock_budgets', JSON.stringify(mockBudgets));
+          return new Response(JSON.stringify({ status: 'ok', message: 'Anggaran kategori berhasil diperbarui ✨' }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+        }
+        return new Response(JSON.stringify(mockBudgets), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      }
+
+      if (urlStr.includes('/api/v1/auth/login')) {
+        const body = JSON.parse(options.body || '{}');
+        return new Response(JSON.stringify({
+          token: 'demo_token_' + Date.now(),
+          user_id: 'usr_demo',
+          username: body.username || 'demo_user',
+          account_mode: 'family',
+          role: 'suami'
+        }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      }
+
+      if (urlStr.includes('/api/v1/auth/init')) {
+        const body = JSON.parse(options.body || '{}');
+        return new Response(JSON.stringify({
+          message: 'Akun demo berhasil diaktifkan!',
+          token: 'demo_token_' + Date.now(),
+          user_id: 'usr_demo',
+          username: body.username,
+          account_mode: body.account_mode || 'personal',
+          role: body.role || 'personal'
+        }), { status: 201, headers: { 'Content-Type': 'application/json' } });
+      }
+
+      if (urlStr.includes('/api/v1/transactions')) {
+        if (method === 'POST') {
+          const body = JSON.parse(options.body || '{}');
+          return new Response(JSON.stringify({
+            id: 'tx_demo_' + Date.now(),
+            client_tx_id: body.client_tx_id,
+            status: 'saved'
+          }), { status: 201, headers: { 'Content-Type': 'application/json' } });
+        }
+
+        // Ambil transaksi lokal ditambah sampel demo jika masih baru
+        const localList = await getAllLocalTx();
+        if (localList.length === 0) {
+          const sampleTxs = [
+            { client_tx_id: 'ctx_init_1', type: 'income', amount: 15000000, date: '2026-11-01', note: 'Gaji Pokok Bulanan Ayah', account_name: 'Rekening Bank', category_name: 'Gaji Bulanan', author: 'ayah' },
+            { client_tx_id: 'ctx_init_2', type: 'expense', amount: 750000, date: '2026-11-02', note: 'Belanja Mingguan Sayur & Buah Segar', account_name: 'Dompet Tunai', category_name: 'Belanja Harian', author: 'ibu' },
+            { client_tx_id: 'ctx_init_3', type: 'expense', amount: 850000, date: '2026-11-03', note: 'Token Listrik PLN & Tagihan Wifi Rumah', account_name: 'Rekening Bank', category_name: 'Listrik, Air & Wifi', author: 'ayah' },
+            { client_tx_id: 'ctx_init_4', type: 'expense', amount: 1200000, date: '2026-11-04', note: 'Buku Pelajaran & Les Kursus Anak', account_name: 'Rekening Bank', category_name: 'Pendidikan Anak', author: 'ibu' },
+            { client_tx_id: 'ctx_init_5', type: 'expense', amount: 350000, date: '2026-11-05', note: 'Uang Saku & Jajan Anak', account_name: 'E-Wallet', category_name: 'Makanan & Minuman', author: 'anak' },
+            { client_tx_id: 'ctx_init_6', type: 'income', amount: 3000000, date: '2026-11-05', note: 'Hasil Penjualan Toko Online Sampingan', account_name: 'Rekening Bank', category_name: 'Bonus & Hadiah', author: 'ibu' }
+          ];
+          for (const s of sampleTxs) {
+            await saveLocalTx(s, false);
+          }
+          return new Response(JSON.stringify(sampleTxs), { status: 200, headers: { 'Content-Type': 'application/json' } });
+        }
+        return new Response(JSON.stringify(localList), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      }
+
+      if (urlStr.includes('/api/v1/sync')) {
+        return new Response(JSON.stringify({
+          status: 'synced',
+          synced_count: 1,
+          message: 'Transaksi berhasil disinkronisasi ke memori demo!'
+        }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      }
+
+      try {
+        return await originalFetch(url, options);
+      } catch (err) {
+        return new Response(JSON.stringify({ status: 'offline', message: 'Demo offline' }), { status: 200 });
+      }
+    };
+  })();
+}
+
 function initIndexedDB() {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
