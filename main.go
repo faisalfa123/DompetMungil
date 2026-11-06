@@ -54,15 +54,23 @@ func main() {
 
 	// Jika dataDir tidak dispesifikasikan via flag, autodetect lokasi terbaik:
 	// Prioritas:
-	// 1. /var/lib/dompetmungil jika sudah ada (instalasi standar root / systemd)
-	// 2. <appDir>/data (lokasi folder tempat aplikasi berada / portabel)
+	// 1. <appDir>/data (lokasi folder tempat aplikasi berada, misal /opt/dompetmungil/data)
+	// 2. /opt/dompetmungil/data jika direktori /opt/dompetmungil ada
+	// 3. /var/lib/dompetmungil (legacy fallback)
 	resolvedDataDir := *dataDir
 	if resolvedDataDir == "" {
+		localDataDir := filepath.Join(appDir, "data")
+		optDataDir := "/opt/dompetmungil/data"
 		systemDataDir := "/var/lib/dompetmungil"
-		if info, err := os.Stat(systemDataDir); err == nil && info.IsDir() {
+
+		if info, err := os.Stat(localDataDir); err == nil && info.IsDir() {
+			resolvedDataDir = localDataDir
+		} else if info, err := os.Stat("/opt/dompetmungil"); err == nil && info.IsDir() {
+			resolvedDataDir = optDataDir
+		} else if info, err := os.Stat(systemDataDir); err == nil && info.IsDir() {
 			resolvedDataDir = systemDataDir
 		} else {
-			resolvedDataDir = filepath.Join(appDir, "data")
+			resolvedDataDir = localDataDir
 		}
 	}
 
