@@ -16,6 +16,9 @@ CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
 APP_NAME="dompetmungil"
+# Deteksi otomatis folder sumber instalasi / repositori tempat script dijalankan
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+INSTALL_DIR="${SCRIPT_DIR}"
 CONFIG_DIR="/etc/${APP_NAME}"
 DATA_DIR="/var/lib/${APP_NAME}"
 BIN_PATH="/usr/local/bin/${APP_NAME}"
@@ -180,6 +183,7 @@ chmod 700 "$DATA_DIR"
 
 cat <<EOF > "$CONFIG_DIR/config.env"
 PORT=${PORT}
+APP_DIR=${INSTALL_DIR}
 DATA_DIR=${DATA_DIR}
 ENABLE_BACKUP=${ENABLE_BACKUP}
 RCLONE_REMOTE=${SELECTED_REMOTE}
@@ -189,14 +193,14 @@ chmod 600 "$CONFIG_DIR/config.env"
 # 7. Memasang Binary Aplikasi
 ARCH=$(uname -m)
 BINARY_SRC=""
-if [ -f "./bin/keuangan-server-linux-${ARCH}" ]; then
-    BINARY_SRC="./bin/keuangan-server-linux-${ARCH}"
-elif [ -f "./bin/server" ]; then
-    BINARY_SRC="./bin/server"
-elif [ -f "./keuangan-keluarga" ]; then
-    BINARY_SRC="./keuangan-keluarga"
-elif [ -f "./dompetmungil" ]; then
-    BINARY_SRC="./dompetmungil"
+if [ -f "$INSTALL_DIR/bin/keuangan-server-linux-${ARCH}" ]; then
+    BINARY_SRC="$INSTALL_DIR/bin/keuangan-server-linux-${ARCH}"
+elif [ -f "$INSTALL_DIR/bin/server" ]; then
+    BINARY_SRC="$INSTALL_DIR/bin/server"
+elif [ -f "$INSTALL_DIR/keuangan-keluarga" ]; then
+    BINARY_SRC="$INSTALL_DIR/keuangan-keluarga"
+elif [ -f "$INSTALL_DIR/dompetmungil" ]; then
+    BINARY_SRC="$INSTALL_DIR/dompetmungil"
 fi
 
 # Hentikan service terlebih dahulu jika sedang berjalan agar file binary tidak berstatus 'Text file busy'
@@ -218,7 +222,7 @@ else
     if command -v go >/dev/null 2>&1; then
         echo -e "${YELLOW}Mengompilasi binary langsung dari source...${NC}"
         rm -f "$BIN_PATH" 2>/dev/null || true
-        go build -o "$BIN_PATH" main.go
+        (cd "$INSTALL_DIR" && go build -o "$BIN_PATH" main.go)
         chmod 755 "$BIN_PATH"
     else
         echo -e "${RED}[ERROR] Binary untuk $ARCH tidak ditemukan. Silakan download release siap pakai dari GitHub Actions!${NC}"
@@ -271,6 +275,7 @@ Wants=network-online.target
 
 [Service]
 Type=simple
+WorkingDirectory=$INSTALL_DIR
 EnvironmentFile=$CONFIG_DIR/config.env
 ExecStart=$BIN_PATH -port \${PORT} -data-dir \${DATA_DIR}
 Restart=always

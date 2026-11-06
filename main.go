@@ -21,23 +21,64 @@ import (
 //go:embed web/*
 var webFS embed.FS
 
+func getAppDirectory() string {
+	// 1. Coba deteksi dari lokasi path file executable (binary) yang sedang berjalan
+	execPath, err := os.Executable()
+	if err == nil {
+		resolvedPath, err := filepath.EvalSymlinks(execPath)
+		if err == nil {
+			execPath = resolvedPath
+		}
+		dir := filepath.Dir(execPath)
+		// Jika binary dijalankan langsung dari folder instalasi
+		return dir
+	}
+
+	// 2. Fallback ke current working directory
+	pwd, err := os.Getwd()
+	if err == nil {
+		return pwd
+	}
+
+	return "."
+}
+
 func main() {
+	// Deteksi otomatis direktori di mana aplikasi ini terpasang / berjalan
+	appDir := getAppDirectory()
+
 	// Parse CLI flags
 	port := flag.Int("port", 8080, "Port kustom server PWA")
-	dataDir := flag.String("data-dir", "./data", "Direktori penyimpanan database dan kunci rahasia")
+	dataDir := flag.String("data-dir", "", "Direktori penyimpanan database dan kunci rahasia (kosong = autodetect)")
 	flag.Parse()
+
+	// Jika dataDir tidak dispesifikasikan via flag, autodetect lokasi terbaik:
+	// Prioritas:
+	// 1. /var/lib/dompetmungil jika sudah ada (instalasi standar root / systemd)
+	// 2. <appDir>/data (lokasi folder tempat aplikasi berada / portabel)
+	resolvedDataDir := *dataDir
+	if resolvedDataDir == "" {
+		systemDataDir := "/var/lib/dompetmungil"
+		if info, err := os.Stat(systemDataDir); err == nil && info.IsDir() {
+			resolvedDataDir = systemDataDir
+		} else {
+			resolvedDataDir = filepath.Join(appDir, "data")
+		}
+	}
 
 	log.Printf("=====================================================")
 	log.Printf(" Catatan Keuangan Keluarga (Cute & Ultra-Light PWA) ")
 	log.Printf(" Server Target: Odroid C2 / STB HG680P (Amlogic S905X)")
+	log.Printf(" Lokasi Terdeteksi (App Dir): %s", appDir)
+	log.Printf(" Lokasi Data (Data Dir)    : %s", resolvedDataDir)
 	log.Printf("=====================================================")
 
-	if err := os.MkdirAll(*dataDir, 0700); err != nil {
+	if err := os.MkdirAll(resolvedDataDir, 0700); err != nil {
 		log.Fatalf("FATAL: Gagal membuat direktori data: %v", err)
 	}
 
-	keyPath := filepath.Join(*dataDir, "secret.key")
-	dbPath := filepath.Join(*dataDir, "data.db")
+	keyPath := filepath.Join(resolvedDataDir, "secret.key")
+	dbPath := filepath.Join(resolvedDataDir, "data.db")
 
 	// 1. Muat atau buat kunci enkripsi AES-256 lokal
 	log.Printf("[1/3] Memeriksa kunci enkripsi lokal...")
@@ -61,6 +102,7 @@ func main() {
 
 	// Daftarkan endpoint API
 	apiHandler := api.NewAPIHandler(database)
+	apiHandler.SetPaths(appDir, resolvedDataDir)
 	apiHandler.RegisterRoutes(mux)
 
 	// Serve Frontend PWA dari Embedded FS

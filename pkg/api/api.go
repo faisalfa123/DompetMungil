@@ -32,11 +32,13 @@ type UserInfo struct {
 }
 
 type APIHandler struct {
-	db         *db.Database
-	startTime  time.Time
-	tokens     map[string]UserInfo // token -> UserInfo
-	tokenMu    sync.RWMutex
+	db          *db.Database
+	startTime   time.Time
+	tokens      map[string]UserInfo // token -> UserInfo
+	tokenMu     sync.RWMutex
 	lastOOMTime int64
+	appDir      string
+	dataDir     string
 }
 
 func NewAPIHandler(database *db.Database) *APIHandler {
@@ -45,6 +47,11 @@ func NewAPIHandler(database *db.Database) *APIHandler {
 		startTime: time.Now(),
 		tokens:    make(map[string]UserInfo),
 	}
+}
+
+func (h *APIHandler) SetPaths(appDir, dataDir string) {
+	h.appDir = appDir
+	h.dataDir = dataDir
 }
 
 // JSON Helper Response
@@ -132,6 +139,8 @@ func (h *APIHandler) handleHealth(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, map[string]interface{}{
 		"server":        status,
 		"initialized":   userCount > 0,
+		"app_dir":       h.appDir,
+		"data_dir":      h.dataDir,
 		"debug_code":    "STATUS_OK_200",
 	})
 }
