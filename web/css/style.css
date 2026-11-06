@@ -686,3 +686,80 @@ body {
   display: none;
 }
 
+/* 🌸 Custom Kawaii Alert & Confirm Popup Dialog */
+.custom-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(74, 74, 88, 0.45);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+  padding: 20px;
+}
+
+.custom-dialog-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.custom-dialog-box {
+  background: #FFFFFF;
+  border-radius: 26px;
+  padding: 24px 22px 20px;
+  width: 100%;
+  max-width: 340px;
+  text-align: center;
+  box-shadow: 0 20px 50px rgba(255, 183, 178, 0.4), 0 8px 20px rgba(0, 0, 0, 0.12);
+  border: 3px solid var(--pink-pastel);
+  transform: scale(0.85) translateY(15px);
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.custom-dialog-overlay.active .custom-dialog-box {
+  transform: scale(1) translateY(0);
+}
+
+.custom-dialog-mascot {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: #FFF5F7;
+  border: 2px dashed var(--pink-pastel);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: -50px auto 12px;
+  box-shadow: 0 6px 16px rgba(255, 183, 178, 0.25);
+  animation: floatAnimation 3s infinite ease-in-out;
+}
+
+.custom-dialog-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.custom-dialog-message {
+  font-size: 0.86rem;
+  color: #5D5D6D;
+  line-height: 1.5;
+  margin-bottom: 18px;
+  white-space: pre-line;
+}
+
+.custom-dialog-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+

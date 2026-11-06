@@ -3,6 +3,93 @@ const DB_NAME = 'KeuanganKeluargaLocalDB';
 const DB_VERSION = 1;
 let localDB = null;
 
+// 🌸 Sistem Popup Alert & Konfirmasi Custom Kawaii (Pengganti Bawaan Browser)
+function showCuteAlert(message, title = 'Pemberitahuan 🌸') {
+  return new Promise((resolve) => {
+    const overlay = document.getElementById('customDialogOverlay');
+    const titleEl = document.getElementById('customDialogTitle');
+    const msgEl = document.getElementById('customDialogMessage');
+    const cancelBtn = document.getElementById('customDialogCancelBtn');
+    const confirmBtn = document.getElementById('customDialogConfirmBtn');
+    const mascotSvg = document.querySelector('#customDialogMascotSvg use');
+
+    if (!overlay || !msgEl || !confirmBtn) {
+      console.log(message);
+      resolve();
+      return;
+    }
+
+    if (mascotSvg && typeof currentMascot !== 'undefined') {
+      mascotSvg.setAttribute('href', '#' + currentMascot);
+    }
+
+    if (titleEl) titleEl.innerText = title;
+    msgEl.innerText = message;
+    if (cancelBtn) cancelBtn.style.display = 'none';
+    confirmBtn.innerText = 'Oke, Mengerti ✨';
+
+    const closeHandler = () => {
+      overlay.classList.remove('active');
+      confirmBtn.removeEventListener('click', closeHandler);
+      resolve();
+    };
+
+    confirmBtn.onclick = closeHandler;
+    overlay.classList.add('active');
+  });
+}
+
+function showCuteConfirm(message, title = 'Konfirmasi 🐾', confirmText = 'Ya, Lanjutkan ✨', cancelText = 'Batal') {
+  return new Promise((resolve) => {
+    const overlay = document.getElementById('customDialogOverlay');
+    const titleEl = document.getElementById('customDialogTitle');
+    const msgEl = document.getElementById('customDialogMessage');
+    const cancelBtn = document.getElementById('customDialogCancelBtn');
+    const confirmBtn = document.getElementById('customDialogConfirmBtn');
+    const mascotSvg = document.querySelector('#customDialogMascotSvg use');
+
+    if (!overlay || !msgEl || !confirmBtn || !cancelBtn) {
+      resolve(true);
+      return;
+    }
+
+    if (mascotSvg && typeof currentMascot !== 'undefined') {
+      mascotSvg.setAttribute('href', '#' + currentMascot);
+    }
+
+    if (titleEl) titleEl.innerText = title;
+    msgEl.innerText = message;
+    cancelBtn.style.display = 'inline-flex';
+    cancelBtn.innerText = cancelText;
+    confirmBtn.innerText = confirmText;
+
+    confirmBtn.onclick = () => {
+      overlay.classList.remove('active');
+      resolve(true);
+    };
+
+    cancelBtn.onclick = () => {
+      overlay.classList.remove('active');
+      resolve(false);
+    };
+
+    overlay.classList.add('active');
+  });
+}
+
+// Ganti window.alert bawaan browser agar otomatis memakai popup custom kawaii
+window.alert = function(msg) {
+  let title = 'Pemberitahuan 🌸';
+  const str = String(msg || '');
+  if (str.includes('🎉') || str.includes('🎊') || str.includes('✅') || str.includes('✨') || str.includes('🪙')) {
+    title = 'Berhasil! 🎉';
+  } else if (str.includes('⚠️') || str.includes('❌') || str.includes('Gagal')) {
+    title = 'Perhatian 🐾';
+  }
+  return showCuteAlert(str, title);
+};
+
+
 // Deteksi lingkungan GitHub Pages / Static Hosting (tanpa backend Go aktif)
 const IS_STATIC_DEMO_HOST = window.location.hostname.includes('github.io') || window.location.protocol === 'file:';
 
@@ -266,8 +353,9 @@ function showGoogleConnected(email) {
   }
 }
 
-function disconnectGoogleAccount() {
-  if (confirm('Yakin ingin memutuskan tautan akun Google?')) {
+async function disconnectGoogleAccount() {
+  const ok = await showCuteConfirm('Yakin ingin memutuskan tautan akun Google?', 'Putuskan Akun Google 🔗', 'Ya, Putuskan', 'Batal');
+  if (ok) {
     localStorage.removeItem('dm_google_email');
     localStorage.removeItem('dm_google_oauth_token');
     localStorage.removeItem('dm_google_oauth_code');
@@ -411,7 +499,8 @@ async function recallMonthlySalary() {
   const month = String(now.getMonth() + 1).padStart(2, '0');
   const txDate = `${year}-${month}-${String(day).padStart(2, '0')}`;
 
-  if (!confirm(`Terapkan Pemasukan Rutin Bulan Ini?\nNominal: Rp ${amount.toLocaleString('id-ID')}\nTanggal: ${txDate}`)) {
+  const ok = await showCuteConfirm(`Terapkan Pemasukan Rutin Bulan Ini?\nNominal: Rp ${amount.toLocaleString('id-ID')}\nTanggal: ${txDate}`, 'Terapkan Gaji Rutin 💰', 'Ya, Terapkan ✨', 'Batal');
+  if (!ok) {
     return;
   }
 
@@ -811,7 +900,9 @@ function renderCategoryManagerList() {
   `).join('');
 }
 
-function deleteCustomCategory(id) {
+async function deleteCustomCategory(id) {
+  const ok = await showCuteConfirm('Yakin ingin menghapus kategori kustom ini?', 'Hapus Kategori 🎨', 'Ya, Hapus', 'Batal');
+  if (!ok) return;
   CATEGORIES = getStoredCategories();
   CATEGORIES.expense = CATEGORIES.expense.filter(c => c.id !== id);
   CATEGORIES.income = CATEGORIES.income.filter(c => c.id !== id);
@@ -1327,8 +1418,9 @@ function closeDepositGoalModal() {
   document.getElementById('depositGoalModal').classList.remove('active');
 }
 
-function deleteSavingsGoal(goalId) {
-  if (!confirm('Yakin ingin menghapus target celengan ini?')) return;
+async function deleteSavingsGoal(goalId) {
+  const ok = await showCuteConfirm('Yakin ingin menghapus target celengan ini?', 'Hapus Celengan 🐷', 'Ya, Hapus', 'Batal');
+  if (!ok) return;
   let goals = getStoredSavingsGoals();
   goals = goals.filter(g => g.id !== goalId);
   saveStoredSavingsGoals(goals);
@@ -1522,7 +1614,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Tombol Google OAuth Redirect Resmi
   const btnGoogleRedirect = document.getElementById('btnRedirectGoogleOAuth');
   if (btnGoogleRedirect) {
-    btnGoogleRedirect.addEventListener('click', () => {
+    btnGoogleRedirect.addEventListener('click', async () => {
       const clientId = getGoogleClientId();
       if (!clientId) {
         alert('⚠️ Harap masukkan Google Client ID Anda terlebih dahulu.\n\nIkuti petunjuk 1 menit di bawah untuk membuatnya gratis di Google Cloud Console dengan tipe "Desktop app".');
@@ -1539,7 +1631,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         `&scope=${encodeURIComponent('email profile https://www.googleapis.com/auth/gmail.readonly')}` +
         `&include_granted_scopes=true`;
 
-      if (confirm('Anda akan dialihkan ke halaman resmi masuk Google untuk menautkan DompetMungil.\n\nLanjutkan?')) {
+      const ok = await showCuteConfirm('Anda akan dialihkan ke halaman resmi masuk Google untuk menautkan DompetMungil.\n\nLanjutkan?', 'Tautkan Akun Google 🔗', 'Ya, Lanjutkan ✨', 'Batal');
+      if (ok) {
         window.location.href = googleAuthUrl;
       }
     });

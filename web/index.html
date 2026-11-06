@@ -913,7 +913,22 @@
   <!-- Area Dokumen Cetak / Struk Laporan Keuangan (Hanya Tampil Saat Cetak/PDF) -->
   <div id="printableReportSection" class="printable-report" style="display:none;"></div>
 
+  <!-- 🌸 Custom Kawaii Alert & Confirm Popup Dialog (Pengganti Alert/Confirm Bawaan Browser) -->
+  <div id="customDialogOverlay" class="custom-dialog-overlay">
+    <div class="custom-dialog-box">
+      <div class="custom-dialog-mascot">
+        <svg id="customDialogMascotSvg" style="width:58px; height:58px;"><use href="#icon-cat-mascot"></use></svg>
+      </div>
+      <h4 id="customDialogTitle" class="custom-dialog-title">Pemberitahuan 🌸</h4>
+      <p id="customDialogMessage" class="custom-dialog-message">Pesan konfirmasi...</p>
+      <div id="customDialogActions" class="custom-dialog-actions">
+        <button type="button" id="customDialogCancelBtn" class="btn-cute" style="flex:1; justify-content:center; padding:10px 14px; font-size:0.85rem;">Batal</button>
+        <button type="button" id="customDialogConfirmBtn" class="btn-cute primary" style="flex:1; justify-content:center; padding:10px 14px; font-size:0.85rem;">Ya, Lanjutkan ✨</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Script Logika PWA, IndexedDB & Sync dengan cache busting dinamis -->
-  <script src="js/app.js?v=20261105_13"></script>
+  <script src="js/app.js?v=20261105_15"></script>
 </body>
 </html>
