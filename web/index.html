@@ -217,12 +217,48 @@
         </button>
       </section>
 
-      <!-- Riwayat Transaksi -->
-      <section>
-        <div class="section-title">
-          <span>Riwayat Transaksi</span>
-          <span style="font-size: 0.8rem; color: var(--text-muted);" id="txCounter">0 Catatan</span>
+      <!-- Ringkasan Komposisi Pengeluaran (Pie Chart SVG Murni) -->
+      <section style="background:#fff; border-radius:18px; padding:16px; margin-bottom:16px; box-shadow:var(--shadow-soft);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <strong style="font-size:0.85rem; color:var(--text-primary);">📊 Komposisi Pengeluaran</strong>
+          <span id="chartTotalExpense" style="font-size:0.8rem; font-weight:700; color:var(--danger-pastel);">Rp 0</span>
         </div>
+        <div style="display:flex; align-items:center; gap:16px;">
+          <div style="position:relative; width:110px; height:110px; flex-shrink:0;">
+            <svg id="pieChartSvg" viewBox="0 0 42 42" style="width:100%; height:100%; transform: rotate(-90deg); border-radius:50%;">
+              <circle cx="21" cy="21" r="15.91549430918954" fill="#F8F8FC" stroke="#ECECF0" stroke-width="4"></circle>
+            </svg>
+            <div style="position:absolute; top:0; left:0; width:100%; height:100%; display:flex; align-items:center; justify-content:center; pointer-events:none;">
+              <span style="font-size:1.3rem;">🍱</span>
+            </div>
+          </div>
+          <div id="pieChartLegend" style="flex:1; display:flex; flex-direction:column; gap:4px; font-size:0.75rem; max-height:100px; overflow-y:auto;">
+            <!-- Legend Kategori Dimuat Dinamis -->
+            <span style="color:var(--text-muted);">Belum ada data pengeluaran.</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Riwayat Transaksi dengan Filter & Ekspor -->
+      <section>
+        <div class="section-title" style="flex-wrap:wrap; gap:8px;">
+          <span>Riwayat Transaksi</span>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <button onclick="exportTransactionsCSV()" class="btn-cute" style="padding:4px 8px; font-size:0.75rem;" title="Ekspor data ke CSV / Excel">
+              📥 Ekspor CSV
+            </button>
+            <span style="font-size: 0.8rem; color: var(--text-muted);" id="txCounter">0 Catatan</span>
+          </div>
+        </div>
+
+        <!-- Filter Rentang Tanggal -->
+        <div style="display:flex; gap:6px; margin-bottom:10px; overflow-x:auto; padding-bottom:4px;">
+          <button class="btn-cute date-filter-btn active" onclick="filterTransactions('all')" style="padding:4px 10px; font-size:0.72rem; border-radius:12px;">Semua</button>
+          <button class="btn-cute date-filter-btn" onclick="filterTransactions('this_month')" style="padding:4px 10px; font-size:0.72rem; border-radius:12px;">Bulan Ini</button>
+          <button class="btn-cute date-filter-btn" onclick="filterTransactions('last_month')" style="padding:4px 10px; font-size:0.72rem; border-radius:12px;">Bulan Lalu</button>
+          <button class="btn-cute date-filter-btn" onclick="filterTransactions('this_year')" style="padding:4px 10px; font-size:0.72rem; border-radius:12px;">Tahun Ini</button>
+        </div>
+
         <div class="tx-list" id="txContainer">
           <!-- Transaksi akan dimuat dinamis dari IndexedDB & Server -->
           <div style="text-align:center; padding: 40px; color: var(--text-muted);">
@@ -387,11 +423,47 @@
       </div>
     </main>
 
+    <!-- View: Manajemen Anggaran (Budgeting) -->
+    <main id="viewBudget" class="view-panel" style="display:none; padding: 20px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <div>
+          <h2 style="font-size:1.2rem; font-weight:800; color:var(--text-primary);">🎯 Anggaran Bulanan</h2>
+          <p style="font-size:0.8rem; color:var(--text-muted);">Kontrol pengeluaran keluarga agar tidak overbudget</p>
+        </div>
+        <button class="btn-cute primary" onclick="openSetBudgetModal()" style="padding:6px 12px; font-size:0.75rem;">
+          ⚙️ Atur Batas
+        </button>
+      </div>
+
+      <!-- Ringkasan Progress Anggaran -->
+      <div id="budgetSummaryCard" style="background:#fff; border-radius:18px; padding:16px; margin-bottom:16px; box-shadow:var(--shadow-soft);">
+        <div style="display:flex; justify-content:space-between; font-size:0.85rem; font-weight:700; margin-bottom:6px;">
+          <span>Realisasi Bulan Ini</span>
+          <span id="budgetOverallText">Rp 0 / Rp 0</span>
+        </div>
+        <div style="width:100%; height:12px; background:#F0F0F5; border-radius:10px; overflow:hidden;">
+          <div id="budgetOverallBar" style="width:0%; height:100%; background:var(--mint-dark); border-radius:10px; transition:width 0.4s ease;"></div>
+        </div>
+      </div>
+
+      <!-- List Kategori & Batas Anggaran -->
+      <div id="budgetListContainer" style="display:flex; flex-direction:column; gap:12px;">
+        <!-- Dimuat dinamis -->
+      </div>
+    </main>
+
     <!-- Bottom Navigation Bar -->
     <nav class="bottom-nav">
       <button type="button" class="nav-item active" onclick="switchTab('home')" style="background:none; border:none;">
         <svg class="cute-icon"><use href="#icon-wallet"></use></svg>
         <span>Dompet</span>
+      </button>
+      <button type="button" class="nav-item" onclick="switchTab('budget')" style="background:none; border:none;">
+        <svg class="cute-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M12 6v6l4 2"></path>
+        </svg>
+        <span>Anggaran</span>
       </button>
       <button type="button" class="nav-item" onclick="switchTab('bank')" style="background:none; border:none;">
         <svg class="cute-icon"><use href="#icon-bank"></use></svg>
@@ -557,6 +629,13 @@
             </div>
           </button>
         </div>
+
+        <div style="text-align:center; margin-top:12px; border-top:1px dashed #FFD1DC; padding-top:12px;">
+          <p style="font-size:0.8rem; color:var(--text-muted);">Sudah pernah membuat akun?</p>
+          <button type="button" class="btn-cute mint" onclick="showLoginForm()" style="padding:8px 16px; font-size:0.8rem; margin-top:6px;">
+            🔑 Masuk dengan Akun yang Ada
+          </button>
+        </div>
       </div>
 
       <!-- Form Pendaftaran -->
@@ -580,6 +659,53 @@
         </div>
         <button type="submit" class="btn-cute primary" style="width:100%; padding:14px; margin-top:8px;">
           Mulai Gunakan DompetMungil ✨
+        </button>
+        <button type="button" class="btn-cute" onclick="showSelectAccountType()" style="width:100%; padding:10px; margin-top:8px; font-size:0.8rem;">
+          ⬅️ Kembali ke Pilihan Mode
+        </button>
+      </form>
+
+      <!-- Form Masuk / Login Akun -->
+      <form id="loginForm" style="display:none;">
+        <h4 style="font-size:0.95rem; font-weight:700; margin-bottom:12px; color:var(--text-primary);">🔑 Masuk ke DompetMungil</h4>
+        <div class="form-group">
+          <label class="form-label">Username</label>
+          <input type="text" id="loginUsername" class="form-input" placeholder="Masukkan username Anda" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" id="loginPassword" class="form-input" placeholder="Masukkan password Anda" required>
+        </div>
+        <button type="submit" class="btn-cute primary" style="width:100%; padding:14px; margin-top:8px;">
+          Masuk ke Akun ✨
+        </button>
+        <button type="button" class="btn-cute" onclick="showSelectAccountType()" style="width:100%; padding:10px; margin-top:8px; font-size:0.8rem;">
+          ⬅️ Buat Akun Baru
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Atur Anggaran Kategori -->
+  <div class="modal-overlay" id="budgetModal">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3 class="modal-title">🎯 Atur Batas Anggaran Bulanan</h3>
+        <button onclick="closeBudgetModal()" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">✕</button>
+      </div>
+      <form id="budgetForm">
+        <div class="form-group">
+          <label class="form-label">Pilih Kategori Pengeluaran</label>
+          <select id="budgetCategorySelect" class="form-select" required>
+            <!-- Dimuat dinamis -->
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Batas Anggaran Bulanan (Rp)</label>
+          <input type="number" id="budgetAmountInput" class="form-input" placeholder="contoh: 1500000" min="0" required>
+        </div>
+        <button type="submit" class="btn-cute primary" style="width:100%; padding:14px; margin-top:8px;">
+          Simpan Anggaran ✨
         </button>
       </form>
     </div>
@@ -629,6 +755,6 @@
   </div>
 
   <!-- Script Logika PWA, IndexedDB & Sync dengan cache busting dinamis -->
-  <script src="/js/app.js?v=20261105_12"></script>
+  <script src="/js/app.js?v=20261105_13"></script>
 </body>
 </html>

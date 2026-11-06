@@ -5,6 +5,35 @@ Format ini mengacu pada [Keep a Changelog](https://keepachangelog.com/id/1.0.0/)
 
 ---
 
+## [v0.04.0-beta] - 2026-11-06
+
+### 🐛 Perbaikan Bug Kritis (Bug Fixes)
+- **Modal Masuk / Login untuk Pengguna Lama**:
+  - Menyediakan form Login (`loginForm`) di modal akun dengan tombol toggle bolak-balik antara form pendaftaran mode baru dan form masuk akun lama.
+- **Penyimpanan `user_id` pada Transaksi**:
+  - Endpoint `POST /api/v1/transactions` dan `POST /api/v1/sync` kini mengekstrak identitas pengguna dari header otentikasi (`X-Authenticated-ID`) dan menyimpannya ke kolom `user_id` pada tabel `transactions`.
+  - Sistem transparansi terkontrol kini berfungsi optimal: peran **Anak** hanya dapat melihat transaksi yang dicatat oleh akunnya sendiri.
+- **Sesi Token Persisten di SQLite**:
+  - Menambahkan tabel `sessions` dengan kedaluwarsa 30 hari. Token otentikasi tidak lagi hilang saat server STB mengalami restart atau OOM recovery.
+- **Penanganan 4 Tab Navigasi**:
+  - Event listener navigasi bawah kini mendukung secara presisi ke-4 tab: Dompet, Anggaran, Bank Mutasi, dan Panduan.
+
+### 🌟 Fitur Baru (Added)
+- **Manajemen Anggaran Bulanan (Budgeting)**:
+  - Tab baru **"🎯 Anggaran"** untuk memantau batas pengeluaran per kategori.
+  - Progress bar visual yang dinamis dengan indikator peringatan (*⚠️ Overbudget*) ketika realisasi melebihi batas.
+- **Visualisasi Komposisi Pengeluaran (Pie Chart SVG Murni)**:
+  - Diagram lingkaran interaktif SVG murni di dashboard utama tanpa pustaka pihak ketiga eksternal, hemat memori dan ramah low-RAM SBC.
+  - Dilengkapi legenda kategori dan persentase pengeluaran real-time.
+- **Filter Rentang Tanggal**:
+  - Pilihan filter cepat: **Semua**, **Bulan Ini**, **Bulan Lalu**, dan **Tahun Ini** untuk riwayat transaksi dan grafik pengeluaran.
+- **Ekspor Laporan Transaksi ke CSV / Excel**:
+  - Tombol **"📥 Ekspor CSV"** di dashboard yang mendukung pengunduhan server-side UTF-8 BOM (ramah Microsoft Excel) maupun fallback client-side IndexedDB lokal.
+- **Peningkatan Cache PWA**:
+  - Service worker cache diperbarui ke `dompetmungil-v12` untuk pembaruan aset otomatis pada perangkat ponsel.
+
+---
+
 ## [v0.03.0-beta] - 2026-11-05
 
 ### 🌟 Fitur Baru & Perbaikan (Added & Fixed)

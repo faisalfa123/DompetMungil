@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -72,11 +73,13 @@ func (h *APIHandler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/sync", h.authMiddleware(h.handleSync))
 	mux.HandleFunc("/api/v1/categories", h.authMiddleware(h.handleCategories))
 	mux.HandleFunc("/api/v1/accounts", h.authMiddleware(h.handleAccounts))
+	mux.HandleFunc("/api/v1/budgets", h.authMiddleware(h.handleBudgets))
+	mux.HandleFunc("/api/v1/export", h.authMiddleware(h.handleExport))
 	mux.HandleFunc("/api/v1/bank-import", h.authMiddleware(h.handleBankImport))
 	mux.HandleFunc("/api/v1/backup/status", h.authMiddleware(h.handleBackupStatus))
 }
 
-// Middleware otentikasi sederhana hemat RAM berbasis memory token
+// Middleware otentikasi hemat RAM: cek memory map dulu, jika tidak ada fallback ke DB sessions
 func (h *APIHandler) authMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		token := r.Header.Get("X-Auth-Token")
@@ -90,11 +93,21 @@ func (h *APIHandler) authMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		h.tokenMu.RUnlock()
 
 		if !exists {
-			respondError(w, http.StatusUnauthorized, "ERR_AUTH_INVALID_401", "Akses ditolak: Sesi tidak sah atau telah kedaluwarsa")
-			return
+			// Cek sesi tersimpan di SQLite jika server pernah restart
+			var u UserInfo
+			err := h.db.GetConn().QueryRow("SELECT user_id, username, account_mode, role FROM sessions WHERE token = ? AND expires_at > datetime('now')", token).Scan(&u.ID, &u.Username, &u.AccountMode, &u.Role)
+			if err != nil {
+				respondError(w, http.StatusUnauthorized, "ERR_AUTH_INVALID_401", "Akses ditolak: Sesi tidak sah atau telah kedaluwarsa")
+				return
+			}
+			userInfo = u
+			h.tokenMu.Lock()
+			h.tokens[token] = userInfo
+			h.tokenMu.Unlock()
 		}
 
 		// Inject user info ke header untuk dipakai handler
+		r.Header.Set("X-Authenticated-ID", userInfo.ID)
 		r.Header.Set("X-Authenticated-User", userInfo.Username)
 		r.Header.Set("X-Authenticated-Role", userInfo.Role)
 		r.Header.Set("X-Authenticated-Mode", userInfo.AccountMode)
@@ -170,8 +183,13 @@ func (h *APIHandler) handleInitAdmin(w http.ResponseWriter, r *http.Request) {
 	}
 	h.tokenMu.Unlock()
 
+	// Persist session ke SQLite (berlaku 30 hari)
+	_, _ = h.db.GetConn().Exec("INSERT OR REPLACE INTO sessions (token, user_id, username, account_mode, role, expires_at) VALUES (?, ?, ?, ?, ?, datetime('now', '+30 days'))",
+		token, userId, req.Username, req.AccountMode, req.Role)
+
 	respondJSON(w, http.StatusCreated, map[string]interface{}{
 		"message":      "Akun berhasil dibuat!",
+		"user_id":      userId,
 		"username":     req.Username,
 		"account_mode": req.AccountMode,
 		"role":         req.Role,
@@ -221,8 +239,13 @@ func (h *APIHandler) handleLogin(w http.ResponseWriter, r *http.Request) {
 	}
 	h.tokenMu.Unlock()
 
+	// Persist session ke SQLite (berlaku 30 hari)
+	_, _ = h.db.GetConn().Exec("INSERT OR REPLACE INTO sessions (token, user_id, username, account_mode, role, expires_at) VALUES (?, ?, ?, ?, ?, datetime('now', '+30 days'))",
+		token, userId, req.Username, mode, role)
+
 	respondJSON(w, http.StatusOK, map[string]interface{}{
 		"token":        token,
+		"user_id":      userId,
 		"username":     req.Username,
 		"account_mode": mode,
 		"role":         role,
@@ -324,6 +347,7 @@ func (h *APIHandler) handleTransactions(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if r.Method == http.MethodPost {
+		userID := r.Header.Get("X-Authenticated-ID")
 		var req struct {
 			ClientTxID string  `json:"client_tx_id"`
 			AccountID  string  `json:"account_id"`
@@ -342,9 +366,9 @@ func (h *APIHandler) handleTransactions(w http.ResponseWriter, r *http.Request) 
 		txID := fmt.Sprintf("tx_%d", time.Now().UnixNano())
 
 		_, err := h.db.GetConn().Exec(`
-			INSERT INTO transactions (id, client_tx_id, account_id, category_id, type, amount, date, note_enc)
-			VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-		`, txID, req.ClientTxID, req.AccountID, req.CategoryID, req.Type, req.Amount, req.Date, noteEnc)
+			INSERT INTO transactions (id, client_tx_id, account_id, category_id, type, amount, date, note_enc, user_id)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+		`, txID, req.ClientTxID, req.AccountID, req.CategoryID, req.Type, req.Amount, req.Date, noteEnc, userID)
 
 		if err != nil {
 			respondError(w, http.StatusInternalServerError, "ERR_DB_SAVE_500", "Gagal menyimpan transaksi: "+err.Error())
@@ -376,6 +400,7 @@ func (h *APIHandler) handleSync(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	userID := r.Header.Get("X-Authenticated-ID")
 	var req struct {
 		Batch []struct {
 			ClientTxID string  `json:"client_tx_id"`
@@ -409,9 +434,9 @@ func (h *APIHandler) handleSync(w http.ResponseWriter, r *http.Request) {
 		txID := fmt.Sprintf("tx_sync_%d", time.Now().UnixNano())
 
 		_, err := h.db.GetConn().Exec(`
-			INSERT INTO transactions (id, client_tx_id, account_id, category_id, type, amount, date, note_enc)
-			VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-		`, txID, item.ClientTxID, item.AccountID, item.CategoryID, item.Type, item.Amount, item.Date, noteEnc)
+			INSERT INTO transactions (id, client_tx_id, account_id, category_id, type, amount, date, note_enc, user_id)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+		`, txID, item.ClientTxID, item.AccountID, item.CategoryID, item.Type, item.Amount, item.Date, noteEnc, userID)
 
 		if err == nil {
 			if item.Type == "expense" {
@@ -522,8 +547,144 @@ func (h *APIHandler) handleBackupStatus(w http.ResponseWriter, r *http.Request) 
 	})
 }
 
+// GET & POST /api/v1/budgets (Manajemen Anggaran Bulanan)
+func (h *APIHandler) handleBudgets(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodGet {
+		// Dapatkan seluruh budget kategori beserta realisasi pengeluaran bulan berjalan
+		currentMonth := time.Now().Format("2006-01")
+		query := `
+			SELECT c.id, c.name, c.icon, c.color, COALESCE(b.amount, 0),
+			       COALESCE((SELECT SUM(t.amount) FROM transactions t WHERE t.category_id = c.id AND t.type = 'expense' AND strftime('%Y-%m', t.date) = ?), 0) as spent
+			FROM categories c
+			LEFT JOIN budgets b ON c.id = b.category_id
+			WHERE c.type = 'expense'
+			ORDER BY c.name ASC
+		`
+		rows, err := h.db.GetConn().Query(query, currentMonth)
+		if err != nil {
+			respondError(w, http.StatusInternalServerError, "ERR_BUDGET_READ_500", "Gagal membaca anggaran")
+			return
+		}
+		defer rows.Close()
+
+		type BudgetItem struct {
+			CategoryID string  `json:"category_id"`
+			Name       string  `json:"name"`
+			Icon       string  `json:"icon"`
+			Color      string  `json:"color"`
+			Budget     float64 `json:"budget"`
+			Spent      float64 `json:"spent"`
+		}
+
+		list := make([]BudgetItem, 0)
+		for rows.Next() {
+			var b BudgetItem
+			if err := rows.Scan(&b.CategoryID, &b.Name, &b.Icon, &b.Color, &b.Budget, &b.Spent); err == nil {
+				list = append(list, b)
+			}
+		}
+		respondJSON(w, http.StatusOK, list)
+		return
+	}
+
+	if r.Method == http.MethodPost {
+		var req struct {
+			CategoryID string  `json:"category_id"`
+			Amount     float64 `json:"amount"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.CategoryID == "" || req.Amount < 0 {
+			respondError(w, http.StatusBadRequest, "ERR_INVALID_BUDGET_400", "Data anggaran tidak valid")
+			return
+		}
+
+		budgetID := fmt.Sprintf("bdg_%s", req.CategoryID)
+		_, err := h.db.GetConn().Exec(`
+			INSERT INTO budgets (id, category_id, amount, period) VALUES (?, ?, ?, 'monthly')
+			ON CONFLICT(id) DO UPDATE SET amount = excluded.amount
+		`, budgetID, req.CategoryID, req.Amount)
+
+		if err != nil {
+			respondError(w, http.StatusInternalServerError, "ERR_BUDGET_SAVE_500", "Gagal menyimpan anggaran: "+err.Error())
+			return
+		}
+
+		respondJSON(w, http.StatusOK, map[string]interface{}{
+			"status":  "ok",
+			"message": "Anggaran kategori berhasil diperbarui ✨",
+		})
+		return
+	}
+
+	respondError(w, http.StatusMethodNotAllowed, "ERR_METHOD_405", "Metode tidak diizinkan")
+}
+
+// GET /api/v1/export (Ekspor Transaksi ke CSV)
+func (h *APIHandler) handleExport(w http.ResponseWriter, r *http.Request) {
+	currentRole := r.Header.Get("X-Authenticated-Role")
+	currentUser := r.Header.Get("X-Authenticated-User")
+
+	var query string
+	var args []interface{}
+	if currentRole == "anak" {
+		query = `
+			SELECT t.date, t.type, t.amount, c.name, a.name, t.note_enc, COALESCE(u.username, '')
+			FROM transactions t
+			LEFT JOIN accounts a ON t.account_id = a.id
+			LEFT JOIN categories c ON t.category_id = c.id
+			LEFT JOIN users u ON t.user_id = u.id
+			WHERE u.username = ?
+			ORDER BY t.date DESC
+		`
+		args = append(args, currentUser)
+	} else {
+		query = `
+			SELECT t.date, t.type, t.amount, c.name, a.name, t.note_enc, COALESCE(u.username, '')
+			FROM transactions t
+			LEFT JOIN accounts a ON t.account_id = a.id
+			LEFT JOIN categories c ON t.category_id = c.id
+			LEFT JOIN users u ON t.user_id = u.id
+			ORDER BY t.date DESC
+		`
+	}
+
+	rows, err := h.db.GetConn().Query(query, args...)
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, "ERR_EXPORT_500", "Gagal memproses ekspor")
+		return
+	}
+	defer rows.Close()
+
+	w.Header().Set("Content-Type", "text/csv; charset=utf-8")
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"dompetmungil_export_%s.csv\"", time.Now().Format("20060102_1504")))
+
+	// Write UTF-8 BOM agar rapi saat dibuka di Microsoft Excel
+	_, _ = w.Write([]byte("\xEF\xBB\xBF"))
+	_, _ = fmt.Fprintln(w, "Tanggal,Jenis,Nominal,Kategori,Akun,Pencatat,Catatan")
+
+	for rows.Next() {
+		var date, txType, catName, accName, author string
+		var amount float64
+		var noteEnc sql.NullString
+		if err := rows.Scan(&date, &txType, &amount, &catName, &accName, &noteEnc, &author); err == nil {
+			note := ""
+			if noteEnc.Valid {
+				note = h.db.DecryptNote(noteEnc.String)
+			}
+			jenis := "Pengeluaran"
+			if txType == "income" {
+				jenis = "Pemasukan"
+			}
+			// Escape double quotes
+			cleanNote := strings.ReplaceAll(note, "\"", "\"\"")
+			_, _ = fmt.Fprintf(w, "\"%s\",\"%s\",%.0f,\"%s\",\"%s\",\"%s\",\"%s\"\n",
+				date, jenis, amount, catName, accName, author, cleanNote)
+		}
+	}
+}
+
 func generateRandomToken() string {
 	b := make([]byte, 24)
 	_, _ = rand.Read(b)
 	return hex.EncodeToString(b)
 }
+

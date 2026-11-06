@@ -134,15 +134,28 @@ func (d *Database) migrate() error {
 		details TEXT,
 		timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
 	);
+
+	CREATE TABLE IF NOT EXISTS sessions (
+		token TEXT PRIMARY KEY,
+		user_id TEXT NOT NULL,
+		username TEXT NOT NULL,
+		account_mode TEXT NOT NULL,
+		role TEXT NOT NULL,
+		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+		expires_at DATETIME NOT NULL,
+		FOREIGN KEY (user_id) REFERENCES users(id)
+	);
 	`
 	_, err := d.conn.Exec(schema)
 	if err != nil {
 		return err
 	}
 
-	// Migrasi adaptif: Tambahkan kolom baru ke tabel users jika tabel sudah dibuat dari versi lama
+	// Migrasi adaptif: Tambahkan kolom baru ke tabel users & transactions jika tabel sudah dibuat dari versi lama
 	_, _ = d.conn.Exec("ALTER TABLE users ADD COLUMN account_mode TEXT NOT NULL DEFAULT 'personal'")
 	_, _ = d.conn.Exec("ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'member'")
+	_, _ = d.conn.Exec("ALTER TABLE transactions ADD COLUMN user_id TEXT")
+
 
 	// Masukkan kategori default jika belum ada
 	var count int

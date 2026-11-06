@@ -504,10 +504,23 @@ function closeOnboardingModal() {
   document.getElementById('onboardingModal').classList.remove('active');
 }
 
+function showLoginForm() {
+  document.getElementById('stepSelectAccountType').style.display = 'none';
+  document.getElementById('onboardingForm').style.display = 'none';
+  document.getElementById('loginForm').style.display = 'block';
+}
+
+function showSelectAccountType() {
+  document.getElementById('stepSelectAccountType').style.display = 'block';
+  document.getElementById('onboardingForm').style.display = 'none';
+  document.getElementById('loginForm').style.display = 'none';
+}
+
 function chooseAccountMode(mode) {
   accountMode = mode;
   document.getElementById('selectedMode').value = mode;
   document.getElementById('stepSelectAccountType').style.display = 'none';
+  document.getElementById('loginForm').style.display = 'none';
   document.getElementById('onboardingForm').style.display = 'block';
 
   if (mode === 'family') {
@@ -549,6 +562,7 @@ function formatRupiah(num) {
 
 window.switchTab = function(tab) {
   const viewHome = document.getElementById('viewHome');
+  const viewBudget = document.getElementById('viewBudget');
   const viewBank = document.getElementById('viewBank');
   const viewGuide = document.getElementById('viewGuide');
 
@@ -561,18 +575,24 @@ window.switchTab = function(tab) {
 
   // Sembunyikan semua tab secara tegas
   viewHome.style.display = 'none';
+  if (viewBudget) viewBudget.style.display = 'none';
   viewBank.style.display = 'none';
   viewGuide.style.display = 'none';
 
   // Tampilkan tab target
   if (tab === 'home') viewHome.style.display = 'block';
+  if (tab === 'budget') {
+    if (viewBudget) viewBudget.style.display = 'block';
+    loadBudgets();
+  }
   if (tab === 'bank') viewBank.style.display = 'block';
   if (tab === 'guide') viewGuide.style.display = 'block';
 
-  // Update status tombol aktif di navbar
+  // Update status tombol aktif di navbar (Home, Budget, Bank, Guide)
+  const tabKeys = ['home', 'budget', 'bank', 'guide'];
   document.querySelectorAll('.bottom-nav .nav-item').forEach((item, index) => {
     item.classList.remove('active');
-    if ((tab === 'home' && index === 0) || (tab === 'bank' && index === 1) || (tab === 'guide' && index === 2)) {
+    if (tabKeys[index] === tab) {
       item.classList.add('active');
     }
   });
@@ -679,6 +699,9 @@ async function triggerSyncWithServer() {
   }
 }
 
+let currentTxList = [];
+let currentFilter = 'all';
+
 // Memuat data overview dan transaksi dari server jika online
 async function loadServerData() {
   const headers = {};
@@ -698,13 +721,225 @@ async function loadServerData() {
       document.getElementById('totalIncomeDisplay').innerText = '+' + formatRupiah(overview.total_income);
       document.getElementById('totalExpenseDisplay').innerText = '-' + formatRupiah(overview.total_expense);
 
-      renderTransactions(txs);
+      currentTxList = txs;
+      applyTransactionFilter();
       return;
     }
   } catch (e) {
     console.log('Fallback ke data lokal:', e);
   }
   renderLocalTransactions();
+}
+
+function filterTransactions(range) {
+  currentFilter = range;
+  document.querySelectorAll('.date-filter-btn').forEach(btn => btn.classList.remove('active'));
+  const activeBtn = Array.from(document.querySelectorAll('.date-filter-btn')).find(b => b.getAttribute('onclick')?.includes(`'${range}'`));
+  if (activeBtn) activeBtn.classList.add('active');
+  applyTransactionFilter();
+}
+
+function applyTransactionFilter() {
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth(); // 0-indexed
+
+  let filtered = currentTxList.filter(tx => {
+    if (currentFilter === 'all') return true;
+    if (!tx.date) return false;
+    const d = new Date(tx.date);
+    if (isNaN(d.getTime())) return false;
+
+    if (currentFilter === 'this_month') {
+      return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
+    }
+    if (currentFilter === 'last_month') {
+      const lastMonthDate = new Date(currentYear, currentMonth - 1, 1);
+      return d.getFullYear() === lastMonthDate.getFullYear() && d.getMonth() === lastMonthDate.getMonth();
+    }
+    if (currentFilter === 'this_year') {
+      return d.getFullYear() === currentYear;
+    }
+    return true;
+  });
+
+  renderTransactions(filtered);
+  renderExpensePieChart(filtered);
+}
+
+// Render Pie Chart SVG Murni untuk Komposisi Pengeluaran
+function renderExpensePieChart(list) {
+  const svg = document.getElementById('pieChartSvg');
+  const legend = document.getElementById('pieChartLegend');
+  const totalExpenseLabel = document.getElementById('chartTotalExpense');
+  if (!svg || !legend) return;
+
+  const expenses = list.filter(t => t.type === 'expense');
+  const catTotals = {};
+  let totalExpense = 0;
+
+  expenses.forEach(t => {
+    const catName = t.category_name || 'Lainnya';
+    catTotals[catName] = (catTotals[catName] || 0) + Number(t.amount);
+    totalExpense += Number(t.amount);
+  });
+
+  if (totalExpenseLabel) {
+    totalExpenseLabel.innerText = formatRupiah(totalExpense);
+  }
+
+  if (totalExpense === 0) {
+    svg.innerHTML = `<circle cx="21" cy="21" r="15.91549430918954" fill="#F8F8FC" stroke="#ECECF0" stroke-width="4"></circle>`;
+    legend.innerHTML = `<span style="color:var(--text-muted);">Belum ada data pengeluaran pada rentang waktu ini.</span>`;
+    return;
+  }
+
+  const PALETTE = ['#FFB7B2', '#B5EAD7', '#C7CEEA', '#FFDAC1', '#E2F0CB', '#FF9AA2', '#52B788', '#F4A261'];
+  let accumulatedPercent = 0;
+  let circlesHtml = '';
+  let legendHtml = '';
+  let colorIdx = 0;
+
+  const sortedCats = Object.entries(catTotals).sort((a, b) => b[1] - a[1]);
+
+  sortedCats.forEach(([cat, amt]) => {
+    const percent = (amt / totalExpense) * 100;
+    const color = PALETTE[colorIdx % PALETTE.length];
+    colorIdx++;
+
+    const strokeDasharray = `${percent.toFixed(2)} ${(100 - percent).toFixed(2)}`;
+    const strokeDashoffset = (-accumulatedPercent).toFixed(2);
+    accumulatedPercent += percent;
+
+    circlesHtml += `<circle cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="${color}" stroke-width="4" stroke-dasharray="${strokeDasharray}" stroke-dashoffset="${strokeDashoffset}"></circle>`;
+
+    legendHtml += `
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <span style="display:flex; align-items:center; gap:5px;">
+          <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${color};"></span>
+          <span style="color:var(--text-primary); font-weight:600;">${escapeHtml(cat)}</span>
+        </span>
+        <span style="color:var(--text-muted); font-size:0.7rem;">${percent.toFixed(0)}% (${formatRupiah(amt)})</span>
+      </div>
+    `;
+  });
+
+  svg.innerHTML = circlesHtml;
+  legend.innerHTML = legendHtml;
+}
+
+// Ekspor Transaksi ke CSV via browser
+async function exportTransactionsCSV() {
+  if (authToken) {
+    try {
+      const res = await fetch('/api/v1/export', {
+        headers: { 'X-Auth-Token': authToken }
+      });
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `dompetmungil_export_${new Date().toISOString().slice(0, 10)}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        return;
+      }
+    } catch (e) {
+      console.warn('Ekspor server gagal, fallback ke ekspor lokal IndexedDB:', e);
+    }
+  }
+
+  // Fallback ekspor client-side dari data IndexedDB lokal
+  const txs = currentTxList.length > 0 ? currentTxList : (await getAllLocalTx());
+  if (txs.length === 0) {
+    alert('Belum ada transaksi untuk diekspor!');
+    return;
+  }
+
+  let csv = '\uFEFFTanggal,Jenis,Nominal,Kategori,Catatan\n';
+  txs.forEach(t => {
+    const jenis = t.type === 'income' ? 'Pemasukan' : 'Pengeluaran';
+    const note = (t.note || '').replace(/"/g, '""');
+    csv += `"${t.date}","${jenis}",${t.amount},"${t.category_name || t.category_id || ''}","${note}"\n`;
+  });
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `dompetmungil_lokal_${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+// Manajemen Anggaran (Budgeting)
+async function loadBudgets() {
+  const container = document.getElementById('budgetListContainer');
+  if (!container) return;
+
+  const headers = {};
+  if (authToken) headers['X-Auth-Token'] = authToken;
+
+  try {
+    const res = await fetch('/api/v1/budgets', { headers });
+    if (res.ok) {
+      const budgets = await res.json();
+      let totalBudget = 0;
+      let totalSpent = 0;
+
+      container.innerHTML = budgets.map(b => {
+        totalBudget += b.budget;
+        totalSpent += b.spent;
+        const percent = b.budget > 0 ? Math.min(100, (b.spent / b.budget) * 100) : 0;
+        const isOver = b.budget > 0 && b.spent > b.budget;
+        const barColor = isOver ? '#FF9AA2' : (percent > 80 ? '#FFDAC1' : '#B5EAD7');
+
+        return `
+          <div style="background:#fff; border-radius:16px; padding:14px; box-shadow:var(--shadow-soft);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <strong style="font-size:0.9rem; color:var(--text-primary);">${escapeHtml(b.name)}</strong>
+              <span style="font-size:0.75rem; color:${isOver ? '#C62828' : 'var(--text-muted)'}; font-weight:700;">
+                ${isOver ? '⚠️ Overbudget!' : percent.toFixed(0) + '%'}
+              </span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--text-muted); margin-bottom:6px;">
+              <span>Terpakai: ${formatRupiah(b.spent)}</span>
+              <span>Batas: ${b.budget > 0 ? formatRupiah(b.budget) : 'Belum diatur'}</span>
+            </div>
+            <div style="width:100%; height:8px; background:#F0F0F5; border-radius:10px; overflow:hidden;">
+              <div style="width:${percent}%; height:100%; background:${barColor}; border-radius:10px; transition:width 0.4s ease;"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      const overallPercent = totalBudget > 0 ? Math.min(100, (totalSpent / totalBudget) * 100) : 0;
+      document.getElementById('budgetOverallText').innerText = `${formatRupiah(totalSpent)} / ${formatRupiah(totalBudget)}`;
+      const overallBar = document.getElementById('budgetOverallBar');
+      if (overallBar) {
+        overallBar.style.width = overallPercent + '%';
+        overallBar.style.background = totalSpent > totalBudget && totalBudget > 0 ? '#FF9AA2' : '#84C5B0';
+      }
+    }
+  } catch (err) {
+    console.warn('Gagal memuat anggaran:', err);
+    container.innerHTML = `<p style="text-align:center; color:var(--text-muted); padding:20px;">Fitur anggaran memerlukan koneksi ke server STB.</p>`;
+  }
+}
+
+function openSetBudgetModal() {
+  const select = document.getElementById('budgetCategorySelect');
+  if (select) {
+    select.innerHTML = (CATEGORIES.expense || []).map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+  }
+  document.getElementById('budgetModal').classList.add('active');
+}
+
+function closeBudgetModal() {
+  document.getElementById('budgetModal').classList.remove('active');
 }
 
 // Render data transaksi
@@ -729,7 +964,7 @@ function renderTransactions(list) {
         </div>
         <div>
           <div class="tx-title">${escapeHtml(tx.note || tx.category_name || 'Transaksi')}</div>
-          <div class="tx-meta">${tx.date} • ${tx.account_name || 'Dompet'}</div>
+          <div class="tx-meta">${tx.date} • ${tx.account_name || 'Dompet'} ${tx.author ? '• 👤 ' + escapeHtml(tx.author) : ''}</div>
         </div>
       </div>
       <div class="tx-amount ${tx.type}">
@@ -741,6 +976,7 @@ function renderTransactions(list) {
 
 async function renderLocalTransactions() {
   const localList = await getAllLocalTx();
+  currentTxList = localList;
   let income = 0, expense = 0;
   localList.forEach(item => {
     if (item.type === 'income') income += Number(item.amount);
@@ -749,12 +985,12 @@ async function renderLocalTransactions() {
   document.getElementById('totalBalanceDisplay').innerText = formatRupiah(income - expense);
   document.getElementById('totalIncomeDisplay').innerText = '+' + formatRupiah(income);
   document.getElementById('totalExpenseDisplay').innerText = '-' + formatRupiah(expense);
-  renderTransactions(localList);
+  applyTransactionFilter();
 }
 
 function escapeHtml(text) {
   const div = document.createElement('div');
-  div.innerText = text;
+  div.innerText = text || '';
   return div.innerHTML;
 }
 
@@ -807,6 +1043,77 @@ document.addEventListener('DOMContentLoaded', async () => {
       alert('Tidak dapat terhubung ke server STB.');
     }
   });
+
+  // Login Form Submit (Masuk akun yang sudah ada)
+  const loginForm = document.getElementById('loginForm');
+  if (loginForm) {
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const u = document.getElementById('loginUsername').value.trim();
+      const p = document.getElementById('loginPassword').value;
+
+      try {
+        const res = await fetch('/api/v1/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: u, password: p })
+        });
+        const data = await res.json();
+        if (res.ok && data.token) {
+          authToken = data.token;
+          userRole = data.role || 'personal';
+          accountMode = data.account_mode || 'personal';
+          localStorage.setItem('kk_token', authToken);
+          localStorage.setItem('dm_role', userRole);
+          localStorage.setItem('dm_mode', accountMode);
+          document.getElementById('onboardingModal').classList.remove('active');
+          updateUserBadge();
+          triggerSyncWithServer();
+          alert(`🎉 Selamat datang kembali, ${data.username}!`);
+        } else {
+          alert('❌ ' + (data.message || 'Username atau password salah'));
+        }
+      } catch (err) {
+        alert('⚠️ Gagal terhubung ke server STB.');
+      }
+    });
+  }
+
+  // Budget Form Submit (Simpan batas anggaran kategori)
+  const budgetForm = document.getElementById('budgetForm');
+  if (budgetForm) {
+    budgetForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const cat = document.getElementById('budgetCategorySelect').value;
+      const amt = parseFloat(document.getElementById('budgetAmountInput').value);
+
+      if (!authToken) {
+        alert('Harap masuk/daftar akun terlebih dahulu.');
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/v1/budgets', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Auth-Token': authToken
+          },
+          body: JSON.stringify({ category_id: cat, amount: amt })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          closeBudgetModal();
+          loadBudgets();
+          alert('✨ Batas anggaran berhasil disimpan!');
+        } else {
+          alert(data.message || 'Gagal menyimpan anggaran');
+        }
+      } catch (err) {
+        alert('⚠️ Gagal menyimpan anggaran ke server STB.');
+      }
+    });
+  }
 
   // Inisialisasi formulir Google Client ID jika sudah tersimpan
   const savedClientId = getGoogleClientId();
@@ -903,7 +1210,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Pasang event listener langsung untuk tombol navigasi bawah
   const navBtns = document.querySelectorAll('.bottom-nav .nav-item');
-  if (navBtns.length >= 3) {
+  if (navBtns.length >= 4) {
+    navBtns[0].addEventListener('click', (e) => { e.preventDefault(); window.switchTab('home'); });
+    navBtns[1].addEventListener('click', (e) => { e.preventDefault(); window.switchTab('budget'); });
+    navBtns[2].addEventListener('click', (e) => { e.preventDefault(); window.switchTab('bank'); });
+    navBtns[3].addEventListener('click', (e) => { e.preventDefault(); window.switchTab('guide'); });
+  } else if (navBtns.length >= 3) {
     navBtns[0].addEventListener('click', (e) => { e.preventDefault(); window.switchTab('home'); });
     navBtns[1].addEventListener('click', (e) => { e.preventDefault(); window.switchTab('bank'); });
     navBtns[2].addEventListener('click', (e) => { e.preventDefault(); window.switchTab('guide'); });
