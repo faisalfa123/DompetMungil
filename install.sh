@@ -51,8 +51,8 @@ prompt_input() {
     local default_value="$2"
     local user_val=""
 
-    echo -e "\n${CYAN}▶ ${prompt_text}${NC}"
-    echo -ne "${YELLOW}  [Tekan Enter untuk default: ${WHITE}${BOLD}${default_value}${YELLOW}]: ${NC}"
+    echo -e "\n${CYAN}▶ ${prompt_text}${NC}" >&2
+    echo -ne "${YELLOW}  [Tekan Enter untuk default: ${WHITE}${BOLD}${default_value}${YELLOW}]: ${NC}" >&2
     read -r user_val < "$TTY_IN" || user_val=""
     if [ -z "$user_val" ]; then
         echo "$default_value"
@@ -66,11 +66,11 @@ prompt_yesno() {
     local default_choice="$2" # y or n
     local choice=""
 
-    echo -e "\n${CYAN}▶ ${prompt_text}${NC}"
+    echo -e "\n${CYAN}▶ ${prompt_text}${NC}" >&2
     if [ "$default_choice" = "y" ]; then
-        echo -ne "${YELLOW}  (Y/n) [Default: Ya]: ${NC}"
+        echo -ne "${YELLOW}  (Y/n) [Default: Ya]: ${NC}" >&2
     else
-        echo -ne "${YELLOW}  (y/N) [Default: Tidak]: ${NC}"
+        echo -ne "${YELLOW}  (y/N) [Default: Tidak]: ${NC}" >&2
     fi
     read -r choice < "$TTY_IN" || choice=""
     choice=$(echo "$choice" | tr '[:upper:]' '[:lower:]')
