@@ -241,7 +241,7 @@
       </section>
 
       <!-- Mini Shortcut Fitur Pintar -->
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px; padding: 0 20px;">
+      <div id="smartShortcutsGrid" style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px; padding: 0 20px;">
         <button type="button" class="btn-cute" onclick="switchTab('bills')" style="padding:8px 10px; font-size:0.75rem; justify-content:center; gap:6px;">
           <span>📌</span> Tagihan Bulanan
         </button>
@@ -251,7 +251,7 @@
       </div>
 
       <!-- Ringkasan Komposisi Pengeluaran (Pie Chart SVG Murni) -->
-      <section style="background:#fff; border-radius:18px; padding:16px; margin:0 20px 16px; box-shadow:var(--shadow-soft);">
+      <section id="pieChartSection" style="background:#fff; border-radius:18px; padding:16px; margin:0 20px 16px; box-shadow:var(--shadow-soft);">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
           <strong style="font-size:0.85rem; color:var(--text-primary);">📊 Komposisi Pengeluaran</strong>
           <span id="chartTotalExpense" style="font-size:0.8rem; font-weight:700; color:var(--danger-pastel);">Rp 0</span>
@@ -640,7 +640,8 @@
       <div class="spotlight-tooltip-footer">
         <button class="btn-cute" onclick="stopDashboardTour()" style="padding:6px 10px; font-size:0.75rem;">Lewati</button>
         <div style="display:flex; align-items:center; gap:8px;">
-          <span id="tourStepIndicator" style="font-size:0.75rem; font-weight:700; color:var(--text-muted);">1 / 5</span>
+          <button class="btn-cute" id="btnTourPrev" onclick="prevTourStep()" style="padding:6px 10px; font-size:0.75rem; display:none;">⬅️</button>
+          <span id="tourStepIndicator" style="font-size:0.75rem; font-weight:700; color:var(--text-muted);">1 / 14</span>
           <button class="btn-cute primary" id="btnTourNext" onclick="nextTourStep()" style="padding:6px 14px; font-size:0.75rem;">Lanjut ➡️</button>
         </div>
       </div>
@@ -853,7 +854,8 @@
         </div>
         <div class="form-group">
           <label class="form-label">Batas Anggaran Bulanan (Rp)</label>
-          <input type="number" id="budgetAmountInput" class="form-input" placeholder="contoh: 1500000" min="0" required>
+          <input type="text" inputmode="numeric" id="budgetAmountInput" class="form-input" placeholder="contoh: 1.500 RB / 2.000.000" required autocomplete="off" oninput="onNominalInput(this, 'budgetAmountGhostPreview')">
+          <div id="budgetAmountGhostPreview" style="font-size:0.78rem; font-weight:700; color:#E76F51; margin-top:6px; min-height:18px;"></div>
         </div>
         <button type="submit" class="btn-cute primary" style="width:100%; padding:14px; margin-top:8px;">
           Simpan Anggaran ✨
@@ -874,7 +876,8 @@
         <input type="hidden" id="txEditClientTxId" value="">
         <div class="form-group">
           <label class="form-label">Nominal (Rp)</label>
-          <input type="number" id="formAmount" class="form-input" placeholder="0" required min="100">
+          <input type="text" inputmode="numeric" id="formAmount" class="form-input" placeholder="contoh: 1.000 RB / 50.000" required autocomplete="off" oninput="onNominalInput(this, 'formAmountGhostPreview')">
+          <div id="formAmountGhostPreview" style="font-size:0.78rem; font-weight:700; color:#E76F51; margin-top:6px; min-height:18px;"></div>
         </div>
         <div class="form-group">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">

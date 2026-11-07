@@ -547,55 +547,191 @@ function selectMascotTheme(mascotId, name, accentColor) {
   document.documentElement.style.setProperty('--pink-pastel', accentColor);
 }
 
-// Logika Panduan Game Spotlight di Dashboard (RPG/Game-Style Tour)
+// 🌸 Sistem Ghost Typing & Auto-Format Nominal Rupiah (Otomatis: 1000 RB -> 1.000 RB / 1.000.000)
+function parseNominalToNumber(rawStr) {
+  if (!rawStr) return 0;
+  let s = String(rawStr).trim().toLowerCase();
+
+  // Bersihkan karakter awalan Rp, spasi
+  s = s.replace(/^rp\s*/i, '').trim();
+
+  // Cek pengali ribuan/jutaan khas ketikan cepat Indonesia
+  let multiplier = 1;
+  if (/(\d+[\.,]?\d*)\s*(jt|juta)\b/i.test(s)) {
+    multiplier = 1000000;
+    s = s.replace(/(jt|juta)/gi, '').trim();
+  } else if (/(\d+[\.,]?\d*)\s*(rb|ribu|k)\b/i.test(s)) {
+    multiplier = 1000;
+    s = s.replace(/(rb|ribu|k)/gi, '').trim();
+  }
+
+  // Jika ada multiplier (rb/jt)
+  if (multiplier > 1) {
+    // Jika formatnya ribuan bertitik sebelum kata 'rb' (misal: "1.000 rb" => 1000 * 1000 = 1.000.000)
+    if (/^\d{1,3}(\.\d{3})+$/.test(s)) {
+      s = s.replace(/\./g, '');
+    } else {
+      // Jika formatnya desimal (misal: "2.5 jt" atau "2,5 jt")
+      s = s.replace(/,/g, '.');
+    }
+    const num = parseFloat(s) || 0;
+    return Math.round(num * multiplier);
+  }
+
+  // Untuk angka murni biasa (misal: 1.000.000)
+  s = s.replace(/\./g, '').replace(/,/g, '.').trim();
+  const num = parseFloat(s) || 0;
+  return Math.round(num);
+}
+
+function formatGhostTypingString(num) {
+  if (!num || isNaN(num) || num <= 0) return '';
+  return num.toLocaleString('id-ID');
+}
+
+function spellIndonesianRupiah(num) {
+  if (!num || isNaN(num) || num <= 0) return '';
+  if (num >= 1000000000) {
+    const m = (num / 1000000000).toFixed(1).replace('.0', '');
+    return `Rp ${num.toLocaleString('id-ID')} (${m} Miliar Rupiah ✨)`;
+  }
+  if (num >= 1000000) {
+    const jt = (num / 1000000).toFixed(1).replace('.0', '');
+    return `Rp ${num.toLocaleString('id-ID')} (${jt} Juta Rupiah ✨)`;
+  }
+  if (num >= 1000) {
+    const rb = (num / 1000).toFixed(0);
+    return `Rp ${num.toLocaleString('id-ID')} (${rb} Ribu Rupiah ✨)`;
+  }
+  return `Rp ${num.toLocaleString('id-ID')} Rupiah`;
+}
+
+// Event handler saat user mengetik di input nominal
+function onNominalInput(inputEl, previewId) {
+  if (!inputEl) return;
+  const raw = inputEl.value;
+  const previewEl = document.getElementById(previewId);
+
+  // Jika user mengetik angka murni tanpa suffix, kita auto format titik ribuan di posisi kursor
+  const hasSuffix = /(rb|ribu|k|jt|juta)/i.test(raw);
+  const parsed = parseNominalToNumber(raw);
+
+  if (!hasSuffix && parsed > 0 && /^\d[\d\.]*$/.test(raw)) {
+    const formatted = formatGhostTypingString(parsed);
+    if (formatted !== raw && !raw.endsWith('.')) {
+      inputEl.value = formatted;
+    }
+  } else if (hasSuffix && parsed > 0) {
+    // Jika ketik "1000 rb" -> rapikan angka sebelum suffix jadi "1.000 RB"
+    const match = raw.match(/^([0-9\.\,]+)\s*(rb|ribu|k|jt|juta)$/i);
+    if (match) {
+      const numPart = match[1].replace(/\./g, '');
+      const suffixPart = match[2].toUpperCase();
+      if (/^\d+$/.test(numPart)) {
+        const formattedNum = Number(numPart).toLocaleString('id-ID');
+        const candidate = `${formattedNum} ${suffixPart}`;
+        if (candidate !== raw && inputEl.value !== candidate) {
+          inputEl.value = candidate;
+        }
+      }
+    }
+  }
+
+  if (previewEl) {
+    if (parsed > 0) {
+      previewEl.innerText = `💡 Terbaca: ${spellIndonesianRupiah(parsed)}`;
+      previewEl.style.display = 'block';
+    } else {
+      previewEl.innerText = '';
+    }
+  }
+}
+
+// Logika Panduan Game Spotlight di Seluruh Dashboard & Tab Fitur (14 Langkah Menyeluruh)
 const TOUR_STEPS = [
   {
     tab: 'home',
     target: '#mascotAvatarContainer',
-    title: 'Pilih Teman Finansialmu 🐾',
-    desc: 'Sentuh avatar ini kapan saja untuk memilih maskot (Kucing, Shiba, Capybara, Usagi, Panda). Seluruh warna tema aplikasi akan ikut berganti manis!'
+    title: '1. Maskot & Tema Lucu 🐾',
+    desc: 'Sentuh avatar ini kapan saja untuk memilih 5 maskot imut (Kucing, Shiba Inu, Capybara, Kelinci Usagi, Panda). Warna tema seluruh aplikasi akan otomatis ikut berganti!'
   },
   {
     tab: 'home',
     target: '.card-wallet',
-    title: 'Kartu Dompet & 3 Saldo Keluarga 💰',
-    desc: 'Di sini Anda dapat melihat Total Saldo Keseluruhan (Suami + Istri), Saldo Saya, dan Saldo Pasangan secara transparan, serta mengatur tanggal gajian rutin dengan 1 sentuhan.'
+    title: '2. Kartu Dompet & 3 Saldo Keluarga 💰',
+    desc: 'Mencakup 3 saldo transparan: Total Saldo Bersama (Suami + Istri), Saldo Saya, dan Saldo Pasangan. Lengkap dengan jadwal tanggal gajian rutin.'
   },
   {
     tab: 'home',
     target: '.quick-actions-bar',
-    title: 'Pencatatan Secepat Kilat 🌸',
-    desc: 'Klik Catat Keluar atau Catat Masuk. Data dienkripsi AES-256 dan tetap tersimpan aman di HP meski server STB sedang offline.'
+    title: '3. Tombol Catat Cepat (Keluar & Masuk) 🌸',
+    desc: 'Catat pengeluaran atau pemasukan dalam 5 detik! Dilengkapi ghost-typing otomatis: ketik "1000 rb" langsung terformat Rp 1.000.000 dengan aman.'
+  },
+  {
+    tab: 'home',
+    target: '#smartShortcutsGrid',
+    title: '4. Shortcut Tagihan & Hutang Pintar 📌',
+    desc: 'Akses cepat ke checklist Tagihan Bulanan (listrik, wifi, PDAM) dan pencatatan Hutang/Piutang keluarga agar tidak ada cicilan yang terlupakan.'
+  },
+  {
+    tab: 'home',
+    target: '#pieChartSection',
+    title: '5. Grafik Komposisi Pengeluaran 📊',
+    desc: 'Pie chart SVG interaktif yang menampilkan persentase alokasi uang belanja bulan ini berdasarkan kategori (makan, belanja, tagihan, dll).'
   },
   {
     tab: 'home',
     target: '#authorTabAll',
-    title: 'Tab Riwayat Suami & Istri 👨‍👩‍👧‍👦',
-    desc: 'Gunakan tab filter untuk melihat "Semua", "Catatan Saya", atau "Catatan Pasangan". Transaksi mutasi Gmail bersifat permanen dan tidak bisa dihapus demi akuntabilitas.'
+    title: '6. Filter Riwayat Suami & Istri 👨‍👩‍👧‍👦',
+    desc: 'Lihat catatan belanja bersama, catatan suami saja, atau catatan istri saja. Mutasi dari Gmail bersifat permanen dan tidak dapat dihapus demi kejujuran finansial.'
   },
   {
     tab: 'budget',
     target: '#viewBudget',
-    title: 'Anggaran Bulanan Bersama 🎯',
-    desc: 'Anggaran bulanan memerlukan kesepakatan bersama. Penambahan atau pengurangan kategori/batas anggaran memerlukan persetujuan dari akun Suami atau Istri.'
+    title: '7. Tab Anggaran Bulanan Bersama 🎯',
+    desc: 'Atur batas maksimal pengeluaran per kategori. Di DompetMungil, penambahan atau perubahan batas kategori wajib disetujui bersama oleh akun Suami & Istri.'
+  },
+  {
+    tab: 'budget',
+    target: '#budgetProposalContainer',
+    title: '8. Sistem Izin & Persetujuan Pasangan 💌',
+    desc: 'Jika Suami mengusulkan perubahan anggaran, notifikasi persetujuan muncul di akun Istri untuk disetujui atau ditolak bersama.'
   },
   {
     tab: 'savings',
     target: '#viewSavings',
-    title: 'Celengan Ayam Impian 🐔',
-    desc: 'Nabung untuk tujuan masa depan keluarga (liburan, kurban, dana darurat) dengan tradisi celengan ayam khas Indonesia!'
+    title: '9. Tab Celengan Ayam Impian 🐔',
+    desc: 'Wujudkan cita-cita masa depan (liburan, kurban, beli motor, laptop anak) dengan celengan ayam jago khas budaya Indonesia!'
+  },
+  {
+    tab: 'savings',
+    target: '#savingsGoalsListContainer',
+    title: '10. Isi & Pantau Celengan Ayam 🪙',
+    desc: 'Setiap kali ada sisa uang belanja, klik "Isi Celengan" untuk memasukkan koin tabungan hingga persentase impian tercapai 100%!'
+  },
+  {
+    tab: 'bills',
+    target: '#viewBills',
+    title: '11. Tagihan Rutin & Pengingat Bulanan 💡',
+    desc: 'Daftar checklist tagihan rutin rumah tangga (PLN, WiFi, SPP). Sekali klik "Bayar", nominal otomatis tercatat rapi ke pengeluaran dompet.'
+  },
+  {
+    tab: 'debts',
+    target: '#viewDebts',
+    title: '12. Catatan Hutang & Piutang 🤝',
+    desc: 'Pantau siapa yang meminjam uang atau pinjaman yang harus dikembalikan lengkap dengan nominal dan status pelunasan.'
   },
   {
     tab: 'bank',
     target: '#viewBank',
-    title: 'Bank Mutasi & Gmail Sync 🏦',
-    desc: 'Sinkronkan mutasi bank via email notifikasi Gmail resmi atau paste teks mutasi SMS/m-Banking secara otomatis dan aman.'
+    title: '13. Integrasi Mutasi Bank & Gmail 🏦',
+    desc: 'Koneksikan notifikasi mutasi m-Banking via Google OAuth resmi atau paste teks SMS mutasi. Data langsung diproses dan dienkripsi AES-256.'
   },
   {
     tab: 'guide',
     target: '#viewGuide',
-    title: 'Buku Panduan & Bantuan 📖',
-    desc: 'Buka kapan saja untuk membaca tips pengelolaan uang rumah tangga, ganti mode akun, atau mengulang tur aplikasi ini!'
+    title: '14. Panduan & Kunci Layar PIN 📖',
+    desc: 'Temukan tips pengelolaan uang, aktifkan kunci PIN 4 digit untuk privasi HP, atau ulangi tur aplikasi ini kapan saja!'
   }
 ];
 
@@ -625,6 +761,13 @@ function nextTourStep() {
   }
 }
 
+function prevTourStep() {
+  if (currentTourIndex > 0) {
+    currentTourIndex--;
+    renderTourStep();
+  }
+}
+
 function renderTourStep() {
   const step = TOUR_STEPS[currentTourIndex];
   if (step.tab) {
@@ -637,14 +780,15 @@ function renderTourStep() {
   const desc = document.getElementById('tourTooltipDesc');
   const indicator = document.getElementById('tourStepIndicator');
   const btnNext = document.getElementById('btnTourNext');
+  const btnPrev = document.getElementById('btnTourPrev');
 
   if (!highlight || !tooltip) return;
 
   setTimeout(() => {
-    const targetEl = document.querySelector(step.target);
-    if (!targetEl) {
-      console.warn('Target tour tidak ditemukan:', step.target);
-      return;
+    let targetEl = document.querySelector(step.target);
+    if (!targetEl || targetEl.offsetParent === null) {
+      // Fallback ke kontainer view tab jika elemen kecil belum ter-render
+      targetEl = document.querySelector('.app-container') || document.body;
     }
 
     targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -652,19 +796,25 @@ function renderTourStep() {
     setTimeout(() => {
       const rect = targetEl.getBoundingClientRect();
       const padding = 8;
-      
-      highlight.style.top = `${rect.top - padding + window.scrollY}px`;
-      highlight.style.left = `${rect.left - padding + window.scrollX}px`;
-      highlight.style.width = `${rect.width + padding * 2}px`;
-      highlight.style.height = `${rect.height + padding * 2}px`;
 
+      // Gunakan viewport coordinate murni (fixed position)
+      highlight.style.position = 'fixed';
+      highlight.style.top = `${Math.max(4, rect.top - padding)}px`;
+      highlight.style.left = `${Math.max(4, rect.left - padding)}px`;
+      highlight.style.width = `${Math.min(window.innerWidth - 8, rect.width + padding * 2)}px`;
+      highlight.style.height = `${Math.min(window.innerHeight - 8, rect.height + padding * 2)}px`;
+
+      tooltip.style.position = 'fixed';
       const tooltipWidth = Math.min(320, window.innerWidth - 32);
-      let tooltipTop = rect.bottom + 16 + window.scrollY;
       let tooltipLeft = Math.max(16, (window.innerWidth - tooltipWidth) / 2);
 
-      if (rect.bottom + 180 > window.innerHeight) {
-        tooltipTop = Math.max(10, rect.top - 180 + window.scrollY);
+      // Cek apakah diletakkan di bawah atau di atas
+      let tooltipTop = rect.bottom + 14;
+      if (tooltipTop + 190 > window.innerHeight) {
+        tooltipTop = Math.max(16, rect.top - 200);
       }
+      // Batas aman dalam layar
+      tooltipTop = Math.max(16, Math.min(window.innerHeight - 220, tooltipTop));
 
       tooltip.style.top = `${tooltipTop}px`;
       tooltip.style.left = `${tooltipLeft}px`;
@@ -674,6 +824,9 @@ function renderTourStep() {
       desc.innerText = step.desc;
       indicator.innerText = `${currentTourIndex + 1} / ${TOUR_STEPS.length}`;
       btnNext.innerText = currentTourIndex === TOUR_STEPS.length - 1 ? 'Selesai ✨' : 'Lanjut ➡️';
+      if (btnPrev) {
+        btnPrev.style.display = currentTourIndex > 0 ? 'inline-flex' : 'none';
+      }
     }, 120);
   }, 100);
 }
@@ -1853,6 +2006,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('onboardingModal').classList.remove('active');
         updateUserBadge();
         triggerSyncWithServer();
+
+        // Mulai tour aplikasi otomatis setelah registrasi akun
+        setTimeout(() => {
+          showCuteAlert(`Selamat datang di DompetMungil, ${username}! 🌸\n\nMari kita mulai tur interaktif pengenalan seluruh fitur aplikasi agar Anda dan pasangan dapat mengelola keuangan dengan nyaman!`, 'Akun Berhasil Dibuat ✨')
+            .then(() => {
+              startDashboardTour();
+            });
+        }, 500);
       } else {
         alert(data.message || 'Gagal mendaftar');
       }
@@ -1886,7 +2047,16 @@ document.addEventListener('DOMContentLoaded', async () => {
           document.getElementById('onboardingModal').classList.remove('active');
           updateUserBadge();
           triggerSyncWithServer();
-          alert(`🎉 Selamat datang kembali, ${data.username}!`);
+
+          // Jika tur belum pernah diselesaikan, jalankan tur
+          const tourCompleted = localStorage.getItem('dm_tour_completed');
+          if (!tourCompleted) {
+            setTimeout(() => {
+              startDashboardTour();
+            }, 600);
+          } else {
+            alert(`🎉 Selamat datang kembali, ${data.username}!`);
+          }
         } else {
           alert('❌ ' + (data.message || 'Username atau password salah'));
         }
@@ -1904,10 +2074,16 @@ document.addEventListener('DOMContentLoaded', async () => {
       const catSelect = document.getElementById('budgetCategorySelect');
       const cat = catSelect ? catSelect.value : '';
       const catName = catSelect && catSelect.selectedOptions && catSelect.selectedOptions[0] ? catSelect.selectedOptions[0].innerText : cat;
-      const amt = parseFloat(document.getElementById('budgetAmountInput').value);
+      const rawAmt = document.getElementById('budgetAmountInput').value;
+      const amt = parseNominalToNumber(rawAmt);
 
       if (!authToken) {
         alert('Harap masuk/daftar akun terlebih dahulu.');
+        return;
+      }
+
+      if (!amt || isNaN(amt) || amt < 0) {
+        alert('Harap masukkan nominal batas anggaran yang valid (contoh: 1.500 rb atau 1.500.000).');
         return;
       }
 
@@ -2048,7 +2224,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     e.preventDefault();
     const editId = document.getElementById('txEditClientTxId').value;
     const type = document.getElementById('formType').value;
-    const amount = parseFloat(document.getElementById('formAmount').value);
+    const rawAmount = document.getElementById('formAmount').value;
+    const amount = parseNominalToNumber(rawAmount);
+
+    if (!amount || isNaN(amount) || amount <= 0) {
+      alert('Harap masukkan nominal transaksi yang valid (contoh: 50.000 atau 50 rb).');
+      return;
+    }
+
     const category = document.getElementById('formCategory').value;
     const account = document.getElementById('formAccount').value;
     const note = document.getElementById('formNote').value;
@@ -2285,6 +2468,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   setInterval(() => {
     triggerSyncWithServer();
   }, 30000);
+
+  // Cek apakah user pertama kali mendaftar/login (jika belum, buka wizard pendaftaran)
+  checkUserOnboarding();
 
   // Jalankan sync pertama saat buka aplikasi
   triggerSyncWithServer();
