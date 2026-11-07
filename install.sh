@@ -137,7 +137,7 @@ elif [ "$INSTALLED_VERSION" != "$CURRENT_VERSION" ]; then
 fi
 
 IS_FRESH_INSTALL=1
-SAVED_PORT="8080"
+SAVED_PORT="1234"
 SAVED_ENABLE_BACKUP="no"
 SAVED_RCLONE_REMOTE=""
 
@@ -145,7 +145,7 @@ if [ -n "$INSTALLED_VERSION" ] && [ "$INSTALLED_VERSION" = "$CURRENT_VERSION" ] 
     IS_FRESH_INSTALL=0
     # shellcheck disable=SC1091
     source "$CONFIG_DIR/config.env"
-    SAVED_PORT="${PORT:-8080}"
+    SAVED_PORT="${PORT:-1234}"
     SAVED_ENABLE_BACKUP="${ENABLE_BACKUP:-no}"
     SAVED_RCLONE_REMOTE="${RCLONE_REMOTE:-}"
     echo -e "\n${GREEN}✔ Terdeteksi instalasi aktif ${INSTALLED_VERSION}. Menggunakan konfigurasi yang ada.${NC}"
@@ -164,7 +164,7 @@ elif [ "$LEGACY_DETECTED" -eq 1 ]; then
     if [ -f "$CONFIG_DIR/config.env" ]; then
         # shellcheck disable=SC1091
         source "$CONFIG_DIR/config.env" 2>/dev/null || true
-        SAVED_PORT="${PORT:-8080}"
+        SAVED_PORT="${PORT:-1234}"
         SAVED_ENABLE_BACKUP="${ENABLE_BACKUP:-no}"
         SAVED_RCLONE_REMOTE="${RCLONE_REMOTE:-}"
     fi

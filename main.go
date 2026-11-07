@@ -48,7 +48,7 @@ func main() {
 	appDir := getAppDirectory()
 
 	// Parse CLI flags
-	port := flag.Int("port", 8080, "Port kustom server PWA")
+	port := flag.Int("port", 1234, "Port kustom server PWA")
 	dataDir := flag.String("data-dir", "", "Direktori penyimpanan database dan kunci rahasia (kosong = autodetect)")
 	flag.Parse()
 
