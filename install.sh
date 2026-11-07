@@ -1,45 +1,23 @@
 #!/bin/bash
 # ==============================================================================
-#  WIZARD INSTALASI TUI: CATATAN KEUANGAN KELUARGA (CUTE & ULTRA-LIGHT PWA)
+#  INSTALLER MODERN: CATATAN KEUANGAN KELUARGA (CUTE & ULTRA-LIGHT PWA)
 #  Target Hardware: Odroid C2 / STB HG680P (Amlogic S905X / RAM 1-2GB)
 #  Lisensi: GNU General Public License v3.0 (GPL-3.0)
 # ==============================================================================
 
 set -e
 
-# ------------------------------------------------------------------------------
-# 0. Penanganan Khusus Pipe Installer (curl -sSL ... | sudo bash)
-# Jika script dipanggil via pipe tanpa tty di stdin, unduh ke file sementara di /tmp
-# lalu jalankan ulang dengan stdin terhubung langsung ke terminal fisik (/dev/tty).
-# Hal ini menjamin Whiptail/Dialog menerima input tombol (Enter/Tab) secara normal.
-# ------------------------------------------------------------------------------
-if [ -z "$DOMPETMUNGIL_SELF_RUN" ] && [ ! -t 0 ]; then
-    TMP_INSTALLER="/tmp/dompetmungil_installer_$$.sh"
-    export DOMPETMUNGIL_SELF_RUN=1
-    if command -v curl >/dev/null 2>&1; then
-        curl -fsSL "https://raw.githubusercontent.com/faisalfa123/DompetMungil/main/install.sh" -o "$TMP_INSTALLER" 2>/dev/null || cat > "$TMP_INSTALLER"
-    else
-        cat > "$TMP_INSTALLER"
-    fi
-    chmod 755 "$TMP_INSTALLER"
-    if [ -e /dev/tty ]; then
-        exec bash "$TMP_INSTALLER" "$@" </dev/tty
-    else
-        exec bash "$TMP_INSTALLER" "$@"
-    fi
-fi
-
 CURRENT_VERSION="V2.00.1 BETA"
-
-# Bersihkan file installer sementara jika ada
-trap 'rm -f /tmp/dompetmungil_installer_*.sh 2>/dev/null || true' EXIT
 
 # Warna ANSI untuk terminal
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
+PURPLE='\033[0;35m'
 CYAN='\033[0;36m'
+WHITE='\033[1;37m'
+BOLD='\033[1m'
 NC='\033[0m' # No Color
 
 APP_NAME="dompetmungil"
@@ -54,108 +32,80 @@ if [ "$(id -u)" -ne 0 ]; then
     exit 1
 fi
 
-# Pastikan paket penting (git, curl, tar, whiptail/dialog) terpasang
-ensure_packages() {
-    local missing=()
-    if ! command -v git >/dev/null 2>&1; then missing+=("git"); fi
-    if ! command -v curl >/dev/null 2>&1; then missing+=("curl"); fi
-    if ! command -v tar >/dev/null 2>&1; then missing+=("tar"); fi
-    if ! command -v whiptail >/dev/null 2>&1 && ! command -v dialog >/dev/null 2>&1; then missing+=("whiptail"); fi
-    
-    if [ ${#missing[@]} -gt 0 ]; then
-        echo -e "${CYAN}Menyiapkan paket sistem yang dibutuhkan: ${missing[*]}...${NC}"
-        if command -v apt-get >/dev/null 2>&1; then
-            export DEBIAN_FRONTEND=noninteractive
-            apt-get update -y -qq >/dev/null 2>&1 || true
-            apt-get install -y -qq "${missing[@]}" >/dev/null 2>&1 || true
-        fi
-    fi
-}
-ensure_packages
-
-# Deteksi ketersediaan TUI engine (whiptail / dialog)
-TUI_BIN=""
-if command -v whiptail >/dev/null 2>&1; then
-    TUI_BIN="whiptail"
-elif command -v dialog >/dev/null 2>&1; then
-    TUI_BIN="dialog"
+# Tentukan sumber input terminal (jika via pipe, alihkan ke /dev/tty)
+TTY_IN="/dev/stdin"
+if [ ! -t 0 ] && [ -e /dev/tty ]; then
+    TTY_IN="/dev/tty"
 fi
 
-show_msg() {
+# Fungsi helper UI estetik modern
+box_header() {
     local title="$1"
-    local msg="$2"
-    if [ -n "$TUI_BIN" ]; then
-        $TUI_BIN --title "$title" --msgbox "$msg" 15 76
+    echo -e "\n${PURPLE}╔══════════════════════════════════════════════════════════════════════════════╗${NC}"
+    printf "${PURPLE}║${WHITE}${BOLD} %-76s ${PURPLE}║${NC}\n" "$title"
+    echo -e "${PURPLE}╚══════════════════════════════════════════════════════════════════════════════╝${NC}"
+}
+
+prompt_input() {
+    local prompt_text="$1"
+    local default_value="$2"
+    local user_val=""
+
+    echo -e "\n${CYAN}▶ ${prompt_text}${NC}"
+    echo -ne "${YELLOW}  [Tekan Enter untuk default: ${WHITE}${BOLD}${default_value}${YELLOW}]: ${NC}"
+    read -r user_val < "$TTY_IN" || user_val=""
+    if [ -z "$user_val" ]; then
+        echo "$default_value"
     else
-        echo -e "\n${CYAN}=== $title ===${NC}"
-        echo -e "$msg"
-        echo -e "${YELLOW}Tekan Enter untuk melanjutkan...${NC}"
-        read -r
+        echo "$user_val"
     fi
 }
 
-show_yesno() {
-    local title="$1"
-    local msg="$2"
-    if [ -n "$TUI_BIN" ]; then
-        $TUI_BIN --title "$title" --yesno "$msg" 14 76
-        return $?
-    else
-        echo -e "\n${CYAN}=== $title ===${NC}"
-        echo -e "$msg"
-        read -p "(y/n): " choice
-        case "$choice" in
-            y|Y ) return 0;;
-            * ) return 1;;
-        esac
-    fi
-}
+prompt_yesno() {
+    local prompt_text="$1"
+    local default_choice="$2" # y or n
+    local choice=""
 
-show_input() {
-    local title="$1"
-    local prompt="$2"
-    local default_val="$3"
-    if [ -n "$TUI_BIN" ]; then
-        if [ "$TUI_BIN" = "dialog" ]; then
-            $TUI_BIN --title "$title" --inputbox "$prompt" 13 76 "$default_val" --stdout
-        else
-            $TUI_BIN --title "$title" --inputbox "$prompt" 13 76 "$default_val" 3>&1 1>&2 2>&3
-        fi
+    echo -e "\n${CYAN}▶ ${prompt_text}${NC}"
+    if [ "$default_choice" = "y" ]; then
+        echo -ne "${YELLOW}  (Y/n) [Default: Ya]: ${NC}"
     else
-        echo -e "\n${CYAN}$prompt [Default: $default_val]${NC}"
-        read -r val
-        echo "${val:-$default_val}"
+        echo -ne "${YELLOW}  (y/N) [Default: Tidak]: ${NC}"
+    fi
+    read -r choice < "$TTY_IN" || choice=""
+    choice=$(echo "$choice" | tr '[:upper:]' '[:lower:]')
+    if [ -z "$choice" ]; then
+        choice="$default_choice"
+    fi
+    if [ "$choice" = "y" ] || [ "$choice" = "yes" ]; then
+        return 0
+    else
+        return 1
     fi
 }
 
 clear
-show_msg "🌸 Catatan Keuangan Keluarga 🌸" \
-"Selamat datang di Wizard Instalasi Catatan Keuangan Keluarga (${CURRENT_VERSION})!\n\n\
-Aplikasi PWA ultra-ringan & efisien khusus STB / Odroid C2 / Linux Server.\n\
-Installer ini akan memandu Anda menentukan:\n\
-- Folder Tempat Aplikasi Di-Install\n\
-- Port Web Server\n\
-- Integrasi Cloud Backup (Opsional)\n\n\
-Seluruh akun Admin / Orang Tua langsung dibuat di Web saat pertama kali dibuka."
+box_header "🌸 CATATAN KEUANGAN KELUARGA (${CURRENT_VERSION}) 🌸"
+echo -e "${WHITE}Aplikasi Catatan Keuangan PWA Ultra-Ringan (RAM < 20MB) & AES-256 Encrypted.${NC}"
+echo -e "${WHITE}Dioptimalkan khusus untuk STB HG680P / Odroid C2 / Linux Server.${NC}"
 
 # 2. Periksa Spesifikasi Hardware & RAM Bebas
 TOTAL_RAM_MB=$(free -m 2>/dev/null | awk '/^Mem:/{print $2}' || echo "1024")
 AVAIL_RAM_MB=$(free -m 2>/dev/null | awk '/^Mem:/{print $7}' || echo "512")
 CPU_MODEL=$(lscpu 2>/dev/null | grep "Model name" | cut -d: -f2 | xargs || uname -m)
 
-HARDWARE_INFO="Spesifikasi Server Terdeteksi:\n\
-- CPU: ${CPU_MODEL}\n\
-- Total RAM: ${TOTAL_RAM_MB} MB\n\
-- RAM Tersedia: ${AVAIL_RAM_MB} MB\n\n"
+echo -e "\n${BOLD}Spesifikasi Server Terdeteksi:${NC}"
+echo -e "  • CPU          : ${CYAN}${CPU_MODEL}${NC}"
+echo -e "  • Total RAM    : ${CYAN}${TOTAL_RAM_MB} MB${NC}"
+echo -e "  • RAM Tersedia : ${CYAN}${AVAIL_RAM_MB} MB${NC}"
 
 if [ "$AVAIL_RAM_MB" -lt 50 ]; then
-    HARDWARE_INFO+="${RED}Peringatan: RAM tersedia sangat rendah (< 50MB)! Aplikasi Go ini akan beroperasi pada mode ultra-hemat (cache 2MB).${NC}"
+    echo -e "  • Status RAM   : ${RED}Rendah (< 50MB) - Mode ultra-hemat cache 2MB aktif.${NC}"
 else
-    HARDWARE_INFO+="${GREEN}Kondisi server memadai untuk menjalankan aplikasi Catatan Keuangan Keluarga.${NC}"
+    echo -e "  • Status RAM   : ${GREEN}Normal & Memadai.${NC}"
 fi
-show_msg "Pemeriksaan Sumber Daya Server" "$HARDWARE_INFO"
 
-# 3. Tentukan Lokasi Folder Instalasi (Ditanyakan ke Pengguna)
+# 3. Tentukan Lokasi Folder Instalasi
 DEFAULT_INSTALL_DIR="/opt/${APP_NAME}"
 if [ -f "$CONFIG_DIR/config.env" ]; then
     # shellcheck disable=SC1091
@@ -165,11 +115,7 @@ if [ -f "$CONFIG_DIR/config.env" ]; then
     fi
 fi
 
-INSTALL_DIR=$(show_input "Folder Tempat Aplikasi Di-Install" \
-"Tentukan path folder absolut tempat aplikasi DompetMungil akan dipasang di server Anda:" \
-"$DEFAULT_INSTALL_DIR")
-
-# Normalisasi path (hilangkan trailing slash)
+INSTALL_DIR=$(prompt_input "Tentukan folder tempat aplikasi dipasang" "$DEFAULT_INSTALL_DIR")
 INSTALL_DIR="${INSTALL_DIR%/}"
 DATA_DIR="${INSTALL_DIR}/data"
 BIN_PATH="${INSTALL_DIR}/${APP_NAME}"
@@ -195,7 +141,6 @@ SAVED_PORT="8080"
 SAVED_ENABLE_BACKUP="no"
 SAVED_RCLONE_REMOTE=""
 
-# Jika versi sama persis sudah terpasang, aktifkan Mode Update (pertahankan konfigurasi)
 if [ -n "$INSTALLED_VERSION" ] && [ "$INSTALLED_VERSION" = "$CURRENT_VERSION" ] && [ -f "$CONFIG_DIR/config.env" ]; then
     IS_FRESH_INSTALL=0
     # shellcheck disable=SC1091
@@ -203,32 +148,19 @@ if [ -n "$INSTALLED_VERSION" ] && [ "$INSTALLED_VERSION" = "$CURRENT_VERSION" ] 
     SAVED_PORT="${PORT:-8080}"
     SAVED_ENABLE_BACKUP="${ENABLE_BACKUP:-no}"
     SAVED_RCLONE_REMOTE="${RCLONE_REMOTE:-}"
-    show_msg "Deteksi Instalasi Aktif (${INSTALLED_VERSION})" \
-    "Aplikasi terdeteksi sudah terpasang dengan versi ${INSTALLED_VERSION} di ${INSTALL_DIR}.\n\n\
-Seluruh konfigurasi server sebelumnya otomatis digunakan:\n\
-- Folder Install: ${INSTALL_DIR}\n\
-- Port Server   : ${SAVED_PORT}\n\
-- Cloud Backup  : ${SAVED_ENABLE_BACKUP} (${SAVED_RCLONE_REMOTE})\n\n\
-Binary aplikasi akan diperbarui tanpa mengubah konfigurasi server."
+    echo -e "\n${GREEN}✔ Terdeteksi instalasi aktif ${INSTALLED_VERSION}. Menggunakan konfigurasi yang ada.${NC}"
 elif [ "$LEGACY_DETECTED" -eq 1 ]; then
-    show_msg "Pemberitahuan Wajib Install Ulang" \
-    "Perhatian: Terdeteksi instalasi versi lama atau belum standar ${CURRENT_VERSION}.\n\n\
-Untuk mencegah bentrok dependensi & struktur folder baru di ${INSTALL_DIR},\n\
-sistem akan melakukan FRESH INSTALL (Instalasi Baru Bersih).\n\n\
-Catatan: Jika ada database lama di /var/lib/${APP_NAME}, cadangan akan disalin aman."
-
-    # Hentikan dan hapus service lama jika ada
+    echo -e "\n${YELLOW}⚠ Terdeteksi versi lama. Melakukan FRESH INSTALL bersih di ${INSTALL_DIR} untuk mencegah bentrok.${NC}"
     systemctl stop "$APP_NAME" 2>/dev/null || true
     killall -9 "$APP_NAME" 2>/dev/null || true
 
-    # Salin database lama jika ada ke folder baru agar data keuangan tetap utuh
+    # Salin database lama jika ada
     if [ -f "/var/lib/${APP_NAME}/data.db" ] && [ ! -f "${DATA_DIR}/data.db" ]; then
         mkdir -p "${DATA_DIR}"
         cp -a /var/lib/${APP_NAME}/* "${DATA_DIR}/" 2>/dev/null || true
-        echo -e "${GREEN}[INFO] Migrasi database & kunci rahasia dari /var/lib/${APP_NAME} ke ${DATA_DIR} berhasil disalin aman.${NC}"
+        echo -e "${GREEN}✔ Salinan database lama dari /var/lib/${APP_NAME} berhasil dimigrasikan ke ${DATA_DIR}.${NC}"
     fi
 
-    # Jika ada port lama, tawarkan sebagai default
     if [ -f "$CONFIG_DIR/config.env" ]; then
         # shellcheck disable=SC1091
         source "$CONFIG_DIR/config.env" 2>/dev/null || true
@@ -241,7 +173,7 @@ fi
 # 5. Konfigurasi Port Web Server
 PORT="$SAVED_PORT"
 if [ "$IS_FRESH_INSTALL" -eq 1 ]; then
-    PORT=$(show_input "Konfigurasi Port Web Server" "Tentukan nomor port untuk mengakses PWA di browser:" "$SAVED_PORT")
+    PORT=$(prompt_input "Tentukan port web server PWA" "$SAVED_PORT")
 fi
 
 # 6. Deteksi Backup & Pemulihan Cloud (rclone)
@@ -256,18 +188,18 @@ ENABLE_BACKUP="$SAVED_ENABLE_BACKUP"
 SELECTED_REMOTE="$SAVED_RCLONE_REMOTE"
 
 if [ "$IS_FRESH_INSTALL" -eq 1 ] && [ -n "$RCLONE_REMOTES" ]; then
-    if show_yesno "Integrasi Cloud Backup Otomatis" \
-    "Terdeteksi rclone aktif di server Anda!\n\nRemote ditemukan:\n$RCLONE_REMOTES\n\
-Apakah Anda ingin mengaktifkan pencadangan otomatis harian database & kunci enkripsi ke rclone?"; then
+    echo -e "\n${GREEN}✔ Terdeteksi rclone aktif: $(echo "$RCLONE_REMOTES" | tr '\n' ' ')${NC}"
+    if prompt_yesno "Aktifkan pencadangan harian otomatis database & kunci ke cloud via rclone?" "y"; then
         ENABLE_BACKUP="yes"
-        SELECTED_REMOTE=$(show_input "Pilih Remote rclone" "Ketik nama remote rclone (misal: gdrive:backup):" "$(echo "$RCLONE_REMOTES" | head -n1)")
+        SELECTED_REMOTE=$(prompt_input "Ketik nama remote rclone tempat backup disimpan" "$(echo "$RCLONE_REMOTES" | head -n1)")
     else
         ENABLE_BACKUP="no"
         SELECTED_REMOTE=""
     fi
 fi
 
-# 7. Menyiapkan Folder Instalasi dan Mengunduh / Menyinkronkan Source
+# 7. Menyiapkan Folder Instalasi
+box_header "MEMASANG APLIKASI DI ${INSTALL_DIR}"
 mkdir -p "$INSTALL_DIR"
 mkdir -p "$DATA_DIR"
 mkdir -p "$CONFIG_DIR"
@@ -275,11 +207,10 @@ chmod 755 "$INSTALL_DIR"
 chmod 700 "$DATA_DIR"
 chmod 700 "$CONFIG_DIR"
 
-# Simpan marker versi aktif
 echo "${CURRENT_VERSION}" > "$VERSION_FILE"
 chmod 644 "$VERSION_FILE"
 
-# Cek apakah script ini dijalankan dari folder source lokal atau dari curl pipe
+# Cek apakah dijalankan dari folder lokal atau curl pipe
 SCRIPT_DIR=""
 if [ -n "${BASH_SOURCE[0]}" ] && [ -f "${BASH_SOURCE[0]}" ]; then
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -309,7 +240,6 @@ elif [ ! -f "$INSTALL_DIR/main.go" ]; then
     rm -rf "$TMP_CLONE"
 fi
 
-# Simpan konfigurasi server
 cat <<EOF > "$CONFIG_DIR/config.env"
 PORT=${PORT}
 APP_DIR=${INSTALL_DIR}
@@ -320,7 +250,7 @@ VERSION=${CURRENT_VERSION}
 EOF
 chmod 600 "$CONFIG_DIR/config.env"
 
-# 8. Memasang Binary Aplikasi Siap Pakai dari GitHub Release (Anti-Hang di STB)
+# 8. Memasang Binary Siap Pakai dari GitHub Releases (Anti-Hang di STB)
 ARCH=$(uname -m)
 ASSET_NAME=""
 case "$ARCH" in
@@ -338,9 +268,8 @@ case "$ARCH" in
         ;;
 esac
 
-# Hentikan service jika sedang berjalan
 if systemctl is-active --quiet "$APP_NAME" 2>/dev/null; then
-    echo -e "${YELLOW}Menghentikan service ${APP_NAME} untuk pembaruan binary...${NC}"
+    echo -e "${YELLOW}Menghentikan sementara service ${APP_NAME} untuk pembaruan binary...${NC}"
     systemctl stop "$APP_NAME" 2>/dev/null || true
 fi
 killall -9 "$APP_NAME" 2>/dev/null || true
@@ -349,7 +278,6 @@ echo -e "${CYAN}Mengunduh binary siap pakai (${ASSET_NAME}) dari GitHub Actions 
 BINARY_DOWNLOADED=0
 RELEASE_URL="https://github.com/${GITHUB_REPO}/releases/download/latest/${ASSET_NAME}"
 
-# Coba download dari latest release GitHub
 if curl -fsSL -L "$RELEASE_URL" -o "${BIN_PATH}.tmp" 2>/dev/null; then
     mv "${BIN_PATH}.tmp" "$BIN_PATH"
     chmod 755 "$BIN_PATH"
@@ -357,7 +285,6 @@ if curl -fsSL -L "$RELEASE_URL" -o "${BIN_PATH}.tmp" 2>/dev/null; then
     echo -e "${GREEN}✔ Berhasil mengunduh binary ${ASSET_NAME} siap pakai dari GitHub!${NC}"
 fi
 
-# Jika download latest belum tersedia atau gagal, periksa apakah ada binary lokal di repo
 if [ "$BINARY_DOWNLOADED" -eq 0 ]; then
     if [ -f "$INSTALL_DIR/bin/${ASSET_NAME}" ]; then
         cp "$INSTALL_DIR/bin/${ASSET_NAME}" "$BIN_PATH"
@@ -370,7 +297,6 @@ if [ "$BINARY_DOWNLOADED" -eq 0 ]; then
     fi
 fi
 
-# Fallback terakhir hanya jika Go terpasang secara eksplisit oleh pengguna
 if [ "$BINARY_DOWNLOADED" -eq 0 ]; then
     if command -v go >/dev/null 2>&1; then
         echo -e "${YELLOW}Mengompilasi binary langsung dari source di ${INSTALL_DIR}...${NC}"
@@ -379,12 +305,10 @@ if [ "$BINARY_DOWNLOADED" -eq 0 ]; then
         chmod 755 "$BIN_PATH"
     else
         echo -e "${RED}[ERROR] Gagal mengunduh binary ${ASSET_NAME} dari GitHub.${NC}"
-        echo -e "${YELLOW}Pastikan server terhubung ke internet untuk mengunduh release.${NC}"
         exit 1
     fi
 fi
 
-# Pasang symlink global di /usr/local/bin
 ln -sf "$BIN_PATH" "$GLOBAL_BIN"
 
 # 9. Skrip Backup & Recovery Berpasangan
@@ -432,8 +356,6 @@ EnvironmentFile=$CONFIG_DIR/config.env
 ExecStart=$BIN_PATH -port \${PORT} -data-dir \${DATA_DIR}
 Restart=always
 RestartSec=3s
-
-# Perlindungan OOM Killer
 OOMScoreAdjust=-500
 
 [Install]
@@ -446,15 +368,12 @@ systemctl restart "$APP_NAME"
 
 LOCAL_IP=$(hostname -I 2>/dev/null | awk '{print $1}' || echo "localhost")
 
-show_msg "Instalasi Berhasil! 🎉" \
-"Aplikasi Catatan Keuangan Keluarga (${CURRENT_VERSION}) telah aktif!\n\n\
-Folder Aplikasi : ${INSTALL_DIR}\n\
-Database & Kunci: ${DATA_DIR}\n\
-Port Server     : ${PORT}\n\
-Cloud Backup    : ${ENABLE_BACKUP}\n\n\
-Silakan buka browser di HP / Laptop Anda melalui URL:\n\
-👉 http://${LOCAL_IP}:${PORT}\n\n\
-Saat pertama kali dibuka, buat akun Admin / Orang Tua langsung di antarmuka web.\n\
-Pengaturan Admin & Kategori dapat diubah kapan saja oleh Orang Tua di web."
-
-echo -e "\n${GREEN}✔ Sukses! Kunjungi http://${LOCAL_IP}:${PORT} untuk membuka PWA.${NC}\n"
+box_header "INSTALASI BERHASIL! 🎉"
+echo -e "${GREEN}✔ Service ${APP_NAME} aktif dan berjalan otomatis.${NC}"
+echo -e "  • Folder Aplikasi : ${CYAN}${INSTALL_DIR}${NC}"
+echo -e "  • Database & Kunci: ${CYAN}${DATA_DIR}${NC}"
+echo -e "  • Port Server     : ${CYAN}${PORT}${NC}"
+echo -e "  • Cloud Backup    : ${CYAN}${ENABLE_BACKUP}${NC}"
+echo -e "\n${BOLD}${WHITE}Buka browser di HP / Laptop Anda melalui URL:${NC}"
+echo -e "👉 ${YELLOW}${BOLD}http://${LOCAL_IP}:${PORT}${NC}\n"
+echo -e "${WHITE}Catatan: Akun Admin / Orang Tua langsung dibuat di Web saat pertama kali dibuka.${NC}\n"
