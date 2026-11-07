@@ -289,7 +289,8 @@ echo -e "${CYAN}Mengunduh binary siap pakai (${ASSET_NAME}) dari GitHub Actions 
 BINARY_DOWNLOADED=0
 RELEASE_URL="https://github.com/${GITHUB_REPO}/releases/download/latest/${ASSET_NAME}"
 
-if curl -fsSL -L "$RELEASE_URL" -o "${BIN_PATH}.tmp" 2>/dev/null; then
+# Gunakan --progress-bar agar pengguna melihat kecepatan/persentase unduhan secara realtime
+if curl -fL --progress-bar --connect-timeout 15 --retry 3 --retry-delay 2 "$RELEASE_URL" -o "${BIN_PATH}.tmp"; then
     mv "${BIN_PATH}.tmp" "$BIN_PATH"
     chmod 755 "$BIN_PATH"
     BINARY_DOWNLOADED=1
