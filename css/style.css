@@ -1,0 +1,850 @@
+:root {
+  --bg-primary: #FFF8FA;
+  --bg-card: #FFFFFF;
+  --pink-pastel: #FFB7B2;
+  --pink-hover: #FFAAA6;
+  --wallet-gradient: linear-gradient(135deg, #FFB7B2 0%, #FFDAC1 100%);
+  --mint-pastel: #B5EAD7;
+  --mint-dark: #84C5B0;
+  --lavender: #C7CEEA;
+  --peach: #FFDAC1;
+  --yellow-pastel: #E2F0CB;
+  --text-primary: #4A4A58;
+  --text-muted: #8E8E9F;
+  --border-radius-card: 20px;
+  --border-radius-pill: 999px;
+  --shadow-soft: 0 8px 24px rgba(255, 183, 178, 0.15);
+  --shadow-hover: 0 12px 28px rgba(255, 183, 178, 0.25);
+  --danger-pastel: #FF9AA2;
+  --success-pastel: #7BDCB5;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: 'Quicksand', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Container Layout */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  max-width: 520px;
+  margin: 0 auto;
+  width: 100%;
+  min-height: 100vh;
+  position: relative;
+  background: var(--bg-primary);
+}
+
+/* Desktop Mode Responsive */
+@media (min-width: 992px) {
+  body {
+    background: linear-gradient(135deg, #FFF0F5 0%, #E8F5E9 100%);
+  }
+  .app-container {
+    max-width: 900px;
+    margin: 30px auto;
+    border-radius: 28px;
+    box-shadow: 0 20px 60px rgba(74, 74, 88, 0.08);
+    overflow: hidden;
+    min-height: 850px;
+    border: 2px solid rgba(255, 183, 178, 0.3);
+  }
+}
+
+/* Cute Animations & Micro-interactions */
+@keyframes floatAnimation {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-6px) rotate(2deg); }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 8px 24px rgba(255, 183, 178, 0.2); }
+  50% { box-shadow: 0 12px 32px rgba(255, 183, 178, 0.45); }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.card-wallet {
+  animation: pulseGlow 4s infinite ease-in-out;
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.card-wallet:hover {
+  transform: translateY(-3px) scale(1.01);
+}
+
+.mascot-avatar {
+  animation: floatAnimation 3.5s infinite ease-in-out;
+  transition: transform 0.2s ease;
+}
+
+.mascot-avatar:active {
+  transform: scale(0.88) rotate(-10deg);
+}
+
+.btn-cute {
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.btn-cute:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+}
+
+.btn-cute:active {
+  transform: scale(0.94);
+}
+
+.tx-card {
+  animation: slideInUp 0.4s ease-out;
+}
+
+.modal-sheet {
+  animation: slideInUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Tab View Transitions (Animasi Geser Halus) */
+.view-panel {
+  transition: opacity 0.3s cubic-bezier(0.25, 1, 0.5, 1), transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.slide-from-right {
+  animation: slideFromRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.slide-from-left {
+  animation: slideFromLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideFromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Kalender Grid Mini Picker */
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.calendar-day-cell {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: #FFFDFE;
+  border: 1px solid #F0E6EA;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.calendar-day-cell:hover {
+  background: var(--pink-hover);
+  color: #fff;
+  transform: scale(1.1);
+}
+
+.calendar-day-cell.selected {
+  background: var(--pink-pastel);
+  color: #fff;
+  border-color: var(--pink-pastel);
+  box-shadow: 0 4px 12px rgba(255, 183, 178, 0.4);
+}
+
+.brand-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mascot-avatar {
+  width: 44px;
+  height: 44px;
+  background: var(--pink-pastel);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-soft);
+  animation: bounce 3s infinite ease-in-out;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+.brand-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #4A4A58;
+}
+
+.brand-subtitle {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* Recovery Banner (OOM & Offline) */
+.recovery-banner {
+  margin: 10px 20px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #FFF3E0, #FFE0B2);
+  border-radius: 16px;
+  border-left: 5px solid #FF9800;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.85rem;
+  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.recovery-banner.hidden {
+  display: none;
+}
+
+/* Cute Cards */
+.card-wallet {
+  margin: 14px 20px;
+  background: var(--wallet-gradient);
+  border-radius: var(--border-radius-card);
+  padding: 24px;
+  color: #FFFFFF;
+  box-shadow: var(--shadow-soft);
+  position: relative;
+  overflow: hidden;
+  transition: background 0.4s ease, transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.card-wallet::after {
+  content: "";
+  position: absolute;
+  top: -20px;
+  right: -20px;
+  width: 120px;
+  height: 120px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 50%;
+}
+
+.wallet-balance-label {
+  font-size: 0.85rem;
+  opacity: 0.9;
+  font-weight: 600;
+}
+
+.wallet-balance-val {
+  font-size: 2rem;
+  font-weight: 800;
+  margin: 6px 0 16px;
+  letter-spacing: -0.5px;
+}
+
+.wallet-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.25);
+  padding: 12px 16px;
+  border-radius: 14px;
+  backdrop-filter: blur(8px);
+}
+
+.stat-item-label {
+  font-size: 0.75rem;
+  opacity: 0.9;
+}
+
+.stat-item-val {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+/* Quick Action Buttons */
+.quick-actions-bar {
+  display: flex;
+  gap: 12px;
+  padding: 0 20px;
+  margin-bottom: 16px;
+}
+
+.btn-cute {
+  flex: 1;
+  padding: 12px;
+  border-radius: 16px;
+  border: none;
+  background: var(--bg-card);
+  box-shadow: var(--shadow-soft);
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-cute:active {
+  transform: scale(0.96);
+}
+
+.btn-cute.primary {
+  background: var(--pink-pastel);
+  color: #2D3142;
+  font-weight: 800;
+}
+
+.btn-cute.primary:hover {
+  background: #FF9AA2;
+}
+
+.btn-cute.mint {
+  background: var(--mint-pastel);
+  color: #1B4332;
+  font-weight: 800;
+}
+
+/* Transactions Feed */
+.section-title {
+  padding: 8px 20px 12px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tx-list {
+  padding: 0 20px 90px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+}
+
+.tx-card {
+  background: var(--bg-card);
+  padding: 14px 16px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03);
+  transition: transform 0.2s ease;
+}
+
+.tx-card:hover {
+  transform: translateY(-2px);
+}
+
+.tx-info-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.tx-icon-circle {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tx-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.tx-meta {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.tx-amount {
+  font-weight: 800;
+  font-size: 0.95rem;
+}
+
+.tx-amount.income {
+  color: #4CAF50;
+}
+
+.tx-amount.expense {
+  color: #E57373;
+}
+
+/* Bottom Navigation Bar for Mobile */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-width: 520px;
+  margin: 0 auto;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  padding: 10px 16px;
+  padding-bottom: max(10px, env(safe-area-inset-bottom));
+  border-radius: 24px 24px 0 0;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  z-index: 100;
+}
+
+@media (min-width: 992px) {
+  .bottom-nav {
+    position: static;
+    border-radius: 0;
+    max-width: 100%;
+    margin-top: auto;
+  }
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.nav-item svg {
+  width: 24px;
+  height: 24px;
+  max-width: 24px;
+  max-height: 24px;
+}
+
+.nav-item.active {
+  color: #E76F51;
+  font-weight: 800;
+}
+
+/* Cute SVG Icons Helper */
+.cute-icon {
+  width: 24px !important;
+  height: 24px !important;
+  max-width: 24px !important;
+  max-height: 24px !important;
+}
+
+svg.cute-icon:not([stroke]) {
+  fill: currentColor;
+}
+
+/* Modal Popup */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  display: none; /* Cegah memblokir klik saat tidak aktif */
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 200;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+@media (min-width: 576px) {
+  .modal-overlay {
+    align-items: center;
+  }
+}
+
+.modal-overlay.active {
+  display: flex !important;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-sheet {
+  background: var(--bg-card);
+  width: 100%;
+  max-width: 480px;
+  border-radius: 28px 28px 0 0;
+  padding: 24px;
+  padding-bottom: max(28px, env(safe-area-inset-bottom) + 16px);
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.1);
+  transform: translateY(100%);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+@media (min-width: 576px) {
+  .modal-sheet {
+    border-radius: 28px;
+    transform: translateY(20px);
+    padding-bottom: 24px;
+  }
+}
+
+.modal-overlay.active .modal-sheet {
+  transform: translateY(0);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.modal-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #2D3142;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #333344;
+  margin-bottom: 6px;
+}
+
+.form-input, .form-select {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 14px;
+  border: 1.5px solid #D5D5E0;
+  background: #FFFDFE;
+  font-family: inherit;
+  font-size: 0.95rem;
+  color: #2D3142;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-input::placeholder {
+  color: #8E8E9F;
+  opacity: 0.9;
+}
+
+.form-input:focus, .form-select:focus {
+  border-color: #E76F51;
+  box-shadow: 0 0 0 3px rgba(231, 111, 81, 0.15);
+}
+
+/* Spotlight Game-Style Interactive Tour */
+.spotlight-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  pointer-events: none;
+  display: none;
+  transition: all 0.3s ease;
+}
+
+.spotlight-overlay.active {
+  display: block;
+  pointer-events: auto;
+}
+
+.spotlight-highlight {
+  position: absolute;
+  border-radius: 20px;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.65), 0 0 25px rgba(255, 183, 178, 0.9);
+  transition: all 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+  pointer-events: none;
+  z-index: 1000;
+  animation: pulseHighlight 2s infinite ease-in-out;
+}
+
+@keyframes pulseHighlight {
+  0%, 100% { border: 3px solid var(--pink-pastel); }
+  50% { border: 3px solid #FFF; }
+}
+
+.spotlight-tooltip {
+  position: absolute;
+  z-index: 1001;
+  background: #FFFFFF;
+  border-radius: 20px;
+  padding: 18px 20px;
+  max-width: 320px;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.25);
+  transition: all 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+  border: 2px solid var(--pink-pastel);
+  animation: bounceTooltip 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes bounceTooltip {
+  from { opacity: 0; transform: translateY(15px) scale(0.9); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.spotlight-tooltip-title {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #4A4A58;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.spotlight-tooltip-desc {
+  font-size: 0.82rem;
+  color: #666;
+  line-height: 1.45;
+  margin-bottom: 14px;
+}
+
+.spotlight-tooltip-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* 🐷 Celengan Impian Card & Progress */
+.goal-card {
+  background: #FFFFFF;
+  border-radius: 18px;
+  padding: 16px 18px;
+  box-shadow: var(--shadow-soft);
+  border: 1px solid #FFE4E8;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: transform 0.2s ease;
+}
+
+.goal-card:hover {
+  transform: translateY(-2px);
+}
+
+.goal-icon-bubble {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: #FFF0F3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+
+/* 🖨️ Struk / Laporan Keuangan Cetak & PDF */
+@media print {
+  body {
+    background: #FFF !important;
+    color: #000 !important;
+  }
+  .app-container, .bottom-nav, .quick-actions-bar, .modal-overlay, #spotlightOverlay, #recoveryBanner {
+    display: none !important;
+  }
+  #printableReportSection {
+    display: block !important;
+    padding: 20px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 12pt;
+    line-height: 1.4;
+    color: #000;
+  }
+}
+
+.printable-report {
+  display: none;
+}
+
+/* 🌸 Custom Kawaii Alert & Confirm Popup Dialog */
+.custom-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(74, 74, 88, 0.45);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+  padding: 20px;
+}
+
+.custom-dialog-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.custom-dialog-box {
+  background: #FFFFFF;
+  border-radius: 26px;
+  padding: 24px 22px 20px;
+  width: 100%;
+  max-width: 340px;
+  text-align: center;
+  box-shadow: 0 20px 50px rgba(255, 183, 178, 0.4), 0 8px 20px rgba(0, 0, 0, 0.12);
+  border: 3px solid var(--pink-pastel);
+  transform: scale(0.85) translateY(15px);
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.custom-dialog-overlay.active .custom-dialog-box {
+  transform: scale(1) translateY(0);
+}
+
+.custom-dialog-mascot {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: #FFF5F7;
+  border: 2px dashed var(--pink-pastel);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: -50px auto 12px;
+  box-shadow: 0 6px 16px rgba(255, 183, 178, 0.25);
+  animation: floatAnimation 3s infinite ease-in-out;
+}
+
+.custom-dialog-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.custom-dialog-message {
+  font-size: 0.86rem;
+  color: #5D5D6D;
+  line-height: 1.5;
+  margin-bottom: 18px;
+  white-space: pre-line;
+}
+
+.custom-dialog-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+/* 🌙 Cozy Dark Mode Variables & Overrides */
+body.dark-mode {
+  --bg-primary: #1E1E28;
+  --bg-card: #272736;
+  --text-primary: #F2F2FA;
+  --text-muted: #A3A3B8;
+  --shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.35);
+  background-color: #161620 !important;
+  color: #F2F2FA !important;
+}
+
+body.dark-mode .app-container {
+  background: #1E1E28;
+  border-color: rgba(255, 183, 178, 0.15);
+}
+
+body.dark-mode .app-header {
+  background: #272736;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+body.dark-mode .tx-card,
+body.dark-mode .goal-card,
+body.dark-mode .bill-card,
+body.dark-mode .debt-card,
+body.dark-mode .modal-sheet,
+body.dark-mode .custom-dialog-box {
+  background: #272736 !important;
+  color: #F2F2FA !important;
+  border-color: #38384E !important;
+}
+
+body.dark-mode .form-input,
+body.dark-mode .form-select {
+  background: #1A1A24;
+  color: #F2F2FA;
+  border-color: #38384E;
+}
+
+body.dark-mode .bottom-nav {
+  background: rgba(39, 39, 54, 0.95);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* 📌 Tagihan & 🤝 Hutang Cards */
+.bill-card, .debt-card {
+  background: #FFFFFF;
+  border-radius: 16px;
+  padding: 14px 16px;
+  box-shadow: var(--shadow-soft);
+  border: 1px solid #FFE4E8;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: transform 0.2s ease;
+}
+
+.bill-card:hover, .debt-card:hover {
+  transform: translateY(-2px);
+}
+
+
+
