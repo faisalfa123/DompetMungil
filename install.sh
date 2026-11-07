@@ -105,13 +105,22 @@ else
     echo -e "  • Status RAM   : ${GREEN}Normal & Memadai.${NC}"
 fi
 
+# Fungsi aman membaca nilai key dari file env tanpa menjalankan eval/source
+get_env_val() {
+    local file="$1"
+    local key="$2"
+    if [ -f "$file" ]; then
+        grep -E "^${key}=" "$file" 2>/dev/null | head -n1 | cut -d'=' -f2- | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e "s/^['\"]//" -e "s/['\"]$//" || echo ""
+    fi
+}
+
 # 3. Tentukan Lokasi Folder Instalasi
 DEFAULT_INSTALL_DIR="/opt/${APP_NAME}"
 if [ -f "$CONFIG_DIR/config.env" ]; then
-    # shellcheck disable=SC1091
-    source "$CONFIG_DIR/config.env" 2>/dev/null || true
-    if [ -n "$APP_DIR" ]; then
-        DEFAULT_INSTALL_DIR="$APP_DIR"
+    LOADED_APP_DIR=$(get_env_val "$CONFIG_DIR/config.env" "APP_DIR")
+    # Hanya gunakan jika path valid (dimulai dengan '/')
+    if [[ "$LOADED_APP_DIR" == /* ]]; then
+        DEFAULT_INSTALL_DIR="$LOADED_APP_DIR"
     fi
 fi
 
@@ -124,7 +133,7 @@ VERSION_FILE="${INSTALL_DIR}/.version"
 # 4. Deteksi Versi & Penanganan Versi di Bawah V2.00.1 BETA (Wajib Fresh Install)
 INSTALLED_VERSION=""
 if [ -f "$VERSION_FILE" ]; then
-    INSTALLED_VERSION=$(cat "$VERSION_FILE" 2>/dev/null || echo "")
+    INSTALLED_VERSION=$(cat "$VERSION_FILE" 2>/dev/null | tr -d '\r\n' || echo "")
 fi
 
 LEGACY_DETECTED=0
@@ -143,11 +152,12 @@ SAVED_RCLONE_REMOTE=""
 
 if [ -n "$INSTALLED_VERSION" ] && [ "$INSTALLED_VERSION" = "$CURRENT_VERSION" ] && [ -f "$CONFIG_DIR/config.env" ]; then
     IS_FRESH_INSTALL=0
-    # shellcheck disable=SC1091
-    source "$CONFIG_DIR/config.env"
-    SAVED_PORT="${PORT:-1234}"
-    SAVED_ENABLE_BACKUP="${ENABLE_BACKUP:-no}"
-    SAVED_RCLONE_REMOTE="${RCLONE_REMOTE:-}"
+    LOADED_PORT=$(get_env_val "$CONFIG_DIR/config.env" "PORT")
+    LOADED_BACKUP=$(get_env_val "$CONFIG_DIR/config.env" "ENABLE_BACKUP")
+    LOADED_REMOTE=$(get_env_val "$CONFIG_DIR/config.env" "RCLONE_REMOTE")
+    if [ -n "$LOADED_PORT" ]; then SAVED_PORT="$LOADED_PORT"; fi
+    if [ -n "$LOADED_BACKUP" ]; then SAVED_ENABLE_BACKUP="$LOADED_BACKUP"; fi
+    if [ -n "$LOADED_REMOTE" ]; then SAVED_RCLONE_REMOTE="$LOADED_REMOTE"; fi
     echo -e "\n${GREEN}✔ Terdeteksi instalasi aktif ${INSTALLED_VERSION}. Menggunakan konfigurasi yang ada.${NC}"
 elif [ "$LEGACY_DETECTED" -eq 1 ]; then
     echo -e "\n${YELLOW}⚠ Terdeteksi versi lama. Melakukan FRESH INSTALL bersih di ${INSTALL_DIR} untuk mencegah bentrok.${NC}"
@@ -162,11 +172,12 @@ elif [ "$LEGACY_DETECTED" -eq 1 ]; then
     fi
 
     if [ -f "$CONFIG_DIR/config.env" ]; then
-        # shellcheck disable=SC1091
-        source "$CONFIG_DIR/config.env" 2>/dev/null || true
-        SAVED_PORT="${PORT:-1234}"
-        SAVED_ENABLE_BACKUP="${ENABLE_BACKUP:-no}"
-        SAVED_RCLONE_REMOTE="${RCLONE_REMOTE:-}"
+        LOADED_PORT=$(get_env_val "$CONFIG_DIR/config.env" "PORT")
+        LOADED_BACKUP=$(get_env_val "$CONFIG_DIR/config.env" "ENABLE_BACKUP")
+        LOADED_REMOTE=$(get_env_val "$CONFIG_DIR/config.env" "RCLONE_REMOTE")
+        if [ -n "$LOADED_PORT" ]; then SAVED_PORT="$LOADED_PORT"; fi
+        if [ -n "$LOADED_BACKUP" ]; then SAVED_ENABLE_BACKUP="$LOADED_BACKUP"; fi
+        if [ -n "$LOADED_REMOTE" ]; then SAVED_RCLONE_REMOTE="$LOADED_REMOTE"; fi
     fi
 fi
 
@@ -298,15 +309,9 @@ if [ "$BINARY_DOWNLOADED" -eq 0 ]; then
 fi
 
 if [ "$BINARY_DOWNLOADED" -eq 0 ]; then
-    if command -v go >/dev/null 2>&1; then
-        echo -e "${YELLOW}Mengompilasi binary langsung dari source di ${INSTALL_DIR}...${NC}"
-        rm -f "$BIN_PATH" 2>/dev/null || true
-        (cd "$INSTALL_DIR" && go build -o "$BIN_PATH" main.go)
-        chmod 755 "$BIN_PATH"
-    else
-        echo -e "${RED}[ERROR] Gagal mengunduh binary ${ASSET_NAME} dari GitHub.${NC}"
-        exit 1
-    fi
+    echo -e "${RED}[ERROR] Gagal mengunduh binary ${ASSET_NAME} dari GitHub Releases.${NC}"
+    echo -e "${YELLOW}Pastikan Odroid C2 / STB Anda terhubung ke internet untuk mengunduh release siap pakai.${NC}"
+    exit 1
 fi
 
 ln -sf "$BIN_PATH" "$GLOBAL_BIN"
