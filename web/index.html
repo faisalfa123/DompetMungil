@@ -136,6 +136,13 @@
       <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" fill="none" stroke="currentColor" stroke-width="2"/>
     </symbol>
 
+    <!-- Ikon Anggaran Bulanan (Target Pie/Kalkulator) -->
+    <symbol id="icon-budget" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.2"/>
+      <path d="M12 7v5l3.5 3.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+      <circle cx="12" cy="12" r="2" fill="currentColor"/>
+    </symbol>
+
     <!-- Ikon Makanan & Belanja Lucu -->
     <symbol id="cute-cat-food" viewBox="0 0 24 24">
       <path d="M18 6h-2c0-2.21-1.79-4-4-4S8 3.79 8 6H6c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6-2c1.1 0 2 .9 2 2h-4c0-1.1.9-2 2-2zm6 16H6V8h2v2c0 .55.45 1 1 1s1-.45 1-1V8h4v2c0 .55.45 1 1 1s1-.45 1-1V8h2v12z" fill="currentColor"/>
@@ -184,26 +191,39 @@
       <!-- Kartu Dompet & Ringkasan -->
       <section class="card-wallet">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-          <div class="wallet-balance-label">Total Saldo Terkelola</div>
-          <div id="salaryPaydayIndicator" onclick="openSalaryModal()" style="font-size:0.75rem; background:rgba(255,255,255,0.3); padding:4px 10px; border-radius:12px; cursor:pointer;" title="Klik untuk atur tanggal gajian & recall pemasukan bulanan">
+          <div class="wallet-balance-label">Total Saldo Keseluruhan (Suami + Istri)</div>
+          <div id="salaryPaydayIndicator" onclick="openSalaryModal()" style="font-size:0.75rem; background:rgba(0,0,0,0.15); color:#FFF; font-weight:700; padding:4px 10px; border-radius:12px; cursor:pointer;" title="Klik untuk atur tanggal gajian & recall pemasukan bulanan">
             🗓️ Gajian: <span id="paydayDateText">Tgl 25</span> ⚙️
           </div>
         </div>
         <div class="wallet-balance-val" id="totalBalanceDisplay">Rp 0</div>
+
+        <!-- 3 Saldo Transparansi Keluarga: Total Bersama, Saldo Saya, Saldo Pasangan -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px;">
+          <div style="background:rgba(0,0,0,0.12); padding:8px 12px; border-radius:12px;">
+            <div style="font-size:0.7rem; color:rgba(255,255,255,0.9); font-weight:700;" id="myBalanceLabel">👤 Saldo Saya</div>
+            <div style="font-size:1rem; font-weight:800; color:#FFF;" id="myBalanceDisplay">Rp 0</div>
+          </div>
+          <div style="background:rgba(0,0,0,0.12); padding:8px 12px; border-radius:12px;">
+            <div style="font-size:0.7rem; color:rgba(255,255,255,0.9); font-weight:700;" id="spouseBalanceLabel">💍 Saldo Pasangan</div>
+            <div style="font-size:1rem; font-weight:800; color:#FFF;" id="spouseBalanceDisplay">Rp 0</div>
+          </div>
+        </div>
+
         <div class="wallet-stats-grid">
           <div>
-            <div class="stat-item-label">Pemasukan (Bulan ini)</div>
-            <div class="stat-item-val" id="totalIncomeDisplay" style="color:#2E7D32;">+Rp 0</div>
+            <div class="stat-item-label" style="color:#2D3142; font-weight:700;">Pemasukan (Bulan ini)</div>
+            <div class="stat-item-val" id="totalIncomeDisplay" style="color:#1B5E20; font-weight:800;">+Rp 0</div>
           </div>
           <div>
-            <div class="stat-item-label">Pengeluaran (Bulan ini)</div>
-            <div class="stat-item-val" id="totalExpenseDisplay" style="color:#C62828;">-Rp 0</div>
+            <div class="stat-item-label" style="color:#2D3142; font-weight:700;">Pengeluaran (Bulan ini)</div>
+            <div class="stat-item-val" id="totalExpenseDisplay" style="color:#B71C1C; font-weight:800;">-Rp 0</div>
           </div>
         </div>
 
         <!-- Tombol Recall Cepat Pemasukan Bulanan Pasti -->
         <div style="margin-top:12px; padding-top:10px; border-top:1px dashed rgba(255,255,255,0.3); display:flex; justify-content:space-between; align-items:center;">
-          <small style="font-size:0.75rem; opacity:0.95;">💰 Pendapatan Pokok Rutin</small>
+          <small style="font-size:0.75rem; opacity:0.95; font-weight:700;">💰 Pendapatan Pokok Rutin</small>
           <button onclick="recallMonthlySalary()" class="btn-cute mint" style="padding:4px 10px; font-size:0.75rem; border-radius:10px;">
             ⚡ Terapkan Gaji Bulan Ini
           </button>
@@ -221,7 +241,7 @@
       </section>
 
       <!-- Mini Shortcut Fitur Pintar -->
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px;">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px; padding: 0 20px;">
         <button type="button" class="btn-cute" onclick="switchTab('bills')" style="padding:8px 10px; font-size:0.75rem; justify-content:center; gap:6px;">
           <span>📌</span> Tagihan Bulanan
         </button>
@@ -231,7 +251,7 @@
       </div>
 
       <!-- Ringkasan Komposisi Pengeluaran (Pie Chart SVG Murni) -->
-      <section style="background:#fff; border-radius:18px; padding:16px; margin-bottom:16px; box-shadow:var(--shadow-soft);">
+      <section style="background:#fff; border-radius:18px; padding:16px; margin:0 20px 16px; box-shadow:var(--shadow-soft);">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
           <strong style="font-size:0.85rem; color:var(--text-primary);">📊 Komposisi Pengeluaran</strong>
           <span id="chartTotalExpense" style="font-size:0.8rem; font-weight:700; color:var(--danger-pastel);">Rp 0</span>
@@ -267,15 +287,22 @@
           </div>
         </div>
 
+        <!-- Tab Khusus Pasangan (Semua Transaksi, Catatan Saya, Catatan Pasangan) -->
+        <div style="display:flex; gap:6px; margin: 0 20px 10px; background:#F0F0F5; padding:4px; border-radius:14px;">
+          <button id="authorTabAll" class="btn-cute author-filter-btn active" onclick="filterByAuthor('all')" style="flex:1; padding:6px 4px; font-size:0.75rem; border-radius:10px; justify-content:center;">Semua</button>
+          <button id="authorTabMe" class="btn-cute author-filter-btn" onclick="filterByAuthor('me')" style="flex:1; padding:6px 4px; font-size:0.75rem; border-radius:10px; justify-content:center;">Catatan Saya</button>
+          <button id="authorTabSpouse" class="btn-cute author-filter-btn" onclick="filterByAuthor('spouse')" style="flex:1; padding:6px 4px; font-size:0.75rem; border-radius:10px; justify-content:center;">Catatan Pasangan</button>
+        </div>
+
         <!-- Kolom Pencarian Cepat Transaksi -->
-        <div style="position:relative; margin-bottom:10px;">
+        <div style="position:relative; margin: 0 20px 10px;">
           <input type="text" id="txSearchInput" class="form-input" placeholder="🔍 Cari transaksi (nama, toko, catatan)..." style="padding:8px 12px 8px 36px; font-size:0.8rem; border-radius:14px;" oninput="onSearchTxInput()">
           <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:0.9rem; pointer-events:none;">🔍</span>
           <button id="btnClearSearch" onclick="clearTxSearch()" style="display:none; position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:#888; font-size:1rem; cursor:pointer;">✕</button>
         </div>
 
         <!-- Filter Rentang Tanggal -->
-        <div style="display:flex; gap:6px; margin-bottom:10px; overflow-x:auto; padding-bottom:4px;">
+        <div style="display:flex; gap:6px; margin: 0 20px 10px; overflow-x:auto; padding-bottom:4px;">
           <button class="btn-cute date-filter-btn active" onclick="filterTransactions('all')" style="padding:4px 10px; font-size:0.72rem; border-radius:12px;">Semua</button>
           <button class="btn-cute date-filter-btn" onclick="filterTransactions('this_month')" style="padding:4px 10px; font-size:0.72rem; border-radius:12px;">Bulan Ini</button>
           <button class="btn-cute date-filter-btn" onclick="filterTransactions('last_month')" style="padding:4px 10px; font-size:0.72rem; border-radius:12px;">Bulan Lalu</button>
@@ -415,10 +442,10 @@
 
       <!-- Tombol Mengulang Panduan Interaktif Langkah Demi Langkah -->
       <div style="background:#F0FFF4; border:1.5px dashed var(--mint-dark); border-radius:18px; padding:16px; margin-bottom:16px; text-align:center;">
-        <h4 style="font-size:0.95rem; font-weight:700; color:#2D5F52;">🎮 Tur Interaktif (Game Spotlight)</h4>
-        <p style="font-size:0.8rem; color:var(--text-muted); margin:4px 0 12px;">Ingin melihat kembali sorotan langkah demi langkah di dashboard seperti tutorial game?</p>
+        <h4 style="font-size:0.95rem; font-weight:700; color:#2D5F52;">🎮 Tur Interaktif Aplikasi</h4>
+        <p style="font-size:0.8rem; color:var(--text-muted); margin:4px 0 12px;">Ingin melihat kembali panduan langkah demi langkah seluruh fitur aplikasi (Dompet, Anggaran, Celengan Ayam, Bank Mutasi & Panduan)?</p>
         <button class="btn-cute mint" onclick="startDashboardTour()" style="margin:0 auto; padding:10px 18px;">
-          Mulai Tur Game Dashboard ✨
+          Mulai Tur Aplikasi ✨
         </button>
       </div>
 
@@ -450,13 +477,16 @@
     <main id="viewBudget" class="view-panel" style="display:none; padding: 20px;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
         <div>
-          <h2 style="font-size:1.2rem; font-weight:800; color:var(--text-primary);">🎯 Anggaran Bulanan</h2>
-          <p style="font-size:0.8rem; color:var(--text-muted);">Kontrol pengeluaran keluarga agar tidak overbudget</p>
+          <h2 style="font-size:1.2rem; font-weight:800; color:var(--text-primary);">🎯 Anggaran Bulanan Bersama</h2>
+          <p style="font-size:0.8rem; color:var(--text-muted);">Keputusan bersama Suami & Istri • Perubahan butuh persetujuan pasangan</p>
         </div>
         <button class="btn-cute primary" onclick="openSetBudgetModal()" style="padding:6px 12px; font-size:0.75rem;">
           ⚙️ Atur Batas
         </button>
       </div>
+
+      <!-- Kotak Notifikasi Usulan Perubahan Anggaran dari Pasangan -->
+      <div id="budgetProposalContainer" style="display:none; margin-bottom:14px;"></div>
 
       <!-- Ringkasan Progress Anggaran -->
       <div id="budgetSummaryCard" style="background:#fff; border-radius:18px; padding:16px; margin-bottom:16px; box-shadow:var(--shadow-soft);">
@@ -479,7 +509,7 @@
     <main id="viewSavings" class="view-panel" style="display:none; padding: 20px;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
         <div>
-          <h2 style="font-size:1.2rem; font-weight:800; color:var(--text-primary);">🐷 Celengan Impian</h2>
+          <h2 style="font-size:1.2rem; font-weight:800; color:var(--text-primary);">🐔 Celengan Ayam Impian</h2>
           <p style="font-size:0.8rem; color:var(--text-muted);">Wujudkan impian keluarga & target tabungan</p>
         </div>
         <button class="btn-cute primary" onclick="openAddGoalModal()" style="padding:6px 12px; font-size:0.75rem;">
@@ -579,14 +609,11 @@
         <span>Dompet</span>
       </button>
       <button type="button" class="nav-item" onclick="switchTab('budget')" style="background:none; border:none;">
-        <svg class="cute-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"></circle>
-          <path d="M12 6v6l4 2"></path>
-        </svg>
+        <svg class="cute-icon"><use href="#icon-budget"></use></svg>
         <span>Anggaran</span>
       </button>
       <button type="button" class="nav-item" onclick="switchTab('savings')" style="background:none; border:none;">
-        <span style="font-size:1.3rem; line-height:1; display:block;">🐷</span>
+        <span style="font-size:1.35rem; line-height:1; display:block;">🐔</span>
         <span>Celengan</span>
       </button>
       <button type="button" class="nav-item" onclick="switchTab('bank')" style="background:none; border:none;">
@@ -888,7 +915,7 @@
   <div class="modal-overlay" id="goalModal">
     <div class="modal-sheet">
       <div class="modal-header">
-        <h3 class="modal-title">🐷 Target Celengan Baru</h3>
+        <h3 class="modal-title">🐔 Target Celengan Ayam Baru</h3>
         <button onclick="closeGoalModal()" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">✕</button>
       </div>
       <form id="goalForm">
@@ -899,7 +926,8 @@
         <div class="form-group">
           <label class="form-label">Pilih Ikon Celengan</label>
           <div style="display:flex; gap:8px; flex-wrap:wrap; font-size:1.4rem;">
-            <label style="cursor:pointer;"><input type="radio" name="goalIcon" value="🏖️" checked> 🏖️</label>
+            <label style="cursor:pointer;"><input type="radio" name="goalIcon" value="🐔" checked> 🐔</label>
+            <label style="cursor:pointer;"><input type="radio" name="goalIcon" value="🏖️"> 🏖️</label>
             <label style="cursor:pointer;"><input type="radio" name="goalIcon" value="🏍️"> 🏍️</label>
             <label style="cursor:pointer;"><input type="radio" name="goalIcon" value="🏠"> 🏠</label>
             <label style="cursor:pointer;"><input type="radio" name="goalIcon" value="💻"> 💻</label>

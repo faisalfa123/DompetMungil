@@ -550,31 +550,58 @@ function selectMascotTheme(mascotId, name, accentColor) {
 // Logika Panduan Game Spotlight di Dashboard (RPG/Game-Style Tour)
 const TOUR_STEPS = [
   {
+    tab: 'home',
     target: '#mascotAvatarContainer',
     title: 'Pilih Teman Finansialmu 🐾',
     desc: 'Sentuh avatar ini kapan saja untuk memilih maskot (Kucing, Shiba, Capybara, Usagi, Panda). Seluruh warna tema aplikasi akan ikut berganti manis!'
   },
   {
+    tab: 'home',
     target: '.card-wallet',
-    title: 'Kartu Dompet & Jadwal Gaji 💰',
-    desc: 'Di sini Anda dapat melihat total saldo, total pengeluaran, pemasukan, serta mengatur kalender tanggal gajian rutin dengan 1 sentuhan.'
+    title: 'Kartu Dompet & 3 Saldo Keluarga 💰',
+    desc: 'Di sini Anda dapat melihat Total Saldo Keseluruhan (Suami + Istri), Saldo Saya, dan Saldo Pasangan secara transparan, serta mengatur tanggal gajian rutin dengan 1 sentuhan.'
   },
   {
+    tab: 'home',
     target: '.quick-actions-bar',
     title: 'Pencatatan Secepat Kilat 🌸',
     desc: 'Klik Catat Keluar atau Catat Masuk. Data dienkripsi AES-256 dan tetap tersimpan aman di HP meski server STB sedang offline.'
   },
   {
-    target: '.bottom-nav',
-    title: 'Navigasi Lengkap 🧭',
-    desc: 'Pindah ke tab Bank Mutasi untuk impor rekening atau tab Panduan untuk membaca tips dan mengulang tur game ini kapan saja!'
+    tab: 'home',
+    target: '#authorTabAll',
+    title: 'Tab Riwayat Suami & Istri 👨‍👩‍👧‍👦',
+    desc: 'Gunakan tab filter untuk melihat "Semua", "Catatan Saya", atau "Catatan Pasangan". Transaksi mutasi Gmail bersifat permanen dan tidak bisa dihapus demi akuntabilitas.'
+  },
+  {
+    tab: 'budget',
+    target: '#viewBudget',
+    title: 'Anggaran Bulanan Bersama 🎯',
+    desc: 'Anggaran bulanan memerlukan kesepakatan bersama. Penambahan atau pengurangan kategori/batas anggaran memerlukan persetujuan dari akun Suami atau Istri.'
+  },
+  {
+    tab: 'savings',
+    target: '#viewSavings',
+    title: 'Celengan Ayam Impian 🐔',
+    desc: 'Nabung untuk tujuan masa depan keluarga (liburan, kurban, dana darurat) dengan tradisi celengan ayam khas Indonesia!'
+  },
+  {
+    tab: 'bank',
+    target: '#viewBank',
+    title: 'Bank Mutasi & Gmail Sync 🏦',
+    desc: 'Sinkronkan mutasi bank via email notifikasi Gmail resmi atau paste teks mutasi SMS/m-Banking secara otomatis dan aman.'
+  },
+  {
+    tab: 'guide',
+    target: '#viewGuide',
+    title: 'Buku Panduan & Bantuan 📖',
+    desc: 'Buka kapan saja untuk membaca tips pengelolaan uang rumah tangga, ganti mode akun, atau mengulang tur aplikasi ini!'
   }
 ];
 
 let currentTourIndex = 0;
 
 function startDashboardTour() {
-  window.switchTab('home');
   currentTourIndex = 0;
   const overlay = document.getElementById('spotlightOverlay');
   if (overlay) overlay.classList.add('active');
@@ -584,6 +611,7 @@ function startDashboardTour() {
 function stopDashboardTour() {
   const overlay = document.getElementById('spotlightOverlay');
   if (overlay) overlay.classList.remove('active');
+  window.switchTab('home');
   localStorage.setItem('dm_tour_completed', 'true');
 }
 
@@ -593,12 +621,16 @@ function nextTourStep() {
     renderTourStep();
   } else {
     stopDashboardTour();
-    alert('🎉 Hore! Anda sudah siap menjelajahi DompetMungil!');
+    alert('🎉 Hore! Anda sudah siap menjelajahi seluruh fitur DompetMungil!');
   }
 }
 
 function renderTourStep() {
   const step = TOUR_STEPS[currentTourIndex];
+  if (step.tab) {
+    window.switchTab(step.tab);
+  }
+
   const highlight = document.getElementById('spotlightHighlight');
   const tooltip = document.getElementById('spotlightTooltip');
   const title = document.getElementById('tourTooltipTitle');
@@ -608,44 +640,45 @@ function renderTourStep() {
 
   if (!highlight || !tooltip) return;
 
-  const targetEl = document.querySelector(step.target);
-  if (!targetEl) {
-    console.warn('Target tour tidak ditemukan:', step.target);
-    return;
-  }
-
-  // Gulir ke elemen target dengan halus
-  targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
   setTimeout(() => {
-    const rect = targetEl.getBoundingClientRect();
-    const padding = 8;
-    
-    // Posisikan highlight tepat di sekeliling elemen target
-    highlight.style.top = `${rect.top - padding + window.scrollY}px`;
-    highlight.style.left = `${rect.left - padding + window.scrollX}px`;
-    highlight.style.width = `${rect.width + padding * 2}px`;
-    highlight.style.height = `${rect.height + padding * 2}px`;
-
-    // Posisikan tooltip di bawah atau di atas elemen target tergantung ruang layar
-    const tooltipWidth = Math.min(320, window.innerWidth - 32);
-    let tooltipTop = rect.bottom + 16 + window.scrollY;
-    let tooltipLeft = Math.max(16, (window.innerWidth - tooltipWidth) / 2);
-
-    if (rect.bottom + 180 > window.innerHeight) {
-      tooltipTop = Math.max(10, rect.top - 170 + window.scrollY);
+    const targetEl = document.querySelector(step.target);
+    if (!targetEl) {
+      console.warn('Target tour tidak ditemukan:', step.target);
+      return;
     }
 
-    tooltip.style.top = `${tooltipTop}px`;
-    tooltip.style.left = `${tooltipLeft}px`;
-    tooltip.style.width = `${tooltipWidth}px`;
+    targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
-    title.innerHTML = `<span>🐾</span> ${step.title}`;
-    desc.innerText = step.desc;
-    indicator.innerText = `${currentTourIndex + 1} / ${TOUR_STEPS.length}`;
-    btnNext.innerText = currentTourIndex === TOUR_STEPS.length - 1 ? 'Selesai ✨' : 'Lanjut ➡️';
+    setTimeout(() => {
+      const rect = targetEl.getBoundingClientRect();
+      const padding = 8;
+      
+      highlight.style.top = `${rect.top - padding + window.scrollY}px`;
+      highlight.style.left = `${rect.left - padding + window.scrollX}px`;
+      highlight.style.width = `${rect.width + padding * 2}px`;
+      highlight.style.height = `${rect.height + padding * 2}px`;
+
+      const tooltipWidth = Math.min(320, window.innerWidth - 32);
+      let tooltipTop = rect.bottom + 16 + window.scrollY;
+      let tooltipLeft = Math.max(16, (window.innerWidth - tooltipWidth) / 2);
+
+      if (rect.bottom + 180 > window.innerHeight) {
+        tooltipTop = Math.max(10, rect.top - 180 + window.scrollY);
+      }
+
+      tooltip.style.top = `${tooltipTop}px`;
+      tooltip.style.left = `${tooltipLeft}px`;
+      tooltip.style.width = `${tooltipWidth}px`;
+
+      title.innerHTML = `<span>🐾</span> ${step.title}`;
+      desc.innerText = step.desc;
+      indicator.innerText = `${currentTourIndex + 1} / ${TOUR_STEPS.length}`;
+      btnNext.innerText = currentTourIndex === TOUR_STEPS.length - 1 ? 'Selesai ✨' : 'Lanjut ➡️';
+    }, 120);
   }, 100);
 }
+
+
 
 // Logika Panduan Interaktif Langkah Demi Langkah (Step-by-Step Guide)
 const GUIDE_STEPS = [
@@ -1008,6 +1041,69 @@ async function triggerSyncWithServer() {
 
 let currentTxList = [];
 let currentFilter = 'all';
+let currentAuthorFilter = 'all';
+
+function filterByAuthor(authorFilter) {
+  currentAuthorFilter = authorFilter;
+  document.querySelectorAll('.author-filter-btn').forEach(btn => btn.classList.remove('active'));
+  const btnMap = { all: 'authorTabAll', me: 'authorTabMe', spouse: 'authorTabSpouse' };
+  const targetBtn = document.getElementById(btnMap[authorFilter]);
+  if (targetBtn) targetBtn.classList.add('active');
+  applyTransactionFilter();
+}
+
+function updateFamilyBalances(txList) {
+  const myRole = (localStorage.getItem('dm_role') || userRole || 'suami').toLowerCase();
+  const isSuami = myRole === 'suami' || myRole === 'ayah';
+
+  // Label UI
+  const myLabel = document.getElementById('myBalanceLabel');
+  const spouseLabel = document.getElementById('spouseBalanceLabel');
+  if (myLabel) myLabel.innerText = isSuami ? '👨 Saldo Saya (Suami)' : '👩 Saldo Saya (Istri)';
+  if (spouseLabel) spouseLabel.innerText = isSuami ? '👩 Saldo Istri' : '👨 Saldo Suami';
+
+  const authorTabMe = document.getElementById('authorTabMe');
+  const authorTabSpouse = document.getElementById('authorTabSpouse');
+  if (authorTabMe) authorTabMe.innerText = isSuami ? 'Catatan Suami' : 'Catatan Istri';
+  if (authorTabSpouse) authorTabSpouse.innerText = isSuami ? 'Catatan Istri' : 'Catatan Suami';
+
+  let totalIncome = 0, totalExpense = 0;
+  let myIncome = 0, myExpense = 0;
+  let spouseIncome = 0, spouseExpense = 0;
+
+  txList.forEach(t => {
+    const amt = Number(t.amount || 0);
+    const author = (t.author || '').toLowerCase();
+    const isMe = author === myRole || (!author && !isSuami);
+    const isSpouse = isSuami ? (author === 'istri' || author === 'ibu') : (author === 'suami' || author === 'ayah');
+
+    if (t.type === 'income') {
+      totalIncome += amt;
+      if (isSpouse) spouseIncome += amt;
+      else myIncome += amt;
+    } else if (t.type === 'expense') {
+      totalExpense += amt;
+      if (isSpouse) spouseExpense += amt;
+      else myExpense += amt;
+    }
+  });
+
+  const totalBalance = totalIncome - totalExpense;
+  const myBalance = myIncome - myExpense;
+  const spouseBalance = spouseIncome - spouseExpense;
+
+  const totalBalEl = document.getElementById('totalBalanceDisplay');
+  const myBalEl = document.getElementById('myBalanceDisplay');
+  const spouseBalEl = document.getElementById('spouseBalanceDisplay');
+  const incEl = document.getElementById('totalIncomeDisplay');
+  const expEl = document.getElementById('totalExpenseDisplay');
+
+  if (totalBalEl) totalBalEl.innerText = formatRupiah(totalBalance);
+  if (myBalEl) myBalEl.innerText = formatRupiah(myBalance);
+  if (spouseBalEl) spouseBalEl.innerText = formatRupiah(spouseBalance);
+  if (incEl) incEl.innerText = '+' + formatRupiah(totalIncome);
+  if (expEl) expEl.innerText = '-' + formatRupiah(totalExpense);
+}
 
 // Memuat data overview dan transaksi dari server jika online
 async function loadServerData() {
@@ -1021,14 +1117,9 @@ async function loadServerData() {
     ]);
 
     if (overviewRes.ok && txRes.ok) {
-      const overview = await overviewRes.json();
       const txs = await txRes.json();
-
-      document.getElementById('totalBalanceDisplay').innerText = formatRupiah(overview.total_balance);
-      document.getElementById('totalIncomeDisplay').innerText = '+' + formatRupiah(overview.total_income);
-      document.getElementById('totalExpenseDisplay').innerText = '-' + formatRupiah(overview.total_expense);
-
       currentTxList = txs;
+      updateFamilyBalances(currentTxList);
       applyTransactionFilter();
       return;
     }
@@ -1069,9 +1160,20 @@ function applyTransactionFilter() {
   const now = new Date();
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth(); // 0-indexed
+  const myRole = (localStorage.getItem('dm_role') || userRole || 'suami').toLowerCase();
+  const isSuami = myRole === 'suami' || myRole === 'ayah';
 
   let filtered = currentTxList.filter(tx => {
-    // 1. Filter Tanggal
+    // 1. Filter Penulis Suami vs Istri
+    if (currentAuthorFilter !== 'all') {
+      const author = (tx.author || '').toLowerCase();
+      const isMe = author === myRole || (!author && isSuami);
+      const isSpouse = isSuami ? (author === 'istri' || author === 'ibu') : (author === 'suami' || author === 'ayah');
+      if (currentAuthorFilter === 'me' && !isMe) return false;
+      if (currentAuthorFilter === 'spouse' && !isSpouse) return false;
+    }
+
+    // 2. Filter Tanggal
     let matchesDate = true;
     if (currentFilter !== 'all') {
       if (!tx.date) return false;
@@ -1089,7 +1191,7 @@ function applyTransactionFilter() {
     }
     if (!matchesDate) return false;
 
-    // 2. Filter Pencarian Teks (Catatan, Kategori, Akun, Penulis)
+    // 3. Filter Pencarian Teks (Catatan, Kategori, Akun, Penulis)
     if (currentTxSearchQuery) {
       const q = currentTxSearchQuery;
       const note = String(tx.note || '').toLowerCase();
@@ -1216,8 +1318,122 @@ async function exportTransactionsCSV() {
   a.remove();
 }
 
-// Manajemen Anggaran (Budgeting)
+// Manajemen Anggaran Bulanan Bersama & Sistem Persetujuan Pasangan (Suami/Istri)
+function getStoredBudgetProposals() {
+  const p = localStorage.getItem('dm_budget_proposals');
+  if (p) {
+    try { return JSON.parse(p); } catch (e) {}
+  }
+  return [];
+}
+
+function saveStoredBudgetProposals(proposals) {
+  localStorage.setItem('dm_budget_proposals', JSON.stringify(proposals));
+}
+
+function renderBudgetProposals() {
+  const container = document.getElementById('budgetProposalContainer');
+  if (!container) return;
+
+  const proposals = getStoredBudgetProposals().filter(p => p.status === 'pending');
+  const myRole = (localStorage.getItem('dm_role') || userRole || 'suami').toLowerCase();
+  const isSuami = myRole === 'suami' || myRole === 'ayah';
+
+  if (proposals.length === 0) {
+    container.style.display = 'none';
+    container.innerHTML = '';
+    return;
+  }
+
+  container.style.display = 'block';
+  container.innerHTML = proposals.map(p => {
+    const isFromMe = p.proposed_by === myRole;
+    const catName = p.category_name || p.category_id;
+
+    if (isFromMe) {
+      return `
+        <div style="background:#FFF3E0; border:1.5px dashed #FF9800; border-radius:16px; padding:12px 14px;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <strong style="font-size:0.85rem; color:#E65100;">⏳ Menunggu Izin ${isSuami ? 'Istri' : 'Suami'}</strong>
+              <div style="font-size:0.75rem; color:#6D4C41; margin-top:2px;">
+                Usulan batas kategori <b>${escapeHtml(catName)}</b> menjadi <b>${formatRupiah(p.amount)}</b>.
+              </div>
+            </div>
+            <button onclick="cancelBudgetProposal('${p.id}')" class="btn-cute" style="padding:4px 8px; font-size:0.72rem; color:#C62828;">Batalkan</button>
+          </div>
+        </div>
+      `;
+    } else {
+      return `
+        <div style="background:#E8F5E9; border:1.5px solid #81C784; border-radius:16px; padding:12px 14px; box-shadow:0 4px 12px rgba(46,125,50,0.1);">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+            <div>
+              <strong style="font-size:0.88rem; color:#1B5E20;">💌 Usulan Anggaran dari Pasangan (${p.proposed_by})</strong>
+              <div style="font-size:0.78rem; color:#2E7D32; margin-top:2px;">
+                Mengusulkan batas anggaran kategori <b>${escapeHtml(catName)}</b> menjadi <b>${formatRupiah(p.amount)}</b>.
+              </div>
+            </div>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button onclick="approveBudgetProposal('${p.id}')" class="btn-cute mint" style="flex:1; padding:6px 10px; font-size:0.75rem; justify-content:center;">
+              ✅ Setujui (Keputusan Bersama)
+            </button>
+            <button onclick="rejectBudgetProposal('${p.id}')" class="btn-cute" style="flex:1; padding:6px 10px; font-size:0.75rem; justify-content:center; color:#C62828;">
+              ❌ Tolak
+            </button>
+          </div>
+        </div>
+      `;
+    }
+  }).join('');
+}
+
+async function approveBudgetProposal(proposalId) {
+  const proposals = getStoredBudgetProposals();
+  const prop = proposals.find(p => p.id === proposalId);
+  if (!prop) return;
+
+  try {
+    const res = await fetch('/api/v1/budgets', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Auth-Token': authToken
+      },
+      body: JSON.stringify({ category_id: prop.category_id, amount: prop.amount })
+    });
+
+    prop.status = 'approved';
+    saveStoredBudgetProposals(proposals);
+    renderBudgetProposals();
+    await loadBudgets();
+    alert(`🎉 Usulan anggaran kategori "${prop.category_name}" berhasil disetujui bersama!`);
+  } catch (e) {
+    alert('Gagal menyetujui anggaran.');
+  }
+}
+
+async function rejectBudgetProposal(proposalId) {
+  const ok = await showCuteConfirm('Tolak usulan batas anggaran dari pasangan ini?', 'Tolak Usulan Anggaran 🎯', 'Ya, Tolak', 'Batal');
+  if (!ok) return;
+
+  let proposals = getStoredBudgetProposals();
+  proposals = proposals.filter(p => p.id !== proposalId);
+  saveStoredBudgetProposals(proposals);
+  renderBudgetProposals();
+  alert('Usulan batas anggaran telah ditolak.');
+}
+
+async function cancelBudgetProposal(proposalId) {
+  let proposals = getStoredBudgetProposals();
+  proposals = proposals.filter(p => p.id !== proposalId);
+  saveStoredBudgetProposals(proposals);
+  renderBudgetProposals();
+}
+
 async function loadBudgets() {
+  renderBudgetProposals();
   const container = document.getElementById('budgetListContainer');
   if (!container) return;
 
@@ -1391,8 +1607,8 @@ function renderSavingsGoals() {
   if (goals.length === 0) {
     container.innerHTML = `
       <div style="text-align:center; padding:40px; color:var(--text-muted); background:#FFF; border-radius:18px;">
-        <span style="font-size:2.5rem; display:block; margin-bottom:8px;">🐷</span>
-        <strong>Belum ada target celengan</strong>
+        <span style="font-size:2.5rem; display:block; margin-bottom:8px;">🐔</span>
+        <strong>Belum ada target celengan ayam</strong>
         <p style="font-size:0.8rem; margin-top:4px;">Klik "+ Target Baru" untuk mulai menabung impianmu!</p>
       </div>
     `;
@@ -1412,7 +1628,7 @@ function renderSavingsGoals() {
       <div class="goal-card">
         <div style="display:flex; justify-content:space-between; align-items:flex-start;">
           <div style="display:flex; align-items:center; gap:10px;">
-            <div class="goal-icon-bubble">${g.icon || '🐷'}</div>
+            <div class="goal-icon-bubble">${g.icon || '🐔'}</div>
             <div>
               <strong style="font-size:0.95rem; color:#4A4A58;">${escapeHtml(g.title)}</strong>
               <div style="font-size:0.75rem; color:#8E8E9F;">Target: ${formatRupiah(g.target)}</div>
@@ -1466,7 +1682,7 @@ function openDepositGoalModal(goalId) {
   if (!goal) return;
 
   document.getElementById('depositGoalId').value = goal.id;
-  document.getElementById('depositGoalTitle').innerText = `${goal.icon || '🐷'} ${goal.title}`;
+  document.getElementById('depositGoalTitle').innerText = `${goal.icon || '🐔'} ${goal.title}`;
   document.getElementById('depositGoalProgress').innerText = `Terkumpul ${formatRupiah(goal.current)} dari target ${formatRupiah(goal.target)}`;
   document.getElementById('depositAmountInput').value = '';
   document.getElementById('depositGoalModal').classList.add('active');
@@ -1477,7 +1693,7 @@ function closeDepositGoalModal() {
 }
 
 async function deleteSavingsGoal(goalId) {
-  const ok = await showCuteConfirm('Yakin ingin menghapus target celengan ini?', 'Hapus Celengan 🐷', 'Ya, Hapus', 'Batal');
+  const ok = await showCuteConfirm('Yakin ingin menghapus target celengan ini?', 'Hapus Celengan 🐔', 'Ya, Hapus', 'Batal');
   if (!ok) return;
   let goals = getStoredSavingsGoals();
   goals = goals.filter(g => g.id !== goalId);
@@ -1499,28 +1715,43 @@ function renderTransactions(list) {
     return;
   }
 
-  container.innerHTML = list.map(tx => `
-    <div class="tx-card" style="position:relative;">
-      <div class="tx-info-left" style="flex:1;">
-        <div class="tx-icon-circle" style="background: ${tx.type === 'income' ? '#B5EAD7' : '#FFB7B2'};">
-          <span style="font-size:1.2rem;">${tx.type === 'income' ? '🌱' : '🌸'}</span>
+  container.innerHTML = list.map(tx => {
+    const isGmailTx = tx.source === 'gmail' || tx.is_gmail || (tx.client_tx_id && tx.client_tx_id.startsWith('gmail_'));
+
+    return `
+      <div class="tx-card" style="position:relative;">
+        <div class="tx-info-left" style="flex:1;">
+          <div class="tx-icon-circle" style="background: ${tx.type === 'income' ? '#B5EAD7' : '#FFB7B2'};">
+            <span style="font-size:1.2rem;">${isGmailTx ? '📧' : (tx.type === 'income' ? '🌱' : '🌸')}</span>
+          </div>
+          <div>
+            <div class="tx-title">
+              ${escapeHtml(tx.note || tx.category_name || 'Transaksi')}
+              ${isGmailTx ? '<span style="font-size:0.65rem; background:#E3F2FD; color:#1976D2; padding:2px 6px; border-radius:8px; margin-left:4px; font-weight:700;">Mutasi Gmail (Permanen)</span>' : ''}
+            </div>
+            <div class="tx-meta">${tx.date} • ${tx.account_name || 'Dompet'} ${tx.author ? '• 👤 ' + escapeHtml(tx.author) : ''}</div>
+          </div>
         </div>
-        <div>
-          <div class="tx-title">${escapeHtml(tx.note || tx.category_name || 'Transaksi')}</div>
-          <div class="tx-meta">${tx.date} • ${tx.account_name || 'Dompet'} ${tx.author ? '• 👤 ' + escapeHtml(tx.author) : ''}</div>
+        <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
+          <div class="tx-amount ${tx.type}">
+            ${tx.type === 'income' ? '+' : '-'}${formatRupiah(tx.amount)}
+          </div>
+          <div style="display:flex; gap:6px;">
+            <button onclick="editTransactionItem('${tx.client_tx_id}')" style="background:none; border:none; cursor:pointer; font-size:0.75rem; color:#4A4A58; font-weight:700;" title="Edit Kategori & Catatan">
+              ✏️ ${isGmailTx ? 'Beri Kategori' : 'Edit'}
+            </button>
+            ${!isGmailTx ? `
+              <button onclick="deleteTransactionItem('${tx.client_tx_id}')" style="background:none; border:none; cursor:pointer; font-size:0.75rem; color:#FF9AA2;" title="Hapus Transaksi">
+                🗑️ Hapus
+              </button>
+            ` : `
+              <span style="font-size:0.72rem; color:#8E8E9F;" title="Transaksi dari mutasi Gmail bersifat permanen dan tidak dapat dihapus">🔒 Terkunci</span>
+            `}
+          </div>
         </div>
       </div>
-      <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
-        <div class="tx-amount ${tx.type}">
-          ${tx.type === 'income' ? '+' : '-'}${formatRupiah(tx.amount)}
-        </div>
-        <div style="display:flex; gap:6px;">
-          <button onclick="editTransactionItem('${tx.client_tx_id}')" style="background:none; border:none; cursor:pointer; font-size:0.75rem; color:#8E8E9F;" title="Edit Transaksi">✏️ Edit</button>
-          <button onclick="deleteTransactionItem('${tx.client_tx_id}')" style="background:none; border:none; cursor:pointer; font-size:0.75rem; color:#FF9AA2;" title="Hapus Transaksi">🗑️ Hapus</button>
-        </div>
-      </div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 }
 
 async function editTransactionItem(clientTxId) {
@@ -1531,15 +1762,19 @@ async function editTransactionItem(clientTxId) {
     return;
   }
 
+  const isGmailTx = tx.source === 'gmail' || tx.is_gmail || (tx.client_tx_id && tx.client_tx_id.startsWith('gmail_'));
+
   // Isi modal transaksi dengan data lama
   document.getElementById('txEditClientTxId').value = tx.client_tx_id;
   document.getElementById('formType').value = tx.type;
   document.getElementById('formAmount').value = tx.amount;
+  // Jika mutasi Gmail, nominal terkunci permanen agar tidak bisa dipalsukan
+  document.getElementById('formAmount').readOnly = isGmailTx;
   document.getElementById('formNote').value = tx.note || '';
   if (document.getElementById('formAccount')) {
     document.getElementById('formAccount').value = tx.account_id || 'acc_dompet';
   }
-  document.getElementById('modalFormTitle').innerText = tx.type === 'expense' ? '✏️ Edit Pengeluaran' : '✏️ Edit Pemasukan';
+  document.getElementById('modalFormTitle').innerText = isGmailTx ? '✏️ Beri Kategori & Catatan Mutasi' : (tx.type === 'expense' ? '✏️ Edit Pengeluaran' : '✏️ Edit Pemasukan');
   populateCategoryOptions(tx.type);
   if (document.getElementById('formCategory')) {
     document.getElementById('formCategory').value = tx.category_id || '';
@@ -1548,6 +1783,13 @@ async function editTransactionItem(clientTxId) {
 }
 
 async function deleteTransactionItem(clientTxId) {
+  const localList = await getAllLocalTx();
+  const tx = localList.find(t => t.client_tx_id === clientTxId);
+  if (tx && (tx.source === 'gmail' || tx.is_gmail || (tx.client_tx_id && tx.client_tx_id.startsWith('gmail_')))) {
+    alert('⚠️ Transaksi ini berasal dari sinkronisasi mutasi Gmail resmi dan bersifat permanen (tidak dapat dihapus). Anda tetap bisa mengubah kategori atau catatannya.');
+    return;
+  }
+
   const ok = await showCuteConfirm('Yakin ingin menghapus catatan transaksi ini?', 'Hapus Transaksi 🗑️', 'Ya, Hapus', 'Batal');
   if (!ok) return;
 
@@ -1559,14 +1801,7 @@ async function deleteTransactionItem(clientTxId) {
 async function renderLocalTransactions() {
   const localList = await getAllLocalTx();
   currentTxList = localList;
-  let income = 0, expense = 0;
-  localList.forEach(item => {
-    if (item.type === 'income') income += Number(item.amount);
-    if (item.type === 'expense') expense += Number(item.amount);
-  });
-  document.getElementById('totalBalanceDisplay').innerText = formatRupiah(income - expense);
-  document.getElementById('totalIncomeDisplay').innerText = '+' + formatRupiah(income);
-  document.getElementById('totalExpenseDisplay').innerText = '-' + formatRupiah(expense);
+  updateFamilyBalances(localList);
   applyTransactionFilter();
 }
 
@@ -1661,12 +1896,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // Budget Form Submit (Simpan batas anggaran kategori)
+  // Budget Form Submit (Simpan / Usulkan batas anggaran kategori bersama)
   const budgetForm = document.getElementById('budgetForm');
   if (budgetForm) {
     budgetForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const cat = document.getElementById('budgetCategorySelect').value;
+      const catSelect = document.getElementById('budgetCategorySelect');
+      const cat = catSelect ? catSelect.value : '';
+      const catName = catSelect && catSelect.selectedOptions && catSelect.selectedOptions[0] ? catSelect.selectedOptions[0].innerText : cat;
       const amt = parseFloat(document.getElementById('budgetAmountInput').value);
 
       if (!authToken) {
@@ -1674,6 +1911,49 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
       }
 
+      const myRole = (localStorage.getItem('dm_role') || userRole || 'personal').toLowerCase();
+      const currentMode = localStorage.getItem('dm_mode') || accountMode || 'personal';
+
+      // Jika dalam mode keluarga (Suami/Istri), butuh persetujuan pasangan
+      if (currentMode === 'family') {
+        const isSuami = myRole === 'suami' || myRole === 'ayah';
+        const partnerName = isSuami ? 'Istri' : 'Suami';
+
+        // Cek apakah akun pasangan sudah terdaftar/terhubung
+        const hasPartnerAccount = localStorage.getItem('dm_partner_account') === 'true' || localStorage.getItem('dm_has_spouse') === 'true';
+
+        if (!hasPartnerAccount) {
+          await showCuteAlert(
+            `⚠️ Usulan Perubahan Anggaran DITOLAK!\n\nDi DompetMungil, anggaran bulanan adalah keputusan bersama suami dan istri. Akun ${partnerName} belum terdaftar di sistem.\n\nSilakan daftarkan akun ${partnerName} terlebih dahulu melalui Wizard Akun Keluarga agar dapat saling memberikan izin dan persetujuan.`,
+            `Butuh Akun ${partnerName} 👨‍👩‍👧‍👦`
+          );
+          closeBudgetModal();
+          return;
+        }
+
+        // Simpan usulan ke sistem persetujuan
+        const proposals = getStoredBudgetProposals();
+        proposals.push({
+          id: 'prop_' + Date.now(),
+          category_id: cat,
+          category_name: catName,
+          amount: amt,
+          proposed_by: myRole,
+          created_at: new Date().toISOString(),
+          status: 'pending'
+        });
+        saveStoredBudgetProposals(proposals);
+        closeBudgetModal();
+        renderBudgetProposals();
+
+        await showCuteAlert(
+          `💌 Usulan batas anggaran sebesar ${formatRupiah(amt)} untuk "${catName}" telah dikirim ke akun ${partnerName}.\n\nAnggaran akan resmi aktif setelah ${partnerName} menekan tombol [Setujui] di tab Anggaran.`,
+          'Menunggu Izin Pasangan ✨'
+        );
+        return;
+      }
+
+      // Mode Personal: Simpan langsung
       try {
         const res = await fetch('/api/v1/budgets', {
           method: 'POST',
@@ -1834,7 +2114,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const target = parseFloat(document.getElementById('goalTargetInput').value);
       const current = parseFloat(document.getElementById('goalCurrentInput').value || 0);
       const iconRadio = document.querySelector('input[name="goalIcon"]:checked');
-      const icon = iconRadio ? iconRadio.value : '🐷';
+      const icon = iconRadio ? iconRadio.value : '🐔';
 
       if (!title || !target) return;
 
