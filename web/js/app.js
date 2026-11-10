@@ -945,6 +945,19 @@ function openStepGuideModal() {
   document.getElementById('stepGuideModal').classList.add('active');
 }
 
+function copyInstallCmd() {
+  const cmd = 'sudo curl -sSL https://raw.githubusercontent.com/faisalfa123/DompetMungil/main/install.sh | sudo bash';
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(cmd).then(() => {
+      showCuteAlert('Perintah instalasi berhasil disalin ke clipboard! 📋\n\nTempelkan (Paste) di terminal SSH Odroid C2 / DietPi Anda.', 'Berhasil Disalin ✨');
+    }).catch(() => {
+      prompt('Salin perintah instalasi di bawah ini:', cmd);
+    });
+  } else {
+    prompt('Salin perintah instalasi di bawah ini:', cmd);
+  }
+}
+
 function closeStepGuideModal() {
   document.getElementById('stepGuideModal').classList.remove('active');
 }
@@ -1230,16 +1243,16 @@ function updateWalletSyncProgress(status, percent, text, pulseColor = '#7BDCB5')
     if (pulseColor === '#FF9AA2') {
       bar.style.background = '#FF9AA2';
     } else if (pulseColor === '#FFA000') {
-      bar.style.background = '#FFE082';
+      bar.style.background = 'linear-gradient(90deg, #FFB74D, #FFA726)';
     } else {
-      bar.style.background = '#FFF';
+      bar.style.background = 'linear-gradient(90deg, #7BDCB5, #B5EAD7)';
     }
   }
   if (percentEl) percentEl.innerText = `${Math.round(percent)}%`;
   if (textEl) textEl.innerText = text;
   if (pulseEl) {
     pulseEl.style.background = pulseColor;
-    pulseEl.style.boxShadow = `0 0 8px ${pulseColor}`;
+    pulseEl.style.boxShadow = `0 0 10px ${pulseColor}`;
   }
 }
 
