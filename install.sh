@@ -51,9 +51,10 @@ prompt_input() {
     local default_value="$2"
     local user_val=""
 
-    echo -e "\n${CYAN}▶ ${prompt_text}${NC}" >&2
-    echo -ne "${YELLOW}  [Tekan Enter untuk default: ${WHITE}${BOLD}${default_value}${YELLOW}]: ${NC}" >&2
+    printf "\n${CYAN}▶ %s${NC}\n" "$prompt_text" >&2
+    printf "${YELLOW}  [Tekan Enter untuk default: ${WHITE}${BOLD}%s${YELLOW}]: ${NC}" "$default_value" >&2
     read -r user_val < "$TTY_IN" || user_val=""
+    user_val=$(echo "$user_val" | sed 's/\x1b\[[0-9;]*[a-zA-Z]//g' | tr -d '\r\n')
     if [ -z "$user_val" ]; then
         echo "$default_value"
     else
@@ -357,9 +358,9 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-WorkingDirectory=$INSTALL_DIR
-EnvironmentFile=$CONFIG_DIR/config.env
-ExecStart=$BIN_PATH -port \${PORT} -data-dir \${DATA_DIR}
+WorkingDirectory=${INSTALL_DIR}
+EnvironmentFile=${CONFIG_DIR}/config.env
+ExecStart=${BIN_PATH} -port \${PORT} -data-dir \${DATA_DIR}
 Restart=always
 RestartSec=3s
 OOMScoreAdjust=-500

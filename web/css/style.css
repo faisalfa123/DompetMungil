@@ -423,6 +423,41 @@ body {
 }
 
 /* Bottom Navigation Bar for Mobile */
+/* Floating Quick Add Button */
+.floating-quick-btn {
+  position: fixed;
+  bottom: calc(75px + env(safe-area-inset-bottom));
+  right: calc(50% - 240px + 20px);
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #FF9AA2 0%, #FFB7B2 100%);
+  border: 3px solid #FFF;
+  box-shadow: 0 8px 24px rgba(255, 154, 162, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 150;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  animation: cuteBounce 3s infinite ease-in-out;
+}
+
+@media (max-width: 520px) {
+  .floating-quick-btn {
+    right: 20px;
+  }
+}
+
+.floating-quick-btn:hover {
+  transform: scale(1.1) translateY(-4px);
+  box-shadow: 0 12px 28px rgba(255, 154, 162, 0.6);
+}
+
+.floating-quick-btn:active {
+  transform: scale(0.9);
+}
+
 .bottom-nav {
   position: fixed;
   bottom: 0;
