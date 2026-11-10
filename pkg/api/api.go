@@ -295,7 +295,7 @@ func (h *APIHandler) handleTransactions(w http.ResponseWriter, r *http.Request) 
 		// Anak: hanya melihat transaksi yang dicatat oleh dirinya sendiri
 		if currentRole == "anak" {
 			query = `
-				SELECT t.id, t.client_tx_id, t.type, t.amount, t.date, t.note_enc, a.name, c.name, c.color, c.icon, COALESCE(u.username, '')
+				SELECT t.id, t.client_tx_id, t.type, t.amount, t.date, t.note_enc, a.name, c.name, c.color, c.icon, COALESCE(u.role, 'suami')
 				FROM transactions t
 				LEFT JOIN accounts a ON t.account_id = a.id
 				LEFT JOIN categories c ON t.category_id = c.id
@@ -306,7 +306,7 @@ func (h *APIHandler) handleTransactions(w http.ResponseWriter, r *http.Request) 
 			args = append(args, currentUser)
 		} else {
 			query = `
-				SELECT t.id, t.client_tx_id, t.type, t.amount, t.date, t.note_enc, a.name, c.name, c.color, c.icon, COALESCE(u.username, '')
+				SELECT t.id, t.client_tx_id, t.type, t.amount, t.date, t.note_enc, a.name, c.name, c.color, c.icon, COALESCE(u.role, 'suami')
 				FROM transactions t
 				LEFT JOIN accounts a ON t.account_id = a.id
 				LEFT JOIN categories c ON t.category_id = c.id

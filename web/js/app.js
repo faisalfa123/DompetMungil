@@ -1370,7 +1370,11 @@ function updateFamilyBalances(txList) {
   txList.forEach(t => {
     const amt = Number(t.amount || 0);
     const author = (t.author || '').toLowerCase();
-    const isMe = author === myRole || (!author && !isSuami);
+    
+    // Suami / Ayah vs Istri / Ibu
+    const isMe = author === myRole || 
+                 (isSuami && (author === 'suami' || author === 'ayah' || !author)) ||
+                 (!isSuami && (author === 'istri' || author === 'ibu' || !author));
     const isSpouse = isSuami ? (author === 'istri' || author === 'ibu') : (author === 'suami' || author === 'ayah');
 
     if (t.type === 'income') {
@@ -1413,8 +1417,18 @@ async function loadServerData() {
     ]);
 
     if (overviewRes.ok && txRes.ok) {
-      const txs = await txRes.json();
-      currentTxList = txs;
+      const serverTxs = await txRes.json();
+      
+      // Simpan juga ke IndexedDB lokal agar cache offline tetap utuh & terupdate
+      if (Array.isArray(serverTxs) && serverTxs.length > 0) {
+        for (const stx of serverTxs) {
+          await saveLocalTx(stx, false);
+        }
+      }
+
+      // Ambil gabungan lengkap dari IndexedDB
+      const allTxs = await getAllLocalTx();
+      currentTxList = allTxs.length > 0 ? allTxs : serverTxs;
       updateFamilyBalances(currentTxList);
       applyTransactionFilter();
       return;
@@ -1463,7 +1477,9 @@ function applyTransactionFilter() {
     // 1. Filter Penulis Suami vs Istri
     if (currentAuthorFilter !== 'all') {
       const author = (tx.author || '').toLowerCase();
-      const isMe = author === myRole || (!author && isSuami);
+      const isMe = author === myRole || 
+                   (isSuami && (author === 'suami' || author === 'ayah' || !author)) ||
+                   (!isSuami && (author === 'istri' || author === 'ibu' || !author));
       const isSpouse = isSuami ? (author === 'istri' || author === 'ibu') : (author === 'suami' || author === 'ayah');
       if (currentAuthorFilter === 'me' && !isMe) return false;
       if (currentAuthorFilter === 'spouse' && !isSpouse) return false;
@@ -2096,6 +2112,20 @@ async function deleteTransactionItem(clientTxId) {
 
 async function renderLocalTransactions() {
   const localList = await getAllLocalTx();
+  
+  // Auto-migrasi transaksi lokal lama yang belum memiliki author
+  const currentRole = (localStorage.getItem('dm_role') || userRole || 'suami').toLowerCase();
+  const defaultAuthor = (currentRole === 'istri' || currentRole === 'ibu') ? 'istri' : 'suami';
+  let migrated = false;
+
+  for (const t of localList) {
+    if (!t.author) {
+      t.author = defaultAuthor;
+      await saveLocalTx(t, false);
+      migrated = true;
+    }
+  }
+
   currentTxList = localList;
   updateFamilyBalances(localList);
   applyTransactionFilter();
@@ -2408,6 +2438,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       targetTxId = 'ctx_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
     }
 
+    const currentRole = (localStorage.getItem('dm_role') || userRole || 'suami').toLowerCase();
+    const isSuami = currentRole === 'suami' || currentRole === 'ayah';
+    const authorRole = isSuami ? 'suami' : (currentRole === 'istri' || currentRole === 'ibu' ? 'istri' : currentRole);
+
     const txItem = {
       client_tx_id: targetTxId,
       type: type,
@@ -2415,7 +2449,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       category_id: category,
       account_id: account,
       date: targetDate,
-      note: note
+      note: note,
+      author: authorRole
     };
 
     // 1. Simpan ke IndexedDB lokal
