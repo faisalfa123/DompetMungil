@@ -460,6 +460,7 @@ body {
   cursor: pointer;
   font-size: 0.75rem;
   font-weight: 600;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .nav-item svg {
@@ -467,11 +468,25 @@ body {
   height: 24px;
   max-width: 24px;
   max-height: 24px;
+  transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.nav-item:hover svg {
+  transform: translateY(-3px) scale(1.12);
+}
+
+.nav-item:active svg {
+  transform: scale(0.85);
 }
 
 .nav-item.active {
   color: #E76F51;
   font-weight: 800;
+}
+
+.nav-item.active svg {
+  transform: translateY(-2px) scale(1.15);
+  filter: drop-shadow(0 3px 6px rgba(231, 111, 81, 0.35));
 }
 
 /* Cute SVG Icons Helper */
@@ -480,6 +495,24 @@ body {
   height: 24px !important;
   max-width: 24px !important;
   max-height: 24px !important;
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes cuteWiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-8deg); }
+  75% { transform: rotate(8deg); }
+}
+
+@keyframes cuteBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+@keyframes cuteCoinPop {
+  0% { transform: scale(0.8) rotate(-10deg); opacity: 0; }
+  50% { transform: scale(1.15) rotate(5deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
 }
 
 svg.cute-icon:not([stroke]) {

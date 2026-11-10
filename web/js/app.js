@@ -313,16 +313,71 @@ function getGoogleClientId() {
   return localStorage.getItem('dm_google_client_id') || '';
 }
 
+function switchGmailMethod(method) {
+  const tabAppPass = document.getElementById('tabBtnGmailAppPass');
+  const tabOAuth = document.getElementById('tabBtnGmailOAuth');
+  const secAppPass = document.getElementById('gmailMethodAppPass');
+  const secOAuth = document.getElementById('gmailMethodOAuth');
+
+  if (method === 'app_pass') {
+    if (tabAppPass) tabAppPass.className = 'btn-cute primary';
+    if (tabOAuth) tabOAuth.className = 'btn-cute';
+    if (secAppPass) secAppPass.style.display = 'block';
+    if (secOAuth) secOAuth.style.display = 'none';
+  } else {
+    if (tabAppPass) tabAppPass.className = 'btn-cute';
+    if (tabOAuth) tabOAuth.className = 'btn-cute primary';
+    if (secAppPass) secAppPass.style.display = 'none';
+    if (secOAuth) secOAuth.style.display = 'block';
+  }
+}
+
+function openGmailAppPassGuide() {
+  const details = document.getElementById('gmailAppPassDetails');
+  if (details) {
+    details.open = true;
+    details.scrollIntoView({ behavior: 'smooth' });
+  }
+}
+
+async function saveAndTestGmailAppPass() {
+  const emailInput = document.getElementById('gmailUserEmail');
+  const passInput = document.getElementById('gmailAppPassword');
+  if (!emailInput || !passInput) return;
+
+  const email = emailInput.value.trim();
+  const rawPass = passInput.value.replace(/\s+/g, '').trim();
+
+  if (!email || !email.includes('@')) {
+    await showCuteAlert('Harap masukkan alamat Gmail yang valid!', 'Alamat Email Salah 💌');
+    emailInput.focus();
+    return;
+  }
+
+  if (!rawPass || rawPass.length < 16) {
+    await showCuteAlert('Sandi aplikasi Google terdiri dari 16 karakter huruf.\n\nContoh: abcd efgh ijkl mnop\n\nBuka tombol "Cara Buat" jika belum memiliki sandi aplikasi.', 'Sandi Aplikasi Belum Lengkap 🔑');
+    passInput.focus();
+    return;
+  }
+
+  localStorage.setItem('dm_gmail_method', 'app_pass');
+  localStorage.setItem('dm_gmail_email', email);
+  localStorage.setItem('dm_gmail_app_password', rawPass);
+
+  showGoogleConnected(email, 'Sandi Aplikasi (16 Digit Aktif)');
+  await showCuteAlert(`Hore! Akun Gmail ${email} berhasil disimpan secara aman di memori lokal STB.\n\nNotifikasi transaksi bank & e-wallet akan disinkronkan otomatis!`, 'Gmail Berhasil Terhubung! 🎉');
+}
+
 function saveGoogleClientId() {
   const input = document.getElementById('customGoogleClientId');
   if (!input) return;
   const val = input.value.trim();
   if (!val) {
-    alert('Silakan masukkan Google Client ID Anda terlebih dahulu.');
+    showCuteAlert('Silakan masukkan Google Client ID Anda terlebih dahulu.', 'Client ID Kosong ⚠️');
     return;
   }
   localStorage.setItem('dm_google_client_id', val);
-  alert('✅ Google Client ID berhasil disimpan!');
+  showCuteAlert('Google Client ID berhasil disimpan!', 'Sukses Simpan 🔑');
 }
 
 // Periksa URL callback kembalian dari Google OAuth2
@@ -334,30 +389,34 @@ function checkGoogleAuthRedirectCallback() {
     const params = new URLSearchParams(hash.substring(1));
     const token = params.get('access_token');
     if (token) {
+      localStorage.setItem('dm_gmail_method', 'oauth');
       localStorage.setItem('dm_google_oauth_token', token);
       localStorage.setItem('dm_google_email', 'Akun Google Tertaut');
       window.location.hash = '';
-      alert('🎉 Hore! DompetMungil sekarang resmi tertaut dengan Akun Google Anda!');
-      showGoogleConnected('Akun Google Tertaut');
+      showCuteAlert('Hore! DompetMungil sekarang resmi tertaut dengan Akun Google Anda!', 'Google OAuth Terhubung! 🎉');
+      showGoogleConnected('Akun Google Tertaut', 'Google OAuth2 (Resmi)');
     }
   } else if (search) {
     const params = new URLSearchParams(search);
     const code = params.get('code');
     if (code) {
+      localStorage.setItem('dm_gmail_method', 'oauth');
       localStorage.setItem('dm_google_oauth_code', code);
       localStorage.setItem('dm_google_email', 'Akun Google Tertaut');
-      alert('🎉 Hore! DompetMungil sekarang resmi tertaut dengan Akun Google Anda!');
-      showGoogleConnected('Akun Google Tertaut');
+      showCuteAlert('Hore! DompetMungil sekarang resmi tertaut dengan Akun Google Anda!', 'Google OAuth Terhubung! 🎉');
+      showGoogleConnected('Akun Google Tertaut', 'Google OAuth2 (Resmi)');
     }
   }
 }
 
-function showGoogleConnected(email) {
+function showGoogleConnected(email, methodTitle = 'Terhubung & Aktif') {
   const card = document.getElementById('googleConnectedCard');
   const emailText = document.getElementById('connectedGoogleEmail');
+  const methodText = document.getElementById('connectedGoogleMethod');
   const btn = document.getElementById('btnRedirectGoogleOAuth');
   if (card && emailText) {
     emailText.innerText = email;
+    if (methodText) methodText.innerText = `Status: ${methodTitle}`;
     card.style.display = 'block';
   }
   if (btn) {
@@ -366,11 +425,20 @@ function showGoogleConnected(email) {
 }
 
 async function disconnectGoogleAccount() {
-  const ok = await showCuteConfirm('Yakin ingin memutuskan tautan akun Google?', 'Putuskan Akun Google 🔗', 'Ya, Putuskan', 'Batal');
+  const ok = await showCuteConfirm('Yakin ingin memutuskan koneksi akun Gmail?', 'Putuskan Akun Gmail 💌', 'Ya, Putuskan', 'Batal');
   if (ok) {
+    localStorage.removeItem('dm_gmail_method');
+    localStorage.removeItem('dm_gmail_email');
+    localStorage.removeItem('dm_gmail_app_password');
     localStorage.removeItem('dm_google_email');
     localStorage.removeItem('dm_google_oauth_token');
     localStorage.removeItem('dm_google_oauth_code');
+
+    const emailInput = document.getElementById('gmailUserEmail');
+    const passInput = document.getElementById('gmailAppPassword');
+    if (emailInput) emailInput.value = '';
+    if (passInput) passInput.value = '';
+
     document.getElementById('googleConnectedCard').style.display = 'none';
     const btn = document.getElementById('btnRedirectGoogleOAuth');
     if (btn) {
@@ -2159,9 +2227,25 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (inputClientId && savedClientId) {
     inputClientId.value = savedClientId;
   }
-  const savedGoogleAcc = localStorage.getItem('dm_google_email');
-  if (savedGoogleAcc) {
-    showGoogleConnected(savedGoogleAcc);
+  
+  // Periksa apakah pengguna tersambung lewat App Password atau OAuth
+  const savedGmailMethod = localStorage.getItem('dm_gmail_method') || 'app_pass';
+  switchGmailMethod(savedGmailMethod);
+
+  const savedGmailEmail = localStorage.getItem('dm_gmail_email');
+  const savedGmailPass = localStorage.getItem('dm_gmail_app_password');
+  const inputUserEmail = document.getElementById('gmailUserEmail');
+  const inputAppPass = document.getElementById('gmailAppPassword');
+  if (inputUserEmail && savedGmailEmail) inputUserEmail.value = savedGmailEmail;
+  if (inputAppPass && savedGmailPass) inputAppPass.value = savedGmailPass;
+
+  if (savedGmailEmail) {
+    showGoogleConnected(savedGmailEmail, savedGmailMethod === 'app_pass' ? 'Sandi Aplikasi (16-Digit)' : 'Google OAuth2 (Resmi)');
+  } else {
+    const savedGoogleAcc = localStorage.getItem('dm_google_email');
+    if (savedGoogleAcc) {
+      showGoogleConnected(savedGoogleAcc, 'Google OAuth2');
+    }
   }
 
   // Tombol Google OAuth Redirect Resmi
