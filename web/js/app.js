@@ -901,23 +901,39 @@ function renderTourStep() {
 
 
 
-// Logika Panduan Interaktif Langkah Demi Langkah (Step-by-Step Guide)
+// Logika Panduan Interaktif Langkah Demi Langkah (Step-by-Step Guide Lengkap dari Awal Sampai Akhir)
 const GUIDE_STEPS = [
   {
-    title: '1. Pilih Peran & Mode Akun 👨‍👩‍👧‍👦',
-    desc: 'Di awal penggunaan, tentukan apakah Anda menggunakan mode <strong>Personal</strong> (mandiri) atau <strong>Keluarga</strong> (Suami/Istri/Anak). Suami & Istri dapat mengelola anggaran penuh, sedangkan Anak memiliki dompet uang saku privat.'
+    title: '1. Pemasangan & Registrasi Akun Pertama 🌸',
+    desc: 'Buka alamat <code>http://IP-Odroid:1234</code> di browser HP Anda. Pilih antara <strong>Mode Keluarga</strong> (Suami & Istri) atau <strong>Mode Personal</strong>. Buat username & password admin pertama untuk mengamankan data keuangan.'
   },
   {
-    title: '2. Atur Tanggal Gajian Rutin 🗓️',
-    desc: 'Sentuh tombol <strong>"Gajian: Tgl 25"</strong> di kartu dompet untuk memilih tanggal gajian melalui kalender mini. Begitu tanggal gajian tiba, cukup klik <strong>"⚡ Terapkan Gaji Bulan Ini"</strong> untuk pencatatan instan.'
+    title: '2. Personalisasi Karakter Maskot Cute 🐾',
+    desc: 'Sentuh avatar hewan di pojok kiri atas kapan saja untuk memilih maskot favorit: 🐱 Kucing (Neko), 🐶 Shiba Inu, 🦫 Capybara, 🐰 Kelinci (Usagi), atau 🐼 Panda. Warna kartu dan tema aplikasi akan ikut berganti otomatis!'
   },
   {
-    title: '3. Pencatatan Cepat & Offline-First 🌸',
-    desc: 'Gunakan tombol <strong>➖ Catat Keluar</strong> atau <strong>➕ Catat Masuk</strong>. Kategori pengeluaran dan pemasukan sudah terpisah rapi. Transaksi akan langsung tersimpan di HP walau server Odroid sedang mati/OOM!'
+    title: '3. Atur Tanggal Gajian & Saldo Awal 🗓️',
+    desc: 'Sentuh tombol <strong>"🗓️ Gajian: Tgl 25"</strong> di kartu dompet untuk memilih tanggal gajian rutin tiap bulan. Begitu tanggal gajian tiba, cukup klik <strong>"⚡ Terapkan Gaji Bulan Ini"</strong> untuk pencatatan instan tanpa ketik ulang.'
   },
   {
-    title: '4. Personalisasi Karakter Maskot 🐾',
-    desc: 'Sentuh ikon maskot di pojok kiri atas untuk memilih teman finansial Anda (Kucing, Shiba, Capybara, Kelinci, atau Panda). Seluruh warna tema aplikasi akan bertransformasi seketika!'
+    title: '4. Pencatatan Pengeluaran & Pemasukan Cepat ➖➕',
+    desc: 'Tekan tombol <strong>➖ Catat Keluar</strong> atau tombol melayang bulat <strong>"+"</strong> di pojok kanan bawah. Fitur <em>Ghost-Typing</em> otomatis mengubah ketikan seperti "1000 rb" menjadi Rp 1.000.000 rapi.'
+  },
+  {
+    title: '5. Batas Anggaran Bulanan & Izin Pasangan 🎯',
+    desc: 'Buka tab <strong>Anggaran</strong> untuk menentukan jatah belanja bulanan per kategori. Di DompetMungil, penambahan atau perubahan batas wajib mendapat persetujuan bersama antara Suami dan Istri demi transparansi harmonis.'
+  },
+  {
+    title: '6. Menabung di Celengan Ayam Impian 🐔',
+    desc: 'Buka tab <strong>Celengan</strong> untuk membuat target impian keluarga (liburan, kurban, beli motor, laptop anak). Setiap kali ada uang lebih, masukkan koin tabungan hingga persentase progres mencapai 100%!'
+  },
+  {
+    title: '7. Koneksi Google Mail (Gmail) 16-Digit 💌',
+    desc: 'Buka tab <strong>Bank Mutasi &raquo; Tautkan Akun Google</strong>. Masukkan alamat Gmail dan 16-digit Sandi Aplikasi dari Google untuk membaca notifikasi bank/e-wallet secara otomatis ke STB tanpa perlu Cloud Console yang rumit.'
+  },
+  {
+    title: '8. Keamanan Kunci PIN Layar & Backup Otomatis 🔐',
+    desc: 'Aktifkan <strong>Kunci PIN Layar</strong> (ikon gembok 🔐 di header) agar privasi catatan keuangan terlindungi saat HP dipinjam. Database & enkripsi AES-256 Anda dicadangkan otomatis tiap hari ke Cloud!'
   }
 ];
 

@@ -523,11 +523,16 @@
 
       <!-- Tombol Mengulang Panduan Interaktif Langkah Demi Langkah -->
       <div style="background:#F0FFF4; border:1.5px dashed var(--mint-dark); border-radius:18px; padding:16px; margin-bottom:16px; text-align:center;">
-        <h4 style="font-size:0.95rem; font-weight:700; color:#2D5F52;">🎮 Tur Interaktif Aplikasi</h4>
-        <p style="font-size:0.8rem; color:var(--text-muted); margin:4px 0 12px;">Ingin melihat kembali panduan langkah demi langkah seluruh fitur aplikasi (Dompet, Anggaran, Celengan Ayam, Bank Mutasi & Panduan)?</p>
-        <button class="btn-cute mint" onclick="startDashboardTour()" style="margin:0 auto; padding:10px 18px;">
-          Mulai Tur Aplikasi ✨
-        </button>
+        <h4 style="font-size:0.95rem; font-weight:700; color:#2D5F52;">📖 Panduan Lengkap Awal Sampai Akhir</h4>
+        <p style="font-size:0.8rem; color:var(--text-muted); margin:4px 0 12px;">Pelajari alur penggunaan DompetMungil langkah demi langkah (Registrasi, Maskot, Saldo, Anggaran, Celengan Ayam, Gmail, hingga Backup):</p>
+        <div style="display:flex; justify-content:center; gap:8px; flex-wrap:wrap;">
+          <button class="btn-cute mint" onclick="openStepGuideModal()" style="padding:10px 18px;">
+            📖 Buka Langkah Demi Langkah
+          </button>
+          <button class="btn-cute primary" onclick="startDashboardTour()" style="padding:10px 18px;">
+            🎮 Mulai Tur Aplikasi ✨
+          </button>
+        </div>
       </div>
 
       <div style="display:flex; flex-direction:column; gap:16px;">
