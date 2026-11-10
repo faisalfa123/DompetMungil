@@ -1216,16 +1216,47 @@ function closeModal() {
   document.getElementById('txForm').reset();
 }
 
-// Sinkronisasi Background & OOM Recovery
+// Update tampilan visual progress sinkronisasi di dalam kartu dompet
+function updateWalletSyncProgress(status, percent, text, pulseColor = '#7BDCB5') {
+  const container = document.getElementById('walletSyncProgressContainer');
+  const bar = document.getElementById('syncProgressBar');
+  const percentEl = document.getElementById('syncProgressPercent');
+  const textEl = document.getElementById('syncStatusText');
+  const pulseEl = document.getElementById('syncStatusPulse');
+
+  if (container) container.style.display = 'block';
+  if (bar) {
+    bar.style.width = `${Math.min(100, Math.max(0, percent))}%`;
+    if (pulseColor === '#FF9AA2') {
+      bar.style.background = '#FF9AA2';
+    } else if (pulseColor === '#FFA000') {
+      bar.style.background = '#FFE082';
+    } else {
+      bar.style.background = '#FFF';
+    }
+  }
+  if (percentEl) percentEl.innerText = `${Math.round(percent)}%`;
+  if (textEl) textEl.innerText = text;
+  if (pulseEl) {
+    pulseEl.style.background = pulseColor;
+    pulseEl.style.boxShadow = `0 0 8px ${pulseColor}`;
+  }
+}
+
+// Sinkronisasi Background & OOM Recovery Realtime
 async function triggerSyncWithServer() {
   const pending = await getPendingSyncBatch();
   const banner = document.getElementById('recoveryBanner');
   const badge = document.getElementById('serverStatusBadge');
+  const totalItems = pending.length;
 
-  if (pending.length > 0) {
+  if (totalItems > 0) {
     banner.classList.remove('hidden');
     document.getElementById('recoveryTitle').innerText = 'Pemulihan Sinkronisasi';
-    document.getElementById('recoveryDesc').innerText = `Ada ${pending.length} transaksi di HP. Sedang menghubungkan ke STB...`;
+    document.getElementById('recoveryDesc').innerText = `Ada ${totalItems} transaksi di HP. Sedang menghubungkan ke STB...`;
+    updateWalletSyncProgress('syncing', 15, `Menghubungkan ke STB (${totalItems} antrian)...`, '#FFA000');
+  } else {
+    updateWalletSyncProgress('syncing', 35, 'Memeriksa pembaruan mutasi...', '#FFF');
   }
 
   try {
@@ -1241,7 +1272,8 @@ async function triggerSyncWithServer() {
       badge.style.color = '#2E7D32';
     }
 
-    if (pending.length > 0) {
+    if (totalItems > 0) {
+      updateWalletSyncProgress('syncing', 60, `Mengirim ${totalItems} data ke STB...`, '#FFF');
       const syncRes = await fetch('/api/v1/sync', {
         method: 'POST',
         headers: headers,
@@ -1249,17 +1281,27 @@ async function triggerSyncWithServer() {
       });
 
       if (syncRes.ok) {
+        let count = 0;
         for (const item of pending) {
           await clearSyncedItem(item.client_tx_id);
+          count++;
+          const p = 60 + Math.round((count / totalItems) * 35);
+          updateWalletSyncProgress('syncing', p, `Menyimpan data ${count}/${totalItems}...`, '#7BDCB5');
         }
         document.getElementById('recoveryTitle').innerText = 'Sinkronisasi Selesai ✨';
-        document.getElementById('recoveryDesc').innerText = `${pending.length} transaksi berhasil dipulihkan & dicatat di server!`;
-        setTimeout(() => banner.classList.add('hidden'), 4000);
+        document.getElementById('recoveryDesc').innerText = `${totalItems} transaksi berhasil dipulihkan & dicatat di server!`;
+        updateWalletSyncProgress('synced', 100, `Hore! ${totalItems} transaksi tersimpan di server`, '#7BDCB5');
+        setTimeout(() => {
+          if (banner) banner.classList.add('hidden');
+          updateWalletSyncProgress('idle', 100, 'Data Tersinkronisasi Otomatis', '#7BDCB5');
+        }, 3500);
       }
     } else {
-      banner.classList.add('hidden');
+      if (banner) banner.classList.add('hidden');
+      updateWalletSyncProgress('idle', 100, 'Data Tersinkronisasi Otomatis', '#7BDCB5');
     }
 
+    // Segera muat langsung perubahan data ke dalam dompet
     await loadServerData();
   } catch (err) {
     console.warn('Server offline atau terkena OOM:', err);
@@ -1267,12 +1309,16 @@ async function triggerSyncWithServer() {
       badge.innerText = '🟡 Mode Offline / Server Istirahat';
       badge.style.color = '#F57C00';
     }
-    if (pending.length > 0) {
-      banner.classList.remove('hidden');
+    if (totalItems > 0) {
+      if (banner) banner.classList.remove('hidden');
       document.getElementById('recoveryTitle').innerText = 'Mode Offline Aktif';
-      document.getElementById('recoveryDesc').innerText = `${pending.length} catatan disimpan aman di HP. Akan otomatis di-sync saat server online.`;
+      document.getElementById('recoveryDesc').innerText = `${totalItems} catatan disimpan aman di HP. Akan otomatis di-sync saat server online.`;
+      updateWalletSyncProgress('offline', 100, `${totalItems} data aman di HP (Mode Offline)`, '#FFA000');
+    } else {
+      updateWalletSyncProgress('offline', 100, 'Mode Offline (Data Lokal Tersedia)', '#FFA000');
     }
-    renderLocalTransactions();
+    // Langsung muat data lokal ke kartu dompet
+    await renderLocalTransactions();
   }
 }
 
