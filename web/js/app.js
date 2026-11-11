@@ -2636,31 +2636,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // Handle Import Mutasi Bank
-  document.getElementById('btnProcessBankImport').addEventListener('click', async () => {
-    const bank = document.getElementById('bankSelect').value;
-    const rawText = document.getElementById('bankRawText').value;
-    if (!rawText.trim()) {
-      alert('Silakan masukkan teks mutasi rekening Anda terlebih dahulu.');
-      return;
-    }
+  // 🏦 Inisialisasi Drag & Drop Mutasi Bank
+  initBankDropzone();
 
-    try {
-      const res = await fetch('/api/v1/bank-import', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Auth-Token': authToken
-        },
-        body: JSON.stringify({ bank_name: bank, raw_text: rawText })
-      });
-      const data = await res.json();
-      alert(`✨ ${data.message || 'Mutasi berhasil diproses dan dienkripsi!'}`);
-      document.getElementById('bankRawText').value = '';
-    } catch (err) {
-      alert('⚠️ Gagal terhubung ke server STB. Cek koneksi Anda.');
-    }
-  });
+  // Handle Analisis / Deteksi Mutasi Bank (File atau Teks Manual)
+  const btnProcessImport = document.getElementById('btnProcessBankImport');
+  if (btnProcessImport) {
+    btnProcessImport.addEventListener('click', async () => {
+      await processSelectedBankInput();
+    });
+  }
 
   // Registrasi Service Worker PWA
   if ('serviceWorker' in navigator) {
@@ -3095,4 +3080,508 @@ function verifyUnlockPin(inputVal) {
     }
   }
 }
+
+// ==========================================
+// 🏦 SISTEM IMPORT MUTASI BANK & DEDUPLIKASI
+// ==========================================
+
+let bankSelectedFile = null;
+let parsedBankBatch = []; // [{ client_tx_id, date, type, amount, note, category_id, account_id, isDuplicate }]
+
+// Inisialisasi Drag & Drop pada Dropzone Mutasi Bank
+function initBankDropzone() {
+  const dropzone = document.getElementById('bankDropzone');
+  if (!dropzone) return;
+
+  ['dragenter', 'dragover'].forEach(eventName => {
+    dropzone.addEventListener(eventName, (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropzone.classList.add('dragover');
+    }, false);
+  });
+
+  ['dragleave', 'drop'].forEach(eventName => {
+    dropzone.addEventListener(eventName, (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropzone.classList.remove('dragover');
+    }, false);
+  });
+
+  dropzone.addEventListener('drop', (e) => {
+    const dt = e.dataTransfer;
+    const files = dt ? dt.files : null;
+    if (files && files.length > 0) {
+      setBankSelectedFile(files[0]);
+    }
+  });
+}
+
+function handleBankFileSelect(event) {
+  const files = event.target.files;
+  if (files && files.length > 0) {
+    setBankSelectedFile(files[0]);
+  }
+}
+
+function setBankSelectedFile(file) {
+  bankSelectedFile = file;
+  const badge = document.getElementById('selectedFileNameBadge');
+  if (badge) {
+    const sizeKB = (file.size / 1024).toFixed(1);
+    badge.innerText = `📄 ${file.name} (${sizeKB} KB)`;
+    badge.style.display = 'inline-block';
+  }
+}
+
+function resetBankImportForm() {
+  bankSelectedFile = null;
+  parsedBankBatch = [];
+  const fileInput = document.getElementById('bankFileInput');
+  if (fileInput) fileInput.value = '';
+  const badge = document.getElementById('selectedFileNameBadge');
+  if (badge) {
+    badge.innerText = '';
+    badge.style.display = 'none';
+  }
+  const rawText = document.getElementById('bankRawText');
+  if (rawText) rawText.value = '';
+  const resultCard = document.getElementById('bankParseResultsCard');
+  if (resultCard) resultCard.style.display = 'none';
+  const listPreview = document.getElementById('bankParsedListPreview');
+  if (listPreview) listPreview.innerHTML = '';
+}
+
+// Hitung hash SHA-256 string untuk deduplikasi deterministik
+async function computeSha256Hex(str) {
+  try {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(str);
+    const hashBuf = await crypto.subtle.digest('SHA-256', data);
+    const hashArr = Array.from(new Uint8Array(hashBuf));
+    return hashArr.map(b => b.toString(16).padStart(2, '0')).join('');
+  } catch (err) {
+    // Fallback hashing jika Web Crypto tidak tersedia
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = ((hash << 5) - hash) + str.charCodeAt(i);
+      hash |= 0;
+    }
+    return Math.abs(hash).toString(16) + '00000000';
+  }
+}
+
+// Normalisasi nominal uang dari teks mutasi (contoh: "1.250.000,00" atau "50,000" atau "50000")
+function parseBankAmountString(amtStr) {
+  if (!amtStr) return 0;
+  let s = String(amtStr).trim();
+  // Hilangkan Rp, IDR, spasi
+  s = s.replace(/^(Rp\.?|IDR)\s*/i, '').trim();
+
+  // Pola format Indonesia: 1.250.000,00 (titik ribuan, koma desimal)
+  if (s.includes('.') && s.includes(',')) {
+    s = s.replace(/\./g, '').replace(',', '.');
+  } else if (s.includes(',') && !s.includes('.')) {
+    // Bisa jadi 50,00 (desimal) atau 50,000 (ribuan gaya Inggris)
+    const parts = s.split(',');
+    if (parts.length === 2 && parts[1].length === 2) {
+      s = parts[0] + '.' + parts[1]; // desimal 2 angka
+    } else {
+      s = s.replace(/,/g, ''); // ribuan
+    }
+  } else if (s.includes('.') && !s.includes(',')) {
+    const parts = s.split('.');
+    if (parts.length > 2 || (parts.length === 2 && parts[1].length === 3)) {
+      s = s.replace(/\./g, ''); // ribuan titik tanpa desimal
+    }
+  }
+
+  const num = parseFloat(s.replace(/[^0-9.-]/g, ''));
+  return isNaN(num) ? 0 : Math.abs(num);
+}
+
+// Normalisasi format tanggal DD/MM/YYYY atau DD-MM-YYYY ke format YYYY-MM-DD
+function normalizeBankDate(dateStr) {
+  if (!dateStr) return new Date().toISOString().split('T')[0];
+  const parts = dateStr.trim().split(/[\/\-\.]/);
+  const curYear = new Date().getFullYear();
+
+  if (parts.length >= 3) {
+    let day = parts[0];
+    let month = parts[1];
+    let year = parts[2];
+
+    // Jika format YYYY-MM-DD
+    if (parts[0].length === 4) {
+      year = parts[0];
+      month = parts[1];
+      day = parts[2];
+    } else {
+      // Dua digit tahun (contoh: 26 -> 2026)
+      if (year.length === 2) {
+        year = '20' + year;
+      }
+    }
+
+    day = String(day).padStart(2, '0');
+    month = String(month).padStart(2, '0');
+
+    // Validasi angka wajar
+    if (parseInt(month, 10) >= 1 && parseInt(month, 10) <= 12 && parseInt(day, 10) >= 1 && parseInt(day, 10) <= 31) {
+      return `${year}-${month}-${day}`;
+    }
+  }
+  return new Date().toISOString().split('T')[0];
+}
+
+// Ekstraksi teks dari PDF murni client-side (tanpa node / external library)
+function extractTextFromPdfBuffer(arrayBuffer) {
+  const bytes = new Uint8Array(arrayBuffer);
+  let binaryString = '';
+  const chunkSize = 8192;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binaryString += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
+  }
+
+  let extractedLines = [];
+
+  // 1. Ekstrak string literal di dalam kurung (...) dalam stream teks PDF
+  const textMatches = binaryString.match(/\((.*?)\)\s*Tj/g) || [];
+  if (textMatches.length > 0) {
+    let currentLine = '';
+    textMatches.forEach(m => {
+      const matchText = m.replace(/^\(/, '').replace(/\)\s*Tj$/, '').replace(/\\([()\\])/g, '$1');
+      if (matchText) {
+        currentLine += ' ' + matchText;
+      }
+    });
+    if (currentLine) extractedLines.push(currentLine);
+  }
+
+  // 2. Ekstrak array string [... (text) ...] TJ
+  const arrayMatches = binaryString.match(/\[(.*?)\]\s*TJ/g) || [];
+  if (arrayMatches.length > 0) {
+    let lineText = '';
+    arrayMatches.forEach(m => {
+      const inner = m.match(/\((.*?)\)/g) || [];
+      const chunk = inner.map(x => x.slice(1, -1)).join('');
+      if (chunk.trim()) lineText += ' ' + chunk;
+    });
+    if (lineText) extractedLines.push(lineText);
+  }
+
+  // 3. Fallback: Tangkap seluruh string yang terlihat seperti baris mutasi bank
+  if (extractedLines.length === 0) {
+    const rawReadable = binaryString.replace(/[^\x20-\x7E\r\n]/g, ' ');
+    const lines = rawReadable.split(/\r?\n/);
+    lines.forEach(l => {
+      const clean = l.replace(/\s+/g, ' ').trim();
+      if (clean.length > 10 && (/\d{1,2}[\/\-\.]\d{1,2}/.test(clean) || /CR|DB|TRSF|TRANSFER|DEBET|KREDIT|SALDO/i.test(clean))) {
+        extractedLines.push(clean);
+      }
+    });
+  }
+
+  return extractedLines.join('\n');
+}
+
+// Parser cerdas mutasi rekening Indonesia (BCA, Mandiri, BRI, BNI, Jago, CSV Standar)
+function parseBankTextContent(rawText, bankHint = 'AUTO') {
+  const lines = rawText.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+  const results = [];
+
+  for (let line of lines) {
+    // Lewati baris header umum
+    if (/^(tanggal|date|tgl|keterangan|description|mutasi|saldo|uraian|transaksi)/i.test(line)) {
+      continue;
+    }
+
+    // Pola A: CSV Standard dengan koma / titik-koma / tab
+    // Format: Tanggal, Keterangan, Debet/Kredit, Nominal, ...
+    if (line.includes(';') || (line.includes(',') && (line.match(/,/g) || []).length >= 2)) {
+      const delimiter = line.includes(';') ? ';' : ',';
+      const cols = line.split(delimiter).map(c => c.trim().replace(/^["']|["']$/g, ''));
+      if (cols.length >= 3) {
+        // Cari kolom tanggal
+        let dateColIndex = -1;
+        for (let i = 0; i < cols.length; i++) {
+          if (/\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}/.test(cols[i])) {
+            dateColIndex = i;
+            break;
+          }
+        }
+
+        if (dateColIndex !== -1) {
+          const dateStr = normalizeBankDate(cols[dateColIndex]);
+          let note = '';
+          let amount = 0;
+          let type = 'expense';
+
+          // Cari kolom nominal dan tipe DB/CR
+          cols.forEach((col, idx) => {
+            if (idx === dateColIndex) return;
+            const upper = col.toUpperCase();
+            if (upper === 'CR' || upper === 'KREDIT' || upper === 'IN' || upper === 'PEMASUKAN') {
+              type = 'income';
+            } else if (upper === 'DB' || upper === 'DEBET' || upper === 'OUT' || upper === 'PENGELUARAN') {
+              type = 'expense';
+            }
+
+            const parsedVal = parseBankAmountString(col);
+            if (parsedVal > 0 && amount === 0) {
+              amount = parsedVal;
+            } else if (col.length > note.length && isNaN(parsedVal)) {
+              note = col;
+            }
+          });
+
+          if (amount > 0) {
+            results.push({
+              date: dateStr,
+              type: type,
+              amount: amount,
+              note: note || 'Mutasi Bank ' + bankHint,
+              bank: bankHint
+            });
+            continue;
+          }
+        }
+      }
+    }
+
+    // Pola B: Format baris e-statement m-Banking (contoh BCA KlikBCA: "04/11 TRSF E-BANKING DB 150.000,00 TRANSFER KE 123...")
+    const dateMatch = line.match(/(\d{1,2}[\/\-\.]\d{1,2}(?:[\/\-\.]\d{2,4})?)/);
+    if (!dateMatch) continue;
+
+    const dateStr = normalizeBankDate(dateMatch[1]);
+    const isCredit = /\b(CR|KREDIT|PEMASUKAN|TOP UP|DITERIMA)\b/i.test(line);
+    const isDebit = /\b(DB|DEBIT|DEBET|PENGELUARAN|TRSF|QRIS|TARIK)\b/i.test(line);
+    const type = isCredit ? 'income' : 'expense';
+
+    // Cari nominal uang: contoh 100.000,00 atau 50000
+    const amtMatches = line.match(/\b\d{1,3}(?:\.\d{3})*(?:,\d{2})?\b|\b\d{4,}\b/g);
+    let amount = 0;
+    if (amtMatches) {
+      for (let cand of amtMatches) {
+        const val = parseBankAmountString(cand);
+        // Abaikan tanggal atau angka kecil misal "04" atau tahun "2026"
+        if (val >= 1000) {
+          amount = val;
+          break;
+        }
+      }
+    }
+
+    if (amount > 0) {
+      let cleanNote = line
+        .replace(dateMatch[0], '')
+        .replace(/\b(CR|DB|KREDIT|DEBET|DEBIT)\b/gi, '')
+        .replace(/\b\d{1,3}(?:\.\d{3})*(?:,\d{2})?\b/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+      if (!cleanNote) cleanNote = 'Mutasi ' + (type === 'income' ? 'Pemasukan' : 'Pengeluaran');
+
+      results.push({
+        date: dateStr,
+        type: type,
+        amount: amount,
+        note: cleanNote,
+        bank: bankHint
+      });
+    }
+  }
+
+  return results;
+}
+
+// Analisis File Bank Terpilih atau Teks Manual dengan Auto-Deduplikasi
+async function processSelectedBankInput() {
+  const bank = document.getElementById('bankSelect').value;
+  const rawText = (document.getElementById('bankRawText').value || '').trim();
+
+  let textToParse = rawText;
+
+  if (bankSelectedFile) {
+    const fileName = bankSelectedFile.name.toLowerCase();
+    if (fileName.endsWith('.pdf')) {
+      const arrayBuffer = await bankSelectedFile.arrayBuffer();
+      textToParse = extractTextFromPdfBuffer(arrayBuffer);
+      if (!textToParse.trim()) {
+        alert('⚠️ PDF tidak mengandung teks yang dapat dibaca langsung. Pastikan e-statement bukan hasil scan foto tanpa OCR.');
+        return;
+      }
+    } else {
+      textToParse = await bankSelectedFile.text();
+    }
+  }
+
+  if (!textToParse.trim()) {
+    alert('Silakan pilih file mutasi (.csv / .pdf / .txt) atau tempel teks mutasi di area yang tersedia.');
+    return;
+  }
+
+  // 1. Parsing mutasi
+  const parsedItems = parseBankTextContent(textToParse, bank);
+  if (parsedItems.length === 0) {
+    alert('⚠️ Tidak ada transaksi yang berhasil dikenali. Pastikan format mengandung tanggal dan nominal.');
+    return;
+  }
+
+  // 2. Ambil seluruh transaksi lokal yang sudah ada untuk verifikasi duplikat
+  const localTransactions = await getAllLocalTx();
+
+  // 3. Proses hash SHA-256 dan deteksi duplikat
+  parsedBankBatch = [];
+  let newCount = 0;
+  let dupCount = 0;
+
+  for (let item of parsedItems) {
+    // Kunci sidik jari deterministik
+    const normalizedNote = item.note.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const fpString = `${item.bank}_${item.date}_${item.type}_${item.amount}_${normalizedNote}`;
+    const hash = await computeSha256Hex(fpString);
+    const clientTxId = `ctx_bank_${hash.substring(0, 16)}`;
+
+    // Cek apakah transaksi ini sudah ada di IndexedDB
+    const isExisting = localTransactions.some(t => {
+      if (t.client_tx_id === clientTxId) return true;
+      const tNormNote = (t.note || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      return t.date === item.date &&
+             Number(t.amount) === Number(item.amount) &&
+             t.type === item.type &&
+             (tNormNote === normalizedNote || (tNormNote.includes(normalizedNote) || normalizedNote.includes(tNormNote)));
+    });
+
+    const isDuplicate = isExisting;
+    if (isDuplicate) {
+      dupCount++;
+    } else {
+      newCount++;
+    }
+
+    // Tentukan kategori default otomatis
+    let catId = item.type === 'income' ? 'cat_gaji' : 'cat_makan';
+    const noteLower = item.note.toLowerCase();
+    if (noteLower.includes('pln') || noteLower.includes('listrik') || noteLower.includes('wifi') || noteLower.includes('indihome')) {
+      catId = 'cat_tagihan';
+    } else if (noteLower.includes('superindo') || noteLower.includes('alfamart') || noteLower.includes('indomaret') || noteLower.includes('sayur')) {
+      catId = 'cat_belanja';
+    } else if (noteLower.includes('gaji') || noteLower.includes('payroll') || noteLower.includes('salary')) {
+      catId = 'cat_gaji';
+    }
+
+    parsedBankBatch.push({
+      client_tx_id: clientTxId,
+      date: item.date,
+      type: item.type,
+      amount: item.amount,
+      note: item.note,
+      category_id: catId,
+      account_id: 'acc_bank',
+      isDuplicate: isDuplicate
+    });
+  }
+
+  // 4. Render Preview
+  renderBankParsedPreview(newCount, dupCount);
+}
+
+// Render tampilan preview hasil analisis dengan penanda Baru vs Duplikat
+function renderBankParsedPreview(newCount, dupCount) {
+  const resultCard = document.getElementById('bankParseResultsCard');
+  const countBadge = document.getElementById('parseBatchCountBadge');
+  const listPreview = document.getElementById('bankParsedListPreview');
+  const btnSave = document.getElementById('btnConfirmBankSave');
+
+  if (!resultCard || !listPreview) return;
+
+  resultCard.style.display = 'block';
+  if (countBadge) {
+    countBadge.innerText = `${newCount} Baru • ${dupCount} Duplikat`;
+    countBadge.style.background = newCount > 0 ? '#B5EAD7' : '#FFEBE6';
+    countBadge.style.color = newCount > 0 ? '#1B4332' : '#C0392B';
+  }
+
+  if (btnSave) {
+    if (newCount > 0) {
+      btnSave.disabled = false;
+      btnSave.innerText = `💾 Simpan ${newCount} Transaksi Baru ke Dompet (Lewati Duplikat)`;
+      btnSave.style.opacity = '1';
+    } else {
+      btnSave.disabled = true;
+      btnSave.innerText = `🔒 Semua ${dupCount} Transaksi Sudah Ada (Aman, Tidak Dobel)`;
+      btnSave.style.opacity = '0.6';
+    }
+  }
+
+  let html = '';
+  parsedBankBatch.forEach((tx, idx) => {
+    const isDup = tx.isDuplicate;
+    const badgeText = isDup ? '🔒 Sudah Ada (Dilewati)' : '✨ Baru';
+    const badgeClass = isDup ? 'badge-dup' : 'badge-new';
+    const amountSign = tx.type === 'income' ? '+ ' : '- ';
+    const amountColor = tx.type === 'income' ? '#2E7D32' : '#E76F51';
+
+    html += `
+      <div class="parsed-tx-item ${isDup ? 'duplicate' : 'new-item'}">
+        <div style="flex:1; overflow:hidden;">
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span class="file-badge ${badgeClass}" style="font-size:0.65rem; padding:2px 6px;">${badgeText}</span>
+            <span style="font-size:0.75rem; color:var(--text-muted);">${tx.date}</span>
+          </div>
+          <div style="font-size:0.82rem; font-weight:700; color:var(--text-primary); text-overflow:ellipsis; white-space:nowrap; overflow:hidden; margin-top:2px;">
+            ${tx.note}
+          </div>
+        </div>
+        <div style="text-align:right; font-weight:800; font-size:0.88rem; color:${amountColor};">
+          ${amountSign}${formatRupiah(tx.amount)}
+        </div>
+      </div>
+    `;
+  });
+
+  listPreview.innerHTML = html;
+}
+
+// Simpan batch transaksi baru ke IndexedDB dan trigger sinkronisasi
+async function saveParsedBankTransactions() {
+  const newItems = parsedBankBatch.filter(tx => !tx.isDuplicate);
+  if (newItems.length === 0) {
+    alert('Semua data mutasi yang diunggah sudah tercatat sebelumnya. Tidak ada data baru untuk disimpan.');
+    return;
+  }
+
+  const currentRole = (localStorage.getItem('dm_role') || userRole || 'suami').toLowerCase();
+  const authorRole = (currentRole === 'suami' || currentRole === 'ayah') ? 'suami' : 'istri';
+
+  let savedCount = 0;
+  for (let item of newItems) {
+    const txObj = {
+      client_tx_id: item.client_tx_id,
+      type: item.type,
+      amount: item.amount,
+      category_id: item.category_id,
+      account_id: item.account_id,
+      date: item.date,
+      note: item.note,
+      author: authorRole
+    };
+
+    await saveLocalTx(txObj, true);
+    savedCount++;
+  }
+
+  // Refresh transaksi di tampilan utama
+  await renderLocalTransactions();
+  triggerSyncWithServer();
+
+  // Reset form import
+  resetBankImportForm();
+  window.switchTab('home');
+
+  alert(`🎉 Hore! Sebanyak ${savedCount} transaksi berhasil dicatat ke Dompet Mungil tanpa ada yang dobel! ✨`);
+}
+
 

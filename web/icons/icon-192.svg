@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFB7B2"/>
+      <stop offset="100%" stop-color="#FFDAC1"/>
+    </linearGradient>
+    <filter id="softShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#FF9AA2" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  <!-- Background Lingkaran Lembut -->
+  <circle cx="50" cy="50" r="48" fill="url(#bgGrad)" filter="url(#softShadow)"/>
+  <circle cx="50" cy="50" r="45" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-dasharray="6 4" opacity="0.6"/>
+
+  <!-- Telinga Kucing Imut -->
+  <polygon points="22,38 14,14 42,26" fill="#FFB7B2" stroke="#FFAAA6" stroke-width="3"/>
+  <polygon points="24,32 18,20 36,25" fill="#FFD1DC"/>
+  <polygon points="78,38 86,14 58,26" fill="#FFB7B2" stroke="#FFAAA6" stroke-width="3"/>
+  <polygon points="76,32 82,20 64,25" fill="#FFD1DC"/>
+
+  <!-- Kepala Kucing -->
+  <ellipse cx="50" cy="58" rx="36" ry="30" fill="#FFFFFF" stroke="#FFAAA6" stroke-width="3"/>
+
+  <!-- Mata Berbinar Kawaii -->
+  <ellipse cx="38" cy="54" rx="4.5" ry="5.5" fill="#2B2D42"/>
+  <circle cx="39.5" cy="52" r="1.8" fill="#FFFFFF"/>
+  <circle cx="36.5" cy="56" r="0.8" fill="#FFFFFF"/>
+  <ellipse cx="62" cy="54" rx="4.5" ry="5.5" fill="#2B2D42"/>
+  <circle cx="63.5" cy="52" r="1.8" fill="#FFFFFF"/>
+  <circle cx="60.5" cy="56" r="0.8" fill="#FFFFFF"/>
+
+  <!-- Pipi Merona Merah Muda -->
+  <ellipse cx="28" cy="62" rx="6" ry="4" fill="#FF9AA2" opacity="0.65"/>
+  <ellipse cx="72" cy="62" rx="6" ry="4" fill="#FF9AA2" opacity="0.65"/>
+
+  <!-- Hidung & Mulut Kucing :3 -->
+  <polygon points="48,60 52,60 50,63" fill="#FF8E99"/>
+  <path d="M 45,64 Q 50,69 50,64 Q 50,69 55,64" fill="none" stroke="#4A4A58" stroke-width="2.2" stroke-linecap="round"/>
+
+  <!-- Koin Emas Keberuntungan di Kepala -->
+  <circle cx="50" cy="24" r="10.5" fill="#FFE066" stroke="#F4A261" stroke-width="2"/>
+  <circle cx="50" cy="24" r="7.5" fill="none" stroke="#F4A261" stroke-width="1.2" stroke-dasharray="2 1.5"/>
+  <text x="50" y="28" font-size="10" font-weight="900" fill="#E76F51" text-anchor="middle" font-family="'Quicksand', sans-serif">Rp</text>
+</svg>

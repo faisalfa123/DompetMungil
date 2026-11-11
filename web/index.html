@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>DompetMungil (Beta v0.9.5) - Catatan Keuangan Keluarga Cute</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="apple-touch-icon" href="icons/icon-192.svg">
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#FFB7B2">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -465,23 +467,68 @@
         <button class="btn-cute" id="tabBtnBankGoogle" onclick="switchBankTab('google')">🌐 Tautkan Akun Google</button>
       </div>
 
-      <!-- Opsi 1: File CSV / e-Statement Import -->
+      <!-- Opsi 1: File CSV / e-Statement Import dengan Dropzone & Auto-Deduplikasi -->
       <div id="bankSectionFile" style="background:#fff; border-radius:18px; padding:20px; box-shadow:var(--shadow-soft);">
-        <label class="form-label">Pilih Bank / E-Wallet</label>
+        <label class="form-label" style="font-weight:700;">1. Pilih Format Bank / E-Wallet</label>
         <select class="form-select" id="bankSelect">
-          <option value="BCA">BCA (KlikBCA / myBCA / CSV)</option>
+          <option value="AUTO">✨ Auto-Detect (Semua Bank & E-Wallet)</option>
+          <option value="BCA">BCA (KlikBCA / myBCA / e-Statement)</option>
           <option value="Mandiri">Bank Mandiri (Livin' / e-Statement)</option>
-          <option value="BRI">BRI (BRImo / Mutasi PDF-CSV)</option>
-          <option value="BNI">BNI Mobile Banking</option>
+          <option value="BRI">BRI (BRImo / Mutasi CSV-PDF)</option>
+          <option value="BNI">BNI (BNI Mobile / CSV)</option>
           <option value="JAGO">Bank Jago / GoPay</option>
+          <option value="GENERIC">Format CSV Standar (Tanggal, Jenis, Nominal, Catatan)</option>
         </select>
 
-        <label class="form-label" style="margin-top:16px;">Tempel Isi Mutasi / Unggah CSV</label>
-        <textarea id="bankRawText" class="form-input" style="height:110px; resize:none;" placeholder="Contoh: 04/11/2026 TRSF E-BANKING DB 50.000,00 INDOMARET..."></textarea>
+        <!-- Dropzone Unggah File CSV / PDF / TXT -->
+        <div style="margin-top:16px;">
+          <label class="form-label" style="font-weight:700;">2. Unggah File Mutasi (CSV / TXT / PDF)</label>
+          <div id="bankDropzone" class="bank-dropzone" onclick="document.getElementById('bankFileInput').click()">
+            <input type="file" id="bankFileInput" accept=".csv,.txt,.pdf" style="display:none;" onchange="handleBankFileSelect(event)">
+            <div style="font-size:2.2rem; margin-bottom:8px;">📂</div>
+            <strong style="font-size:0.92rem; color:var(--text-primary); display:block;">Pilih File atau Tarik ke Sini</strong>
+            <p style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">
+              Mendukung file <strong>.csv, .txt</strong>, dan <strong>e-statement PDF</strong> langsung dari m-Banking.
+            </p>
+            <span id="selectedFileNameBadge" class="file-badge" style="display:none;"></span>
+          </div>
+        </div>
 
-        <button class="btn-cute primary" id="btnProcessBankImport" style="width:100%; margin-top:16px; padding:14px;">
-          ✨ Proses Mutasi Aman & Enkripsi
-        </button>
+        <!-- Opsi Manual Paste Alternatif -->
+        <details style="margin-top:14px; font-size:0.78rem;">
+          <summary style="cursor:pointer; color:#1976D2; font-weight:700;">📝 Atau Tempel Teks Mutasi Manual (Salin dari SMS/Aplikasi):</summary>
+          <div style="margin-top:8px;">
+            <textarea id="bankRawText" class="form-input" style="height:90px; resize:none; font-family:monospace; font-size:0.75rem;" placeholder="Contoh: 04/11/2026 TRSF E-BANKING DB 50.000,00 INDOMARET..."></textarea>
+          </div>
+        </details>
+
+        <!-- Tombol Aksi Parse Mutasi -->
+        <div style="display:flex; gap:8px; margin-top:16px;">
+          <button class="btn-cute primary" id="btnProcessBankImport" style="flex:1; padding:13px; font-size:0.88rem; justify-content:center;">
+            ✨ Analisis & Deteksi Transaksi
+          </button>
+          <button class="btn-cute" onclick="resetBankImportForm()" style="padding:13px 16px; font-size:0.85rem;" title="Reset Form">
+            🔄 Reset
+          </button>
+        </div>
+
+        <!-- Status & Ringkasan Auto-Deduplikasi Hasil Parse -->
+        <div id="bankParseResultsCard" style="display:none; margin-top:16px; background:#FFF9FB; border:1.5px solid #FFD1DC; border-radius:16px; padding:14px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <div>
+              <strong style="font-size:0.9rem; color:#4A4A58;" id="parseSummaryTitle">Hasil Analisis Mutasi</strong>
+              <p style="font-size:0.72rem; color:var(--text-muted);" id="parseSummarySub">Auto-deduplikasi aktif: data duplikat tidak akan ditimpa ulang.</p>
+            </div>
+            <span id="parseBatchCountBadge" class="beta-badge" style="background:#7BDCB5; color:#1B4332;">0 Siap Catat</span>
+          </div>
+
+          <!-- Preview List Transaksi yang Ditemukan -->
+          <div id="bankParsedListPreview" style="max-height:180px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; margin-bottom:12px;"></div>
+
+          <button type="button" class="btn-cute mint" id="btnConfirmBankSave" onclick="saveParsedBankTransactions()" style="width:100%; padding:12px; font-size:0.88rem; justify-content:center;">
+            💾 Simpan Transaksi Baru ke Dompet (Lewati Duplikat)
+          </button>
+        </div>
       </div>
 
       <!-- Opsi 2: Integrasi Google Mail (Gmail) Notifikasi Bank -->
@@ -1383,7 +1430,7 @@
     </div>
   </div>
 
-  <!-- Script Logika PWA, IndexedDB & Sync dengan cache busting dinamis (v0.9.5-beta) -->
-  <script src="js/app.js?v=20261111_v095beta"></script>
+  <!-- Script Logika PWA, IndexedDB & Sync dengan cache busting dinamis (v0.9.5-bank-import) -->
+  <script src="js/app.js?v=20261111_v095bank"></script>
 </body>
 </html>

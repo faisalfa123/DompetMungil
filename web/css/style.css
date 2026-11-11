@@ -1267,5 +1267,67 @@ body.dark-mode .bottom-nav {
   transform: translateY(-2px);
 }
 
+/* 📂 Dropzone Unggah File Mutasi Bank */
+.bank-dropzone {
+  border: 2px dashed #FFAAA6;
+  background: #FFFDFE;
+  border-radius: 18px;
+  padding: 24px 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.bank-dropzone:hover, .bank-dropzone.dragover {
+  border-color: #E76F51;
+  background: #FFF5F2;
+  transform: scale(1.01);
+  box-shadow: 0 8px 20px rgba(255, 183, 178, 0.3);
+}
+
+.file-badge {
+  display: inline-block;
+  margin-top: 10px;
+  background: var(--pink-pastel);
+  color: #2D3142;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.parsed-tx-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #FFFFFF;
+  border-radius: 12px;
+  padding: 8px 12px;
+  border: 1px solid #F0F0F5;
+  font-size: 0.78rem;
+  transition: all 0.2s ease;
+}
+
+.parsed-tx-item.duplicate {
+  background: #F8F9FA;
+  opacity: 0.7;
+  border-left: 4px solid #FFA000;
+}
+
+.parsed-tx-item.new-item {
+  border-left: 4px solid #7BDCB5;
+}
+
+body.dark-mode .bank-dropzone {
+  background: #1F1F2C;
+  border-color: #FFAAA6;
+}
+
+body.dark-mode .parsed-tx-item {
+  background: #272736;
+  border-color: #38384E;
+}
+
 
 
