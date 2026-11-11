@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>DompetMungil - Catatan Keuangan Keluarga (Cute & Ultra-Light)</title>
+  <title>DompetMungil (Beta v0.9.5) - Catatan Keuangan Keluarga Cute</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#FFB7B2">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <link rel="stylesheet" href="css/style.css?v=20261105_12">
+  <link rel="stylesheet" href="css/style.css?v=20261111_v095beta">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -177,35 +177,96 @@
     </symbol>
 
     <!-- Ikon Makanan & Belanja Lucu -->
-    <symbol id="cute-cat-food" viewBox="0 0 24 24">
-      <path d="M18 6h-2c0-2.21-1.79-4-4-4S8 3.79 8 6H6c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6-2c1.1 0 2 .9 2 2h-4c0-1.1.9-2 2-2zm6 16H6V8h2v2c0 .55.45 1 1 1s1-.45 1-1V8h4v2c0 .55.45 1 1 1s1-.45 1-1V8h2v12z" fill="currentColor"/>
+    <!-- Ikon Kategori Orisinal Kawaii v0.9.5-beta -->
+    <!-- 1. Makanan & Minuman (Bento Beras & Onigiri) -->
+    <symbol id="icon-cat-bento" viewBox="0 0 24 24">
+      <rect x="2" y="4" width="20" height="16" rx="4" fill="#FFEAE8" stroke="#FFAAA6" stroke-width="1.8"/>
+      <line x1="12" y1="4" x2="12" y2="20" stroke="#FFAAA6" stroke-width="1.8"/>
+      <!-- Onigiri Segitiga Mini -->
+      <polygon points="7,8 4.5,13 9.5,13" fill="#FFF" stroke="#FF8E99" stroke-width="1.2"/>
+      <rect x="6" y="11" width="2" height="2" fill="#4A4A58"/>
+      <!-- Lauk Tamagoyaki -->
+      <rect x="14" y="7" width="6" height="4" rx="2" fill="#FFE066" stroke="#E9C46A" stroke-width="1"/>
+      <rect x="14" y="13" width="6" height="4" rx="2" fill="#FFB7B2" stroke="#E76F51" stroke-width="1"/>
+    </symbol>
+
+    <!-- 2. Belanja Harian (Keranjang Pastel dengan Wortel) -->
+    <symbol id="icon-cat-groceries" viewBox="0 0 24 24">
+      <path d="M4 9h16l-2 11H6L4 9z" fill="#FFF5EB" stroke="#F4A261" stroke-width="1.8" stroke-linejoin="round"/>
+      <path d="M8 9V6a4 4 0 0 1 8 0v3" fill="none" stroke="#E76F51" stroke-width="1.8" stroke-linecap="round"/>
+      <circle cx="12" cy="14" r="2.5" fill="#FF9AA2"/>
+      <path d="M10 14h4" stroke="#FFF" stroke-width="1.2" stroke-linecap="round"/>
+    </symbol>
+
+    <!-- 3. Listrik & Tagihan (Bohlam Senyum Lucu) -->
+    <symbol id="icon-cat-light" viewBox="0 0 24 24">
+      <path d="M9 18h6m-5 3h4m-7-9a6 6 0 1 1 8 0c-.8 1-1.5 2-1.5 3.5h-5C10.5 14 9.8 13 9 12z" fill="#FFFBEA" stroke="#E9C46A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="10.5" cy="10" r="0.8" fill="#4A4A58"/>
+      <circle cx="13.5" cy="10" r="0.8" fill="#4A4A58"/>
+      <path d="M11 12q1 1 2 0" fill="none" stroke="#E76F51" stroke-width="1" stroke-linecap="round"/>
+    </symbol>
+
+    <!-- 4. Pendidikan & Buku (Buku Catatan Pastel Bintang) -->
+    <symbol id="icon-cat-school" viewBox="0 0 24 24">
+      <rect x="4" y="3" width="16" height="18" rx="3" fill="#E8F0FE" stroke="#7BAAF7" stroke-width="1.8"/>
+      <line x1="8" y1="3" x2="8" y2="21" stroke="#4285F4" stroke-width="1.8"/>
+      <!-- Pita Pembatas Buku -->
+      <polygon points="14,3 17,3 15.5,8 14,7" fill="#FF8E99"/>
+      <line x1="11" y1="12" x2="17" y2="12" stroke="#7BAAF7" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="11" y1="16" x2="15" y2="16" stroke="#7BAAF7" stroke-width="1.5" stroke-linecap="round"/>
+    </symbol>
+
+    <!-- 5. Transportasi & Bensin (Skuter Vespa Imut) -->
+    <symbol id="icon-cat-scooter" viewBox="0 0 24 24">
+      <circle cx="6" cy="18" r="3" fill="#FFF" stroke="#E76F51" stroke-width="1.8"/>
+      <circle cx="18" cy="18" r="3" fill="#FFF" stroke="#E76F51" stroke-width="1.8"/>
+      <path d="M6 18h8a4 4 0 0 0 4-4v-2h-3" fill="none" stroke="#E76F51" stroke-width="1.8" stroke-linecap="round"/>
+      <path d="M15 8l-2 4h-4" fill="none" stroke="#E76F51" stroke-width="1.8" stroke-linecap="round"/>
+      <circle cx="15" cy="7" r="1.5" fill="#FFE066" stroke="#F4A261" stroke-width="1"/>
+    </symbol>
+
+    <!-- 6. Kesehatan & Obat (Kotak Hati P3K) -->
+    <symbol id="icon-cat-health" viewBox="0 0 24 24">
+      <rect x="3" y="6" width="18" height="14" rx="4" fill="#FFF0F5" stroke="#FF8E99" stroke-width="1.8"/>
+      <path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" fill="none" stroke="#FF8E99" stroke-width="1.8" stroke-linecap="round"/>
+      <!-- Salib Hati -->
+      <path d="M12 9v6m-3-3h6" stroke="#E63946" stroke-width="2.2" stroke-linecap="round"/>
+    </symbol>
+
+    <!-- 7. Hadiah & Hiburan (Kotak Kado Pita Manis) -->
+    <symbol id="icon-cat-gift" viewBox="0 0 24 24">
+      <rect x="3" y="10" width="18" height="11" rx="3" fill="#F0FFF4" stroke="#52B788" stroke-width="1.8"/>
+      <rect x="2" y="6" width="20" height="4" rx="2" fill="#B5EAD7" stroke="#52B788" stroke-width="1.8"/>
+      <line x1="12" y1="6" x2="12" y2="21" stroke="#2D6A4F" stroke-width="1.8"/>
+      <!-- Pita Kupu-Kupu -->
+      <path d="M8 6c-2 0-3-2-1.5-3.5S10 4 12 6c2-2 4.5-3.5 5.5-2S16 6 16 6" fill="none" stroke="#E76F51" stroke-width="1.8" stroke-linecap="round"/>
     </symbol>
   </svg>
 
   <div class="app-container">
-    <!-- Header Aplikasi -->
+    <!-- Header Aplikasi Kawaii Modern (v0.9.5-beta) -->
     <header class="app-header">
       <div class="brand-section">
-        <div class="mascot-avatar" id="mascotAvatarContainer" onclick="openThemeSelectorModal()" style="cursor:pointer;" title="Klik untuk ganti maskot cute!">
-          <svg style="width:36px; height:36px;"><use id="currentMascotUse" href="#icon-cat-mascot"></use></svg>
+        <div class="mascot-avatar" id="mascotAvatarContainer" onclick="openThemeSelectorModal()" style="cursor:pointer;" title="Klik untuk pilih karakter maskot kesukaanmu!">
+          <svg style="width:38px; height:38px;"><use id="currentMascotUse" href="#icon-cat-mascot"></use></svg>
         </div>
         <div>
-          <h1 class="brand-title">DompetMungil</h1>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <h1 class="brand-title">DompetMungil</h1>
+            <span class="beta-badge" title="Versi Beta dalam pengujian aktif">BETA v0.9.5</span>
+          </div>
           <p class="brand-subtitle" id="userRoleBadge">🌸 Suami (Keluarga)</p>
         </div>
       </div>
-      <div style="display:flex; gap:6px; align-items:center;">
-        <button class="btn-cute" id="btnToggleDarkMode" onclick="toggleDarkMode()" style="padding: 6px 8px; font-size: 0.9rem;" title="Mode Malam / Siang">
-          🌙
+      <div class="header-actions">
+        <button class="btn-cute header-pill-btn" onclick="openPinConfigModal()" title="Kunci Layar PIN" aria-label="PIN Lock">
+          <span>🔐</span>
         </button>
-        <button class="btn-cute" onclick="openPinConfigModal()" style="padding: 6px 8px; font-size: 0.9rem;" title="Kunci PIN Layar (App Lock)">
-          🔐
+        <button class="btn-cute header-pill-btn" id="btnToggleDarkMode" onclick="toggleDarkMode()" title="Ubah Mode Gelap / Terang" aria-label="Dark Mode">
+          <span>🌙</span>
         </button>
-        <button class="btn-cute" onclick="openThemeSelectorModal()" style="padding: 6px 8px; font-size: 0.9rem;" title="Ganti Karakter Hewan">
-          🐾
-        </button>
-        <button class="btn-cute mint" id="btnSyncNow" style="padding: 6px 10px; font-size: 0.75rem;">
-          🔄 Sync
+        <button class="btn-cute mint header-pill-btn" id="btnSyncNow" title="Sinkronisasi Data STB Sekarang">
+          <span style="font-size:0.9rem;">🔄</span> <span class="sync-btn-label">Sync</span>
         </button>
       </div>
     </header>
@@ -221,61 +282,82 @@
 
     <!-- Main View: Beranda / Dashboard -->
     <main id="viewHome" class="view-panel">
-      <!-- Kartu Dompet & Ringkasan -->
+      <!-- Kartu Dompet Kawaii Utama (v0.9.5-beta) -->
       <section class="card-wallet">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <div class="wallet-balance-label">Total Saldo Keseluruhan (Suami + Istri)</div>
-          <div id="salaryPaydayIndicator" onclick="openSalaryModal()" style="font-size:0.75rem; background:rgba(0,0,0,0.15); color:#FFF; font-weight:700; padding:4px 10px; border-radius:12px; cursor:pointer;" title="Klik untuk atur tanggal gajian & recall pemasukan bulanan">
-            🗓️ Gajian: <span id="paydayDateText">Tgl 25</span> ⚙️
+        <div class="wallet-header-row">
+          <div>
+            <span class="wallet-balance-label">Total Saldo Gabungan</span>
+            <div class="wallet-balance-val" id="totalBalanceDisplay">Rp 0</div>
+          </div>
+          <div id="salaryPaydayIndicator" onclick="openSalaryModal()" class="payday-pill" title="Atur jadwal gajian & pendapatan bulanan">
+            <span>🗓️</span> <span id="paydayDateText">Tgl 25</span> <span style="opacity:0.7;">⚙️</span>
           </div>
         </div>
-        <div class="wallet-balance-val" id="totalBalanceDisplay">Rp 0</div>
 
-        <!-- Indikator & Progress Bar Sinkronisasi Terpadu di Dalam Dompet -->
-        <div id="walletSyncProgressContainer" style="background:rgba(0,0,0,0.18); border-radius:14px; padding:10px 14px; margin-bottom:14px; border:1px solid rgba(255,255,255,0.3); transition:all 0.3s ease;">
-          <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; font-weight:700; color:#FFF; margin-bottom:6px;">
-            <div style="display:flex; align-items:center; gap:6px;">
-              <span id="syncStatusPulse" style="width:10px; height:10px; border-radius:50%; background:#7BDCB5; display:inline-block; box-shadow:0 0 10px #7BDCB5; animation:pulseGlow 2s infinite ease-in-out;"></span>
+        <!-- 2 Kartu Saldo Transparansi Pasangan (Suami & Istri) Berdampingan -->
+        <div class="family-balances-grid">
+          <div class="family-bal-card me-card">
+            <div class="family-bal-header">
+              <span class="family-bal-avatar">👨</span>
+              <span class="family-bal-title" id="myBalanceLabel">Saldo Saya (Suami)</span>
+            </div>
+            <div class="family-bal-amount" id="myBalanceDisplay">Rp 0</div>
+          </div>
+          <div class="family-bal-card spouse-card">
+            <div class="family-bal-header">
+              <span class="family-bal-avatar">👩</span>
+              <span class="family-bal-title" id="spouseBalanceLabel">Saldo Istri</span>
+            </div>
+            <div class="family-bal-amount" id="spouseBalanceDisplay">Rp 0</div>
+          </div>
+        </div>
+
+        <!-- Mini Kontribusi Rasio Bar (Visual Progress Antara Suami & Istri) -->
+        <div class="family-ratio-container" id="familyRatioContainer">
+          <div class="family-ratio-labels">
+            <span id="ratioLabelMe">Suami: 50%</span>
+            <span style="font-weight:600; opacity:0.8;">⚖️ Rasio Keuangan</span>
+            <span id="ratioLabelSpouse">Istri: 50%</span>
+          </div>
+          <div class="family-ratio-bar">
+            <div id="ratioBarMe" class="ratio-segment-me" style="width: 50%;"></div>
+            <div id="ratioBarSpouse" class="ratio-segment-spouse" style="width: 50%;"></div>
+          </div>
+        </div>
+
+        <!-- Mutasi Bulan Ini (Pemasukan vs Pengeluaran) -->
+        <div class="wallet-stats-grid">
+          <div class="stat-card-item income">
+            <div class="stat-item-label">🌱 Pemasukan Bulan Ini</div>
+            <div class="stat-item-val" id="totalIncomeDisplay">+Rp 0</div>
+          </div>
+          <div class="stat-card-item expense">
+            <div class="stat-item-label">🌸 Pengeluaran Bulan Ini</div>
+            <div class="stat-item-val" id="totalExpenseDisplay">-Rp 0</div>
+          </div>
+        </div>
+
+        <!-- Progress Bar Sinkronisasi STB / Odroid C2 Realtime -->
+        <div id="walletSyncProgressContainer" class="wallet-sync-card">
+          <div class="sync-card-row">
+            <div class="sync-status-group">
+              <span id="syncStatusPulse" class="sync-status-pulse"></span>
               <span id="syncStatusText">Data Tersinkronisasi Otomatis</span>
             </div>
-            <div style="display:flex; align-items:center; gap:8px;">
-              <span id="syncProgressPercent" style="font-size:0.75rem; font-weight:800; color:#FFF;">100%</span>
-              <button onclick="triggerSyncWithServer()" style="background:rgba(255,255,255,0.25); border:none; color:#FFF; border-radius:8px; padding:2px 6px; font-size:0.68rem; font-weight:700; cursor:pointer;" title="Sinkronkan Sekarang">🔄 Sync</button>
+            <div class="sync-action-group">
+              <span id="syncProgressPercent" class="sync-percent-text">100%</span>
+              <button onclick="triggerSyncWithServer()" class="btn-sync-inline" title="Sinkronkan Sekarang">🔄 Sync</button>
             </div>
           </div>
-          <!-- Progress Bar Animasi Berwarna Kontras -->
-          <div style="width:100%; height:7px; background:rgba(0,0,0,0.3); border-radius:8px; overflow:hidden;">
-            <div id="syncProgressBar" style="width:100%; height:100%; background:linear-gradient(90deg, #7BDCB5, #B5EAD7); border-radius:8px; transition:width 0.4s ease, background 0.3s ease;"></div>
+          <div class="sync-progress-track">
+            <div id="syncProgressBar" class="sync-progress-fill" style="width: 100%;"></div>
           </div>
         </div>
 
-        <!-- 3 Saldo Transparansi Keluarga: Total Bersama, Saldo Saya, Saldo Pasangan -->
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px;">
-          <div style="background:rgba(0,0,0,0.12); padding:8px 12px; border-radius:12px;">
-            <div style="font-size:0.7rem; color:rgba(255,255,255,0.9); font-weight:700;" id="myBalanceLabel">👤 Saldo Saya</div>
-            <div style="font-size:1rem; font-weight:800; color:#FFF;" id="myBalanceDisplay">Rp 0</div>
-          </div>
-          <div style="background:rgba(0,0,0,0.12); padding:8px 12px; border-radius:12px;">
-            <div style="font-size:0.7rem; color:rgba(255,255,255,0.9); font-weight:700;" id="spouseBalanceLabel">💍 Saldo Pasangan</div>
-            <div style="font-size:1rem; font-weight:800; color:#FFF;" id="spouseBalanceDisplay">Rp 0</div>
-          </div>
-        </div>
-
-        <div class="wallet-stats-grid">
-          <div>
-            <div class="stat-item-label" style="color:#2D3142; font-weight:700;">Pemasukan (Bulan ini)</div>
-            <div class="stat-item-val" id="totalIncomeDisplay" style="color:#1B5E20; font-weight:800;">+Rp 0</div>
-          </div>
-          <div>
-            <div class="stat-item-label" style="color:#2D3142; font-weight:700;">Pengeluaran (Bulan ini)</div>
-            <div class="stat-item-val" id="totalExpenseDisplay" style="color:#B71C1C; font-weight:800;">-Rp 0</div>
-          </div>
-        </div>
-
-        <!-- Tombol Recall Cepat Pemasukan Bulanan Pasti -->
-        <div style="margin-top:12px; padding-top:10px; border-top:1px dashed rgba(255,255,255,0.3); display:flex; justify-content:space-between; align-items:center;">
-          <small style="font-size:0.75rem; opacity:0.95; font-weight:700;">💰 Pendapatan Pokok Rutin</small>
-          <button onclick="recallMonthlySalary()" class="btn-cute mint" style="padding:4px 10px; font-size:0.75rem; border-radius:10px;">
+        <!-- Recall Cepat Pemasukan Gaji -->
+        <div class="wallet-footer-recall">
+          <small class="recall-hint">💰 Gaji Pokok Rutin Bulanan</small>
+          <button onclick="recallMonthlySalary()" class="btn-cute mint btn-recall-action">
             ⚡ Terapkan Gaji Bulan Ini
           </button>
         </div>
@@ -1010,9 +1092,21 @@
         <input type="hidden" id="formType" value="expense">
         <input type="hidden" id="txEditClientTxId" value="">
         <div class="form-group">
-          <label class="form-label">Nominal (Rp)</label>
-          <input type="text" inputmode="numeric" id="formAmount" class="form-input" placeholder="contoh: 1.000 RB / 50.000" required autocomplete="off" oninput="onNominalInput(this, 'formAmountGhostPreview')">
-          <div id="formAmountGhostPreview" style="font-size:0.78rem; font-weight:700; color:#E76F51; margin-top:6px; min-height:18px;"></div>
+          <label class="form-label" style="display:flex; justify-content:space-between; align-items:center;">
+            <span>Nominal Transaksi (Rp)</span>
+            <span style="font-size:0.72rem; color:var(--text-muted); font-weight:600;">Otomatis: 1000 RB &rarr; 1.000.000</span>
+          </label>
+          <input type="text" inputmode="numeric" id="formAmount" class="form-input form-amount-input" placeholder="contoh: 1.000 RB / 50.000" required autocomplete="off" oninput="onNominalInput(this, 'formAmountGhostPreview')">
+          <div id="formAmountGhostPreview" class="ghost-typing-badge"></div>
+          
+          <!-- Tombol Pilihan Nominal Cepat (+10rb, +50rb, +100rb, +500rb) -->
+          <div class="quick-preset-amounts">
+            <button type="button" class="btn-preset-pill" onclick="addQuickPresetAmount(10000)">+10 rb</button>
+            <button type="button" class="btn-preset-pill" onclick="addQuickPresetAmount(50000)">+50 rb</button>
+            <button type="button" class="btn-preset-pill" onclick="addQuickPresetAmount(100000)">+100 rb</button>
+            <button type="button" class="btn-preset-pill" onclick="addQuickPresetAmount(500000)">+500 rb</button>
+            <button type="button" class="btn-preset-pill clear-pill" onclick="clearPresetAmount()">✕ Reset</button>
+          </div>
         </div>
         <div class="form-group">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
@@ -1289,7 +1383,7 @@
     </div>
   </div>
 
-  <!-- Script Logika PWA, IndexedDB & Sync dengan cache busting dinamis -->
-  <script src="js/app.js?v=20261110_02"></script>
+  <!-- Script Logika PWA, IndexedDB & Sync dengan cache busting dinamis (v0.9.5-beta) -->
+  <script src="js/app.js?v=20261111_v095beta"></script>
 </body>
 </html>

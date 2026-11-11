@@ -711,7 +711,29 @@ function onNominalInput(inputEl, previewId) {
       previewEl.style.display = 'block';
     } else {
       previewEl.innerText = '';
+      previewEl.style.display = 'none';
     }
+  }
+}
+
+// Tombol Preset Nominal Cepat (+10rb, +50rb, +100rb, +500rb)
+function addQuickPresetAmount(extra) {
+  const inputEl = document.getElementById('formAmount');
+  if (!inputEl) return;
+  const current = parseNominalToNumber(inputEl.value) || 0;
+  const nextTotal = current + extra;
+  inputEl.value = nextTotal.toLocaleString('id-ID');
+  onNominalInput(inputEl, 'formAmountGhostPreview');
+}
+
+function clearPresetAmount() {
+  const inputEl = document.getElementById('formAmount');
+  if (!inputEl) return;
+  inputEl.value = '';
+  const previewEl = document.getElementById('formAmountGhostPreview');
+  if (previewEl) {
+    previewEl.innerText = '';
+    previewEl.style.display = 'none';
   }
 }
 
@@ -1403,6 +1425,31 @@ function updateFamilyBalances(txList) {
   if (spouseBalEl) spouseBalEl.innerText = formatRupiah(spouseBalance);
   if (incEl) incEl.innerText = '+' + formatRupiah(totalIncome);
   if (expEl) expEl.innerText = '-' + formatRupiah(totalExpense);
+
+  // Kalkulasi Rasio Keuangan Pasangan (Suami vs Istri)
+  const ratioLabelMe = document.getElementById('ratioLabelMe');
+  const ratioLabelSpouse = document.getElementById('ratioLabelSpouse');
+  const ratioBarMe = document.getElementById('ratioBarMe');
+  const ratioBarSpouse = document.getElementById('ratioBarSpouse');
+
+  const absMy = Math.max(0, myBalance);
+  const absSpouse = Math.max(0, spouseBalance);
+  const sumAbs = absMy + absSpouse;
+
+  let mePct = 50;
+  let spousePct = 50;
+  if (sumAbs > 0) {
+    mePct = Math.round((absMy / sumAbs) * 100);
+    spousePct = 100 - mePct;
+  }
+
+  const meName = isSuami ? 'Suami' : 'Istri';
+  const spouseName = isSuami ? 'Istri' : 'Suami';
+
+  if (ratioLabelMe) ratioLabelMe.innerText = `${meName}: ${mePct}%`;
+  if (ratioLabelSpouse) ratioLabelSpouse.innerText = `${spouseName}: ${spousePct}%`;
+  if (ratioBarMe) ratioBarMe.style.width = `${mePct}%`;
+  if (ratioBarSpouse) ratioBarSpouse.style.width = `${spousePct}%`;
 }
 
 // Memuat data overview dan transaksi dari server jika online
@@ -2029,12 +2076,40 @@ function renderTransactions(list) {
 
   container.innerHTML = list.map(tx => {
     const isGmailTx = tx.source === 'gmail' || tx.is_gmail || (tx.client_tx_id && tx.client_tx_id.startsWith('gmail_'));
+    const cat = (tx.category_id || '').toLowerCase();
+    
+    // Pilih ikon SVG kawaii yang cocok dengan kategori
+    let iconSvgId = '';
+    let emojiFallback = tx.type === 'income' ? '🌱' : '🌸';
+    if (isGmailTx) {
+      emojiFallback = '📧';
+    } else if (cat.includes('makan') || cat.includes('food')) {
+      iconSvgId = 'icon-cat-bento';
+    } else if (cat.includes('belanja') || cat.includes('groceries')) {
+      iconSvgId = 'icon-cat-groceries';
+    } else if (cat.includes('tagihan') || cat.includes('listrik') || cat.includes('bill')) {
+      iconSvgId = 'icon-cat-light';
+    } else if (cat.includes('didik') || cat.includes('school')) {
+      iconSvgId = 'icon-cat-school';
+    } else if (cat.includes('transport') || cat.includes('bensin')) {
+      iconSvgId = 'icon-cat-scooter';
+    } else if (cat.includes('sehat') || cat.includes('obat') || cat.includes('health')) {
+      iconSvgId = 'icon-cat-health';
+    } else if (cat.includes('bonus') || cat.includes('kado') || cat.includes('gift')) {
+      iconSvgId = 'icon-cat-gift';
+    } else if (cat.includes('gaji')) {
+      iconSvgId = 'icon-coin';
+    }
+
+    const iconHtml = iconSvgId
+      ? `<svg style="width:24px; height:24px;"><use href="#${iconSvgId}"></use></svg>`
+      : `<span style="font-size:1.2rem;">${emojiFallback}</span>`;
 
     return `
       <div class="tx-card" style="position:relative;">
         <div class="tx-info-left" style="flex:1;">
           <div class="tx-icon-circle" style="background: ${tx.type === 'income' ? '#B5EAD7' : '#FFB7B2'};">
-            <span style="font-size:1.2rem;">${isGmailTx ? '📧' : (tx.type === 'income' ? '🌱' : '🌸')}</span>
+            ${iconHtml}
           </div>
           <div>
             <div class="tx-title">

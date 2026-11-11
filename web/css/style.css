@@ -194,6 +194,19 @@ body {
   box-shadow: 0 4px 12px rgba(255, 183, 178, 0.4);
 }
 
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px 12px;
+  background: var(--bg-card);
+  border-bottom: 1px solid rgba(255, 183, 178, 0.25);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.02);
+  position: sticky;
+  top: 0;
+  z-index: 90;
+}
+
 .brand-section {
   display: flex;
   align-items: center;
@@ -210,6 +223,7 @@ body {
   justify-content: center;
   box-shadow: var(--shadow-soft);
   animation: bounce 3s infinite ease-in-out;
+  flex-shrink: 0;
 }
 
 @keyframes bounce {
@@ -219,13 +233,58 @@ body {
 
 .brand-title {
   font-size: 1.25rem;
-  font-weight: 700;
+  font-weight: 800;
   color: #4A4A58;
+  line-height: 1.2;
+}
+
+.beta-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, #FF9AA2 0%, #FFB7B2 100%);
+  color: #FFF;
+  font-size: 0.62rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 999px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  box-shadow: 0 2px 6px rgba(255, 154, 162, 0.4);
 }
 
 .brand-subtitle {
   font-size: 0.75rem;
   color: var(--text-muted);
+  font-weight: 600;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.header-pill-btn {
+  padding: 8px 10px;
+  font-size: 0.85rem;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 183, 178, 0.3);
+}
+
+.header-pill-btn.mint {
+  background: var(--mint-pastel);
+  color: #1B4332;
+  border-color: rgba(132, 197, 176, 0.4);
+}
+
+.sync-btn-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+@media (max-width: 380px) {
+  .sync-btn-label {
+    display: none;
+  }
 }
 
 /* Recovery Banner (OOM & Offline) */
@@ -252,7 +311,7 @@ body {
   margin: 14px 20px;
   background: var(--wallet-gradient);
   border-radius: var(--border-radius-card);
-  padding: 24px;
+  padding: 22px;
   color: #FFFFFF;
   box-shadow: var(--shadow-soft);
   position: relative;
@@ -263,40 +322,334 @@ body {
 .card-wallet::after {
   content: "";
   position: absolute;
-  top: -20px;
-  right: -20px;
-  width: 120px;
-  height: 120px;
-  background: rgba(255, 255, 255, 0.15);
+  top: -25px;
+  right: -25px;
+  width: 130px;
+  height: 130px;
+  background: rgba(255, 255, 255, 0.18);
   border-radius: 50%;
+  pointer-events: none;
+}
+
+.wallet-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 14px;
 }
 
 .wallet-balance-label {
-  font-size: 0.85rem;
-  opacity: 0.9;
-  font-weight: 600;
+  font-size: 0.82rem;
+  opacity: 0.95;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
 
 .wallet-balance-val {
-  font-size: 2rem;
+  font-size: 2.1rem;
   font-weight: 800;
-  margin: 6px 0 16px;
+  margin: 4px 0 0;
   letter-spacing: -0.5px;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.15);
 }
 
+.payday-pill {
+  font-size: 0.75rem;
+  background: rgba(0, 0, 0, 0.18);
+  color: #FFF;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.payday-pill:hover {
+  background: rgba(0, 0, 0, 0.25);
+  transform: translateY(-2px);
+}
+
+/* 2 Kartu Saldo Pasangan Berdampingan */
+.family-balances-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.family-bal-card {
+  background: rgba(0, 0, 0, 0.15);
+  padding: 10px 14px;
+  border-radius: 14px;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.family-bal-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.family-bal-avatar {
+  font-size: 0.95rem;
+}
+
+.family-bal-title {
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.95);
+  font-weight: 700;
+}
+
+.family-bal-amount {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #FFFFFF;
+}
+
+/* Rasio Keuangan Suami & Istri */
+.family-ratio-container {
+  background: rgba(0, 0, 0, 0.14);
+  border-radius: 12px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.family-ratio-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.7rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.family-ratio-bar {
+  width: 100%;
+  height: 6px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 6px;
+  overflow: hidden;
+  display: flex;
+}
+
+.ratio-segment-me {
+  height: 100%;
+  background: #7BDCB5;
+  transition: width 0.4s ease;
+}
+
+.ratio-segment-spouse {
+  height: 100%;
+  background: #FFD166;
+  transition: width 0.4s ease;
+}
+
+/* Mutasi Bulan Ini Card Item */
 .wallet-stats-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  background: rgba(255, 255, 255, 0.25);
-  padding: 12px 16px;
-  border-radius: 14px;
-  backdrop-filter: blur(8px);
+  gap: 10px;
+  margin-bottom: 12px;
 }
 
-.stat-item-label {
+.stat-card-item {
+  background: rgba(255, 255, 255, 0.92);
+  padding: 10px 14px;
+  border-radius: 14px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.stat-card-item.income .stat-item-label {
+  color: #2E7D32;
+  font-weight: 700;
+  font-size: 0.72rem;
+}
+
+.stat-card-item.income .stat-item-val {
+  color: #1B5E20;
+  font-weight: 800;
+  font-size: 1rem;
+}
+
+.stat-card-item.expense .stat-item-label {
+  color: #C62828;
+  font-weight: 700;
+  font-size: 0.72rem;
+}
+
+.stat-card-item.expense .stat-item-val {
+  color: #B71C1C;
+  font-weight: 800;
+  font-size: 1rem;
+}
+
+/* Indikator & Progress Bar Sinkronisasi */
+.wallet-sync-card {
+  background: rgba(0, 0, 0, 0.18);
+  border-radius: 14px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  transition: all 0.3s ease;
+}
+
+.sync-card-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #FFF;
+  margin-bottom: 6px;
+}
+
+.sync-status-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sync-status-pulse {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #7BDCB5;
+  display: inline-block;
+  box-shadow: 0 0 8px #7BDCB5;
+  animation: pulseGlow 2s infinite ease-in-out;
+}
+
+.sync-action-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sync-percent-text {
   font-size: 0.75rem;
-  opacity: 0.9;
+  font-weight: 800;
+  color: #FFF;
+}
+
+.btn-sync-inline {
+  background: rgba(255, 255, 255, 0.25);
+  border: none;
+  color: #FFF;
+  border-radius: 8px;
+  padding: 3px 8px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.btn-sync-inline:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.sync-progress-track {
+  width: 100%;
+  height: 7px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.sync-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #7BDCB5, #B5EAD7);
+  border-radius: 8px;
+  transition: width 0.4s ease, background 0.3s ease;
+}
+
+/* Recall Gaji Footer */
+.wallet-footer-recall {
+  padding-top: 10px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.3);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.recall-hint {
+  font-size: 0.74rem;
+  opacity: 0.95;
+  font-weight: 700;
+}
+
+.btn-recall-action {
+  padding: 5px 12px;
+  font-size: 0.75rem;
+  border-radius: 12px;
+  font-weight: 800;
+}
+
+/* Quick Preset Amount Buttons & Ghost Typing Badge */
+.ghost-typing-badge {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #E76F51;
+  background: #FFF0ED;
+  padding: 6px 12px;
+  border-radius: 12px;
+  border: 1px dashed #FFB7B2;
+  margin-top: 8px;
+  min-height: 20px;
+  display: none;
+}
+
+.quick-preset-amounts {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.btn-preset-pill {
+  background: #FFF5F7;
+  border: 1px solid #FFCAD4;
+  color: #4A4A58;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.btn-preset-pill:hover {
+  background: var(--pink-pastel);
+  color: #2D3142;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(255, 183, 178, 0.35);
+}
+
+.btn-preset-pill:active {
+  transform: scale(0.92);
+}
+
+.btn-preset-pill.clear-pill {
+  background: #F8F9FA;
+  border-color: #E0E0E0;
+  color: #888;
+}
+
+.btn-preset-pill.clear-pill:hover {
+  background: #FFEBEE;
+  color: #C62828;
+  border-color: #FFCDD2;
 }
 
 .stat-item-val {
