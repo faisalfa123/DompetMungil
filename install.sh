@@ -7,7 +7,7 @@
 
 set -e
 
-CURRENT_VERSION="V2.00.1 BETA"
+CURRENT_VERSION="v0.9.5-beta"
 
 # Warna ANSI untuk terminal
 RED='\033[0;31m'
@@ -86,7 +86,7 @@ prompt_yesno() {
 }
 
 clear
-box_header "🌸 CATATAN KEUANGAN KELUARGA (${CURRENT_VERSION}) 🌸"
+box_header "🌸 DOMPETMUNGIL - KEUANGAN KELUARGA (${CURRENT_VERSION}) 🌸"
 echo -e "${WHITE}Aplikasi Catatan Keuangan PWA Ultra-Ringan (RAM < 20MB) & AES-256 Encrypted.${NC}"
 echo -e "${WHITE}Dioptimalkan khusus untuk STB HG680P / Odroid C2 / Linux Server.${NC}"
 
@@ -131,7 +131,7 @@ DATA_DIR="${INSTALL_DIR}/data"
 BIN_PATH="${INSTALL_DIR}/${APP_NAME}"
 VERSION_FILE="${INSTALL_DIR}/.version"
 
-# 4. Deteksi Versi & Penanganan Versi di Bawah V2.00.1 BETA (Wajib Fresh Install)
+# 4. Deteksi Versi & Penanganan Pembaruan Tanpa Menghapus Data
 INSTALLED_VERSION=""
 if [ -f "$VERSION_FILE" ]; then
     INSTALLED_VERSION=$(cat "$VERSION_FILE" 2>/dev/null | tr -d '\r\n' || echo "")
@@ -159,9 +159,9 @@ if [ -n "$INSTALLED_VERSION" ] && [ "$INSTALLED_VERSION" = "$CURRENT_VERSION" ] 
     if [ -n "$LOADED_PORT" ]; then SAVED_PORT="$LOADED_PORT"; fi
     if [ -n "$LOADED_BACKUP" ]; then SAVED_ENABLE_BACKUP="$LOADED_BACKUP"; fi
     if [ -n "$LOADED_REMOTE" ]; then SAVED_RCLONE_REMOTE="$LOADED_REMOTE"; fi
-    echo -e "\n${GREEN}✔ Terdeteksi instalasi aktif ${INSTALLED_VERSION}. Menggunakan konfigurasi yang ada.${NC}"
+    echo -e "\n${GREEN}✔ Terdeteksi instalasi aktif ${INSTALLED_VERSION}. Memperbarui file aset terbaru...${NC}"
 elif [ "$LEGACY_DETECTED" -eq 1 ]; then
-    echo -e "\n${YELLOW}⚠ Terdeteksi versi lama. Melakukan FRESH INSTALL bersih di ${INSTALL_DIR} untuk mencegah bentrok.${NC}"
+    echo -e "\n${YELLOW}⚠ Memperbarui dari versi sebelumnya ke ${CURRENT_VERSION} di ${INSTALL_DIR} (Data tetap aman).${NC}"
     systemctl stop "$APP_NAME" 2>/dev/null || true
     killall -9 "$APP_NAME" 2>/dev/null || true
 
@@ -211,7 +211,7 @@ if [ "$IS_FRESH_INSTALL" -eq 1 ] && [ -n "$RCLONE_REMOTES" ]; then
 fi
 
 # 7. Menyiapkan Folder Instalasi
-box_header "MEMASANG APLIKASI DI ${INSTALL_DIR}"
+box_header "MEMASANG & MEMPERBARUI APLIKASI DI ${INSTALL_DIR}"
 mkdir -p "$INSTALL_DIR"
 mkdir -p "$DATA_DIR"
 mkdir -p "$CONFIG_DIR"
@@ -230,18 +230,20 @@ fi
 
 if [ -n "$SCRIPT_DIR" ] && [ -f "$SCRIPT_DIR/main.go" ] && [ "$SCRIPT_DIR" != "$INSTALL_DIR" ]; then
     echo -e "${CYAN}Menyinkronkan file aplikasi dari folder lokal ke ${INSTALL_DIR}...${NC}"
+    rm -rf "$INSTALL_DIR/web"
     cp -r "$SCRIPT_DIR/web" "$INSTALL_DIR/" 2>/dev/null || true
-    if [ -d "$SCRIPT_DIR/pkg" ]; then cp -r "$SCRIPT_DIR/pkg" "$INSTALL_DIR/"; fi
+    if [ -d "$SCRIPT_DIR/pkg" ]; then rm -rf "$INSTALL_DIR/pkg" && cp -r "$SCRIPT_DIR/pkg" "$INSTALL_DIR/"; fi
     if [ -f "$SCRIPT_DIR/main.go" ]; then cp "$SCRIPT_DIR/main.go" "$INSTALL_DIR/"; fi
     if [ -f "$SCRIPT_DIR/go.mod" ]; then cp "$SCRIPT_DIR/go.mod" "$INSTALL_DIR/"; fi
     if [ -f "$SCRIPT_DIR/go.sum" ]; then cp "$SCRIPT_DIR/go.sum" "$INSTALL_DIR/"; fi
     if [ -d "$SCRIPT_DIR/bin" ]; then cp -r "$SCRIPT_DIR/bin" "$INSTALL_DIR/"; fi
     cp "$SCRIPT_DIR/install.sh" "$INSTALL_DIR/" 2>/dev/null || true
-elif [ ! -f "$INSTALL_DIR/main.go" ]; then
-    echo -e "${CYAN}Mengunduh source code Catatan Keuangan Keluarga dari GitHub (${GITHUB_REPO})...${NC}"
+else
+    echo -e "${CYAN}Mengunduh file UI/UX & source code terbaru dari GitHub (${GITHUB_REPO})...${NC}"
     TMP_CLONE="/tmp/dompetmungil_clone_$$"
     rm -rf "$TMP_CLONE"
     git clone --depth 1 "https://github.com/${GITHUB_REPO}.git" "$TMP_CLONE"
+    rm -rf "$INSTALL_DIR/web" "$INSTALL_DIR/pkg"
     cp -r "$TMP_CLONE/web" "$INSTALL_DIR/"
     cp -r "$TMP_CLONE/pkg" "$INSTALL_DIR/"
     cp "$TMP_CLONE/main.go" "$INSTALL_DIR/"
