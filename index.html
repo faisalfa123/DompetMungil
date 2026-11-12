@@ -1,0 +1,1538 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>DompetMungil (Beta v0.9.5) - Catatan Keuangan Keluarga Cute</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="apple-touch-icon" href="icons/icon-192.svg">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#FFB7B2">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="stylesheet" href="css/style.css?v=20261111_v095beta">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Inline Cute SVG Icons Dictionary (100% Orisinal Tanpa Resource Eksternal) -->
+  <svg style="display:none;" version="2.0">
+    <!-- Maskot Kucing Finansial Lucu -->
+    <symbol id="icon-cat-mascot" viewBox="0 0 100 100">
+      <ellipse cx="50" cy="55" rx="38" ry="32" fill="#FFEAE8" stroke="#FFAAA6" stroke-width="4"/>
+      <polygon points="20,35 12,12 38,25" fill="#FFB7B2" stroke="#FFAAA6" stroke-width="4"/>
+      <polygon points="22,30 16,18 34,24" fill="#FFD1DC"/>
+      <polygon points="80,35 88,12 62,25" fill="#FFB7B2" stroke="#FFAAA6" stroke-width="4"/>
+      <polygon points="78,30 84,18 66,24" fill="#FFD1DC"/>
+      <ellipse cx="38" cy="52" rx="4" ry="5" fill="#4A4A58"/>
+      <circle cx="39" cy="50" r="1.5" fill="#FFFFFF"/>
+      <ellipse cx="62" cy="52" rx="4" ry="5" fill="#4A4A58"/>
+      <circle cx="63" cy="50" r="1.5" fill="#FFFFFF"/>
+      <ellipse cx="28" cy="60" rx="6" ry="4" fill="#FF9AA2" opacity="0.6"/>
+      <ellipse cx="72" cy="60" rx="6" ry="4" fill="#FF9AA2" opacity="0.6"/>
+      <polygon points="48,58 52,58 50,61" fill="#FF8E99"/>
+      <path d="M 45,63 Q 50,68 50,63 Q 50,68 55,63" fill="none" stroke="#4A4A58" stroke-width="2.5" stroke-linecap="round"/>
+      <circle cx="50" cy="22" r="10" fill="#FFD166" stroke="#E0A458" stroke-width="2"/>
+      <text x="50" y="26" font-size="11" font-weight="bold" fill="#B27B00" text-anchor="middle">Rp</text>
+    </symbol>
+
+    <!-- Maskot Anjing Shiba Inu Lucu -->
+    <symbol id="icon-dog-mascot" viewBox="0 0 100 100">
+      <circle cx="50" cy="55" r="36" fill="#F4A261" stroke="#E76F51" stroke-width="4"/>
+      <polygon points="22,34 16,10 38,22" fill="#F4A261" stroke="#E76F51" stroke-width="3"/>
+      <polygon points="78,34 84,10 62,22" fill="#F4A261" stroke="#E76F51" stroke-width="3"/>
+      <!-- Pipi Putih Shiba -->
+      <path d="M 24,65 Q 50,85 76,65 Q 70,45 50,55 Q 30,45 24,65 Z" fill="#FFF9F5"/>
+      <circle cx="36" cy="48" r="4.5" fill="#264653"/>
+      <circle cx="64" cy="48" r="4.5" fill="#264653"/>
+      <circle cx="37" cy="46" r="1.5" fill="#FFF"/>
+      <circle cx="65" cy="46" r="1.5" fill="#FFF"/>
+      <ellipse cx="50" cy="58" rx="5" ry="3.5" fill="#264653"/>
+      <path d="M 47,62 Q 50,66 53,62" fill="none" stroke="#264653" stroke-width="2.5" stroke-linecap="round"/>
+      <circle cx="50" cy="20" r="10" fill="#E9C46A" stroke="#F4A261" stroke-width="2"/>
+      <text x="50" y="24" font-size="10" font-weight="bold" fill="#7E4A15" text-anchor="middle">🐶</text>
+    </symbol>
+
+    <!-- Maskot Capybara Santai -->
+    <symbol id="icon-capybara-mascot" viewBox="0 0 100 100">
+      <rect x="22" y="26" width="56" height="58" rx="24" fill="#B08968" stroke="#7F5539" stroke-width="4"/>
+      <!-- Telinga Capy -->
+      <ellipse cx="22" cy="34" rx="6" ry="8" fill="#7F5539"/>
+      <ellipse cx="78" cy="34" rx="6" ry="8" fill="#7F5539"/>
+      <!-- Moncong Kotak Khas Capybara -->
+      <rect x="30" y="52" width="40" height="28" rx="10" fill="#DDB892"/>
+      <ellipse cx="36" cy="45" rx="3.5" ry="4" fill="#3D2B1F"/>
+      <ellipse cx="64" cy="45" rx="3.5" ry="4" fill="#3D2B1F"/>
+      <!-- Hidung Capy -->
+      <line x1="44" y1="62" x2="44" y2="70" stroke="#7F5539" stroke-width="3" stroke-linecap="round"/>
+      <line x1="56" y1="62" x2="56" y2="70" stroke="#7F5539" stroke-width="3" stroke-linecap="round"/>
+      <!-- Jeruk Santai di Atas Kepala -->
+      <circle cx="50" cy="18" r="11" fill="#FF9F1C" stroke="#E07A5F" stroke-width="2"/>
+      <circle cx="50" cy="12" r="2.5" fill="#2A9D8F"/>
+    </symbol>
+
+    <!-- Maskot Kelinci Imut (Usagi) -->
+    <symbol id="icon-bunny-mascot" viewBox="0 0 100 100">
+      <ellipse cx="50" cy="60" rx="35" ry="30" fill="#FFFFFF" stroke="#E2CFC4" stroke-width="4"/>
+      <!-- Telinga Panjang -->
+      <ellipse cx="34" cy="24" rx="9" ry="24" fill="#FFFFFF" stroke="#E2CFC4" stroke-width="3.5"/>
+      <ellipse cx="34" cy="24" rx="4.5" ry="17" fill="#FFCAD4"/>
+      <ellipse cx="66" cy="24" rx="9" ry="24" fill="#FFFFFF" stroke="#E2CFC4" stroke-width="3.5"/>
+      <ellipse cx="66" cy="24" rx="4.5" ry="17" fill="#FFCAD4"/>
+      <!-- Mata Merah Muda -->
+      <circle cx="38" cy="56" r="4.5" fill="#D90429"/>
+      <circle cx="62" cy="56" r="4.5" fill="#D90429"/>
+      <circle cx="39" cy="54" r="1.5" fill="#FFF"/>
+      <circle cx="63" cy="54" r="1.5" fill="#FFF"/>
+      <ellipse cx="26" cy="65" rx="5" ry="3" fill="#FFB7B2" opacity="0.6"/>
+      <ellipse cx="74" cy="65" rx="5" ry="3" fill="#FFB7B2" opacity="0.6"/>
+      <path d="M 46,67 Q 50,71 54,67" fill="none" stroke="#4A4A58" stroke-width="2" stroke-linecap="round"/>
+    </symbol>
+
+    <!-- Maskot Panda Menggemaskan -->
+    <symbol id="icon-panda-mascot" viewBox="0 0 100 100">
+      <circle cx="50" cy="55" r="36" fill="#FFFFFF" stroke="#333333" stroke-width="4"/>
+      <!-- Telinga Hitam -->
+      <circle cx="22" cy="28" r="13" fill="#2B2D42"/>
+      <circle cx="78" cy="28" r="13" fill="#2B2D42"/>
+      <!-- Lingkar Mata Panda -->
+      <ellipse cx="34" cy="52" rx="9" ry="12" fill="#2B2D42"/>
+      <circle cx="35" cy="50" r="3.5" fill="#FFF"/>
+      <ellipse cx="66" cy="52" rx="9" ry="12" fill="#2B2D42"/>
+      <circle cx="65" cy="50" r="3.5" fill="#FFF"/>
+      <!-- Hidung & Senyum -->
+      <ellipse cx="50" cy="64" rx="5" ry="3" fill="#2B2D42"/>
+      <path d="M 46,70 Q 50,74 54,70" fill="none" stroke="#2B2D42" stroke-width="2.5" stroke-linecap="round"/>
+      <!-- Daun Bambu Keberuntungan -->
+      <path d="M 46,14 C 44,8 56,8 54,14 Z" fill="#52B788"/>
+    </symbol>
+
+    <!-- Ikon Dompet Manis -->
+    <symbol id="icon-wallet" viewBox="0 0 24 24">
+      <rect x="2" y="5" width="20" height="15" rx="4" fill="none" stroke="currentColor" stroke-width="2"/>
+      <path d="M2 9h20" stroke="currentColor" stroke-width="2"/>
+      <circle cx="17" cy="13" r="1.5" fill="currentColor"/>
+    </symbol>
+
+    <!-- Ikon Transaksi / Daftar -->
+    <symbol id="icon-list" viewBox="0 0 24 24">
+      <path d="M4 6h16M4 12h16M4 18h10" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+    </symbol>
+
+    <!-- Ikon Bank / Mutasi -->
+    <symbol id="icon-bank" viewBox="0 0 24 24">
+      <path d="M3 9.5L12 4l9 5.5v1.5H3V9.5zm2 3.5h3v5H5v-5zm5 0h4v5h-4v-5zm6 0h3v5h-3v-5zM2 20h20v2H2v-2z" fill="currentColor"/>
+    </symbol>
+
+    <!-- Ikon Celengan Ayam Lucu (Kawaii Chicken Icon) -->
+    <symbol id="icon-chicken" viewBox="0 0 24 24">
+      <!-- Jengger Ayam Merah -->
+      <path d="M9 3c0-1 1-1.5 2-1s1.5 1 2 0.5 1-1 2 0-0.5 1.5 0 2.5" fill="#E76F51" stroke="#E76F51" stroke-width="1.2" stroke-linecap="round"/>
+      <!-- Tubuh Ayam Bulat Imut -->
+      <path d="M4 13c0-4.5 3.5-8 8-8s8 3.5 8 8c0 4.5-3.5 7.5-8 7.5S4 17.5 4 13z" fill="#FFF275" stroke="#E9C46A" stroke-width="1.5"/>
+      <!-- Sayap Membal -->
+      <path d="M9 13c0 2 2 3.5 4 3s3-2 3-3-2-2-4-1" fill="#FFE066" stroke="#E9C46A" stroke-width="1.2"/>
+      <!-- Mata Berbinar -->
+      <circle cx="15.5" cy="10" r="1.2" fill="#2B2D42"/>
+      <circle cx="15.8" cy="9.6" r="0.4" fill="#FFF"/>
+      <!-- Paruh Segitiga Oranye -->
+      <polygon points="18.5,10.5 21.5,12 18.5,13.5" fill="#F4A261"/>
+      <!-- Pipi Merona -->
+      <ellipse cx="14" cy="12.5" rx="1.2" ry="0.8" fill="#FF9AA2" opacity="0.8"/>
+      <!-- Kaki Ayam Kecil -->
+      <path d="M10 20.5v2M14 20.5v2" stroke="#E76F51" stroke-width="1.5" stroke-linecap="round"/>
+    </symbol>
+
+    <!-- Ikon Buku Panduan Manis -->
+    <symbol id="icon-book" viewBox="0 0 24 24">
+      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="12" cy="10" r="2" fill="currentColor" opacity="0.4"/>
+    </symbol>
+
+    <!-- Ikon Pengaturan Rapi -->
+    <symbol id="icon-settings" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2"/>
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" fill="none" stroke="currentColor" stroke-width="2"/>
+    </symbol>
+
+    <!-- Ikon Anggaran Bulanan Beranimasi Target -->
+    <symbol id="icon-budget" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/>
+      <path d="M12 7v5l3.5 3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="12" cy="12" r="1.8" fill="currentColor"/>
+    </symbol>
+
+    <!-- Ikon Surat Gmail Kawaii -->
+    <symbol id="icon-mail" viewBox="0 0 24 24">
+      <rect x="2" y="4" width="20" height="16" rx="4" fill="none" stroke="currentColor" stroke-width="2"/>
+      <path d="M3 6.5l9 6.5 9-6.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+
+    <!-- Ikon Koin Berkilau -->
+    <symbol id="icon-coin" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="8.5" fill="#FFE066" stroke="#F4A261" stroke-width="1.8"/>
+      <circle cx="12" cy="12" r="5.5" fill="none" stroke="#F4A261" stroke-width="1.2" stroke-dasharray="2 1.5"/>
+      <text x="12" y="15" font-size="8" font-weight="900" fill="#E76F51" text-anchor="middle">Rp</text>
+    </symbol>
+
+    <!-- Ikon Makanan & Belanja Lucu -->
+    <!-- Ikon Kategori Orisinal Kawaii v0.9.5-beta -->
+    <!-- 1. Makanan & Minuman (Bento Beras & Onigiri) -->
+    <symbol id="icon-cat-bento" viewBox="0 0 24 24">
+      <rect x="2" y="4" width="20" height="16" rx="4" fill="#FFEAE8" stroke="#FFAAA6" stroke-width="1.8"/>
+      <line x1="12" y1="4" x2="12" y2="20" stroke="#FFAAA6" stroke-width="1.8"/>
+      <!-- Onigiri Segitiga Mini -->
+      <polygon points="7,8 4.5,13 9.5,13" fill="#FFF" stroke="#FF8E99" stroke-width="1.2"/>
+      <rect x="6" y="11" width="2" height="2" fill="#4A4A58"/>
+      <!-- Lauk Tamagoyaki -->
+      <rect x="14" y="7" width="6" height="4" rx="2" fill="#FFE066" stroke="#E9C46A" stroke-width="1"/>
+      <rect x="14" y="13" width="6" height="4" rx="2" fill="#FFB7B2" stroke="#E76F51" stroke-width="1"/>
+    </symbol>
+
+    <!-- 2. Belanja Harian (Keranjang Pastel dengan Wortel) -->
+    <symbol id="icon-cat-groceries" viewBox="0 0 24 24">
+      <path d="M4 9h16l-2 11H6L4 9z" fill="#FFF5EB" stroke="#F4A261" stroke-width="1.8" stroke-linejoin="round"/>
+      <path d="M8 9V6a4 4 0 0 1 8 0v3" fill="none" stroke="#E76F51" stroke-width="1.8" stroke-linecap="round"/>
+      <circle cx="12" cy="14" r="2.5" fill="#FF9AA2"/>
+      <path d="M10 14h4" stroke="#FFF" stroke-width="1.2" stroke-linecap="round"/>
+    </symbol>
+
+    <!-- 3. Listrik & Tagihan (Bohlam Senyum Lucu) -->
+    <symbol id="icon-cat-light" viewBox="0 0 24 24">
+      <path d="M9 18h6m-5 3h4m-7-9a6 6 0 1 1 8 0c-.8 1-1.5 2-1.5 3.5h-5C10.5 14 9.8 13 9 12z" fill="#FFFBEA" stroke="#E9C46A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="10.5" cy="10" r="0.8" fill="#4A4A58"/>
+      <circle cx="13.5" cy="10" r="0.8" fill="#4A4A58"/>
+      <path d="M11 12q1 1 2 0" fill="none" stroke="#E76F51" stroke-width="1" stroke-linecap="round"/>
+    </symbol>
+
+    <!-- 4. Pendidikan & Buku (Buku Catatan Pastel Bintang) -->
+    <symbol id="icon-cat-school" viewBox="0 0 24 24">
+      <rect x="4" y="3" width="16" height="18" rx="3" fill="#E8F0FE" stroke="#7BAAF7" stroke-width="1.8"/>
+      <line x1="8" y1="3" x2="8" y2="21" stroke="#4285F4" stroke-width="1.8"/>
+      <!-- Pita Pembatas Buku -->
+      <polygon points="14,3 17,3 15.5,8 14,7" fill="#FF8E99"/>
+      <line x1="11" y1="12" x2="17" y2="12" stroke="#7BAAF7" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="11" y1="16" x2="15" y2="16" stroke="#7BAAF7" stroke-width="1.5" stroke-linecap="round"/>
+    </symbol>
+
+    <!-- 5. Transportasi & Bensin (Skuter Vespa Imut) -->
+    <symbol id="icon-cat-scooter" viewBox="0 0 24 24">
+      <circle cx="6" cy="18" r="3" fill="#FFF" stroke="#E76F51" stroke-width="1.8"/>
+      <circle cx="18" cy="18" r="3" fill="#FFF" stroke="#E76F51" stroke-width="1.8"/>
+      <path d="M6 18h8a4 4 0 0 0 4-4v-2h-3" fill="none" stroke="#E76F51" stroke-width="1.8" stroke-linecap="round"/>
+      <path d="M15 8l-2 4h-4" fill="none" stroke="#E76F51" stroke-width="1.8" stroke-linecap="round"/>
+      <circle cx="15" cy="7" r="1.5" fill="#FFE066" stroke="#F4A261" stroke-width="1"/>
+    </symbol>
+
+    <!-- 6. Kesehatan & Obat (Kotak Hati P3K) -->
+    <symbol id="icon-cat-health" viewBox="0 0 24 24">
+      <rect x="3" y="6" width="18" height="14" rx="4" fill="#FFF0F5" stroke="#FF8E99" stroke-width="1.8"/>
+      <path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" fill="none" stroke="#FF8E99" stroke-width="1.8" stroke-linecap="round"/>
+      <!-- Salib Hati -->
+      <path d="M12 9v6m-3-3h6" stroke="#E63946" stroke-width="2.2" stroke-linecap="round"/>
+    </symbol>
+
+    <!-- 7. Hadiah & Hiburan (Kotak Kado Pita Manis) -->
+    <symbol id="icon-cat-gift" viewBox="0 0 24 24">
+      <rect x="3" y="10" width="18" height="11" rx="3" fill="#F0FFF4" stroke="#52B788" stroke-width="1.8"/>
+      <rect x="2" y="6" width="20" height="4" rx="2" fill="#B5EAD7" stroke="#52B788" stroke-width="1.8"/>
+      <line x1="12" y1="6" x2="12" y2="21" stroke="#2D6A4F" stroke-width="1.8"/>
+      <!-- Pita Kupu-Kupu -->
+      <path d="M8 6c-2 0-3-2-1.5-3.5S10 4 12 6c2-2 4.5-3.5 5.5-2S16 6 16 6" fill="none" stroke="#E76F51" stroke-width="1.8" stroke-linecap="round"/>
+    </symbol>
+  </svg>
+
+  <div class="app-container">
+    <!-- Header Aplikasi Kawaii Modern (v0.9.5-beta) -->
+    <header class="app-header">
+      <div class="brand-section">
+        <div class="mascot-avatar" id="mascotAvatarContainer" onclick="openThemeSelectorModal()" style="cursor:pointer;" title="Klik untuk pilih karakter maskot kesukaanmu!">
+          <svg style="width:38px; height:38px;"><use id="currentMascotUse" href="#icon-cat-mascot"></use></svg>
+        </div>
+        <div>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <h1 class="brand-title">DompetMungil</h1>
+            <span class="beta-badge" title="Versi Beta dalam pengujian aktif">BETA v0.9.5</span>
+          </div>
+          <p class="brand-subtitle" id="userRoleBadge">🌸 Suami (Keluarga)</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn-cute header-pill-btn" onclick="openPinConfigModal()" title="Kunci Layar PIN" aria-label="PIN Lock">
+          <span>🔐</span>
+        </button>
+        <button class="btn-cute header-pill-btn" id="btnToggleDarkMode" onclick="toggleDarkMode()" title="Ubah Mode Gelap / Terang" aria-label="Dark Mode">
+          <span>🌙</span>
+        </button>
+        <button class="btn-cute mint header-pill-btn" id="btnSyncNow" title="Sinkronisasi Data STB Sekarang">
+          <span style="font-size:0.9rem;">🔄</span> <span class="sync-btn-label">Sync</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- OOM / Offline Recovery Banner -->
+    <div id="recoveryBanner" class="recovery-banner hidden">
+      <span style="font-size: 1.4rem;">💡</span>
+      <div style="flex:1;">
+        <strong id="recoveryTitle">Pemulihan Transaksi</strong>
+        <p id="recoveryDesc" style="font-size:0.75rem; color:#6D4C41;">Ada transaksi tersimpan di memori HP. Sedang disinkronisasi ke server...</p>
+      </div>
+    </div>
+
+    <!-- Main View: Beranda / Dashboard -->
+    <main id="viewHome" class="view-panel">
+      <!-- Kartu Dompet Kawaii Utama (v0.9.5-beta) -->
+      <section class="card-wallet">
+        <div class="wallet-header-row">
+          <div>
+            <span class="wallet-balance-label">Total Saldo Gabungan</span>
+            <div class="wallet-balance-val" id="totalBalanceDisplay">Rp 0</div>
+          </div>
+          <div id="salaryPaydayIndicator" onclick="openSalaryModal()" class="payday-pill" title="Atur jadwal gajian & pendapatan bulanan">
+            <span>🗓️</span> <span id="paydayDateText">Tgl 25</span> <span style="opacity:0.7;">⚙️</span>
+          </div>
+        </div>
+
+        <!-- 2 Kartu Saldo Transparansi Pasangan (Suami & Istri) Berdampingan -->
+        <div class="family-balances-grid">
+          <div class="family-bal-card me-card">
+            <div class="family-bal-header">
+              <span class="family-bal-avatar">👨</span>
+              <span class="family-bal-title" id="myBalanceLabel">Saldo Saya (Suami)</span>
+            </div>
+            <div class="family-bal-amount" id="myBalanceDisplay">Rp 0</div>
+          </div>
+          <div class="family-bal-card spouse-card">
+            <div class="family-bal-header">
+              <span class="family-bal-avatar">👩</span>
+              <span class="family-bal-title" id="spouseBalanceLabel">Saldo Istri</span>
+            </div>
+            <div class="family-bal-amount" id="spouseBalanceDisplay">Rp 0</div>
+          </div>
+        </div>
+
+        <!-- Mini Kontribusi Rasio Bar (Visual Progress Antara Suami & Istri) -->
+        <div class="family-ratio-container" id="familyRatioContainer">
+          <div class="family-ratio-labels">
+            <span id="ratioLabelMe">Suami: 50%</span>
+            <span style="font-weight:600; opacity:0.8;">⚖️ Rasio Keuangan</span>
+            <span id="ratioLabelSpouse">Istri: 50%</span>
+          </div>
+          <div class="family-ratio-bar">
+            <div id="ratioBarMe" class="ratio-segment-me" style="width: 50%;"></div>
+            <div id="ratioBarSpouse" class="ratio-segment-spouse" style="width: 50%;"></div>
+          </div>
+        </div>
+
+        <!-- Mutasi Bulan Ini (Pemasukan vs Pengeluaran) -->
+        <div class="wallet-stats-grid">
+          <div class="stat-card-item income">
+            <div class="stat-item-label">🌱 Pemasukan Bulan Ini</div>
+            <div class="stat-item-val" id="totalIncomeDisplay">+Rp 0</div>
+          </div>
+          <div class="stat-card-item expense">
+            <div class="stat-item-label">🌸 Pengeluaran Bulan Ini</div>
+            <div class="stat-item-val" id="totalExpenseDisplay">-Rp 0</div>
+          </div>
+        </div>
+
+        <!-- Progress Bar Sinkronisasi STB / Odroid C2 Realtime -->
+        <div id="walletSyncProgressContainer" class="wallet-sync-card">
+          <div class="sync-card-row">
+            <div class="sync-status-group">
+              <span id="syncStatusPulse" class="sync-status-pulse"></span>
+              <span id="syncStatusText">Data Tersinkronisasi Otomatis</span>
+            </div>
+            <div class="sync-action-group">
+              <span id="syncProgressPercent" class="sync-percent-text">100%</span>
+              <button onclick="triggerSyncWithServer()" class="btn-sync-inline" title="Sinkronkan Sekarang">🔄 Sync</button>
+            </div>
+          </div>
+          <div class="sync-progress-track">
+            <div id="syncProgressBar" class="sync-progress-fill" style="width: 100%;"></div>
+          </div>
+        </div>
+
+        <!-- Recall Cepat Pemasukan Gaji -->
+        <div class="wallet-footer-recall">
+          <small class="recall-hint">💰 Gaji Pokok Rutin Bulanan</small>
+          <button onclick="recallMonthlySalary()" class="btn-cute mint btn-recall-action">
+            ⚡ Terapkan Gaji Bulan Ini
+          </button>
+        </div>
+      </section>
+
+      <!-- Tombol Aksi Cepat -->
+      <section class="quick-actions-bar">
+        <button class="btn-cute primary" id="btnOpenAddExpense">
+          <span>➖</span> Catat Keluar
+        </button>
+        <button class="btn-cute mint" id="btnOpenAddIncome">
+          <span>➕</span> Catat Masuk
+        </button>
+      </section>
+
+      <!-- Mini Shortcut Fitur Pintar -->
+      <div id="smartShortcutsGrid" style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px; padding: 0 20px;">
+        <button type="button" class="btn-cute" onclick="switchTab('bills')" style="padding:8px 10px; font-size:0.75rem; justify-content:center; gap:6px;">
+          <span>📌</span> Tagihan Bulanan
+        </button>
+        <button type="button" class="btn-cute" onclick="switchTab('debts')" style="padding:8px 10px; font-size:0.75rem; justify-content:center; gap:6px;">
+          <span>🤝</span> Hutang & Piutang
+        </button>
+      </div>
+
+      <!-- Ringkasan Komposisi Pengeluaran (Pie Chart SVG Murni) -->
+      <section id="pieChartSection" style="background:#fff; border-radius:18px; padding:16px; margin:0 20px 16px; box-shadow:var(--shadow-soft);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <strong style="font-size:0.85rem; color:var(--text-primary);">📊 Komposisi Pengeluaran</strong>
+          <span id="chartTotalExpense" style="font-size:0.8rem; font-weight:700; color:var(--danger-pastel);">Rp 0</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:16px;">
+          <div style="position:relative; width:110px; height:110px; flex-shrink:0;">
+            <svg id="pieChartSvg" viewBox="0 0 42 42" style="width:100%; height:100%; transform: rotate(-90deg); border-radius:50%;">
+              <circle cx="21" cy="21" r="15.91549430918954" fill="#F8F8FC" stroke="#ECECF0" stroke-width="4"></circle>
+            </svg>
+            <div style="position:absolute; top:0; left:0; width:100%; height:100%; display:flex; align-items:center; justify-content:center; pointer-events:none;">
+              <span style="font-size:1.3rem;">🍱</span>
+            </div>
+          </div>
+          <div id="pieChartLegend" style="flex:1; display:flex; flex-direction:column; gap:4px; font-size:0.75rem; max-height:100px; overflow-y:auto;">
+            <!-- Legend Kategori Dimuat Dinamis -->
+            <span style="color:var(--text-muted);">Belum ada data pengeluaran.</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Riwayat Transaksi dengan Filter & Ekspor -->
+      <section>
+        <div class="section-title" style="flex-wrap:wrap; gap:8px;">
+          <span>Riwayat Transaksi</span>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <button onclick="exportTransactionsCSV()" class="btn-cute" style="padding:4px 8px; font-size:0.75rem;" title="Ekspor data ke CSV / Excel">
+              📥 CSV
+            </button>
+            <button onclick="printFinancialReport()" class="btn-cute primary" style="padding:4px 8px; font-size:0.75rem;" title="Cetak struk laporan bulanan / Simpan sebagai PDF">
+              🖨️ Cetak / PDF
+            </button>
+            <button onclick="openTxManagerModal()" class="btn-cute" style="padding:4px 8px; font-size:0.75rem; color:#C62828; border-color:#FFCDD2; background:#FFF5F5;" title="Reset atau Hapus Data Transaksi Berdasarkan Kriteria / Rentang Tanggal">
+              🗑️ Reset / Hapus
+            </button>
+            <span style="font-size: 0.8rem; color: var(--text-muted);" id="txCounter">0 Catatan</span>
+          </div>
+        </div>
+
+        <!-- Tab Khusus Pasangan (Semua Transaksi, Catatan Saya, Catatan Pasangan) -->
+        <div style="display:flex; gap:6px; margin: 0 20px 10px; background:#F0F0F5; padding:4px; border-radius:14px;">
+          <button id="authorTabAll" class="btn-cute author-filter-btn active" onclick="filterByAuthor('all')" style="flex:1; padding:6px 4px; font-size:0.75rem; border-radius:10px; justify-content:center;">Semua</button>
+          <button id="authorTabMe" class="btn-cute author-filter-btn" onclick="filterByAuthor('me')" style="flex:1; padding:6px 4px; font-size:0.75rem; border-radius:10px; justify-content:center;">Catatan Saya</button>
+          <button id="authorTabSpouse" class="btn-cute author-filter-btn" onclick="filterByAuthor('spouse')" style="flex:1; padding:6px 4px; font-size:0.75rem; border-radius:10px; justify-content:center;">Catatan Pasangan</button>
+        </div>
+
+        <!-- Kolom Pencarian Cepat Transaksi -->
+        <div style="position:relative; margin: 0 20px 10px;">
+          <input type="text" id="txSearchInput" class="form-input" placeholder="🔍 Cari transaksi (nama, toko, catatan)..." style="padding:8px 12px 8px 36px; font-size:0.8rem; border-radius:14px;" oninput="onSearchTxInput()">
+          <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:0.9rem; pointer-events:none;">🔍</span>
+          <button id="btnClearSearch" onclick="clearTxSearch()" style="display:none; position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:#888; font-size:1rem; cursor:pointer;">✕</button>
+        </div>
+
+        <!-- Filter Rentang Tanggal -->
+        <div style="display:flex; gap:6px; margin: 0 20px 10px; overflow-x:auto; padding-bottom:4px;">
+          <button class="btn-cute date-filter-btn active" onclick="filterTransactions('all')" style="padding:4px 10px; font-size:0.72rem; border-radius:12px;">Semua</button>
+          <button class="btn-cute date-filter-btn" onclick="filterTransactions('this_month')" style="padding:4px 10px; font-size:0.72rem; border-radius:12px;">Bulan Ini</button>
+          <button class="btn-cute date-filter-btn" onclick="filterTransactions('last_month')" style="padding:4px 10px; font-size:0.72rem; border-radius:12px;">Bulan Lalu</button>
+          <button class="btn-cute date-filter-btn" onclick="filterTransactions('this_year')" style="padding:4px 10px; font-size:0.72rem; border-radius:12px;">Tahun Ini</button>
+        </div>
+
+        <div class="tx-list" id="txContainer">
+          <!-- Transaksi akan dimuat dinamis dari IndexedDB & Server -->
+          <div style="text-align:center; padding: 40px; color: var(--text-muted);">
+            <svg style="width:64px; height:64px; opacity:0.6;"><use href="#icon-cat-mascot"></use></svg>
+            <p style="margin-top:10px; font-weight:600;">Belum ada catatan transaksi.<br>Tekan tombol di atas untuk menambah!</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- View: Integrasi Bank Indonesia -->
+    <main id="viewBank" class="view-panel" style="display:none; padding: 20px;">
+      <h2 style="font-size:1.2rem; font-weight:800; margin-bottom:8px;">🏦 Integrasi Mutasi Rekening</h2>
+      <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:16px;">
+        Pilih metode pembacaan mutasi rekening yang Anda sukai. Semua data dienkripsi dengan AES-256 lokal di Odroid STB.
+      </p>
+
+      <!-- Selector Tab: File Import vs Login Google (Aplikasi Tertaut) -->
+      <div style="display:flex; gap:8px; margin-bottom:16px;">
+        <button class="btn-cute primary" id="tabBtnBankFile" onclick="switchBankTab('file')">📄 Unggah e-Statement / CSV</button>
+        <button class="btn-cute" id="tabBtnBankGoogle" onclick="switchBankTab('google')">🌐 Tautkan Akun Google</button>
+      </div>
+
+      <!-- Opsi 1: File CSV / e-Statement Import dengan Dropzone & Auto-Deduplikasi -->
+      <div id="bankSectionFile" style="background:#fff; border-radius:18px; padding:20px; box-shadow:var(--shadow-soft);">
+        <label class="form-label" style="font-weight:700;">1. Pilih Format Bank / E-Wallet</label>
+        <select class="form-select" id="bankSelect">
+          <option value="AUTO">✨ Auto-Detect (Semua Bank & E-Wallet)</option>
+          <option value="BCA">BCA (KlikBCA / myBCA / e-Statement)</option>
+          <option value="Mandiri">Bank Mandiri (Livin' / e-Statement)</option>
+          <option value="BRI">BRI (BRImo / Mutasi CSV-PDF)</option>
+          <option value="BNI">BNI (BNI Mobile / CSV)</option>
+          <option value="JAGO">Bank Jago / GoPay</option>
+          <option value="GENERIC">Format CSV Standar (Tanggal, Jenis, Nominal, Catatan)</option>
+        </select>
+
+        <!-- Dropzone Unggah File CSV / PDF / TXT -->
+        <div style="margin-top:16px;">
+          <label class="form-label" style="font-weight:700;">2. Unggah File Mutasi (CSV / TXT / PDF)</label>
+          <div id="bankDropzone" class="bank-dropzone" onclick="document.getElementById('bankFileInput').click()">
+            <input type="file" id="bankFileInput" accept=".csv,.txt,.pdf" style="display:none;" onchange="handleBankFileSelect(event)">
+            <div style="font-size:2.2rem; margin-bottom:8px;">📂</div>
+            <strong style="font-size:0.92rem; color:var(--text-primary); display:block;">Pilih File atau Tarik ke Sini</strong>
+            <p style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">
+              Mendukung file <strong>.csv, .txt</strong>, dan <strong>e-statement PDF</strong> langsung dari m-Banking.
+            </p>
+            <span id="selectedFileNameBadge" class="file-badge" style="display:none;"></span>
+          </div>
+        </div>
+
+        <!-- Opsi Manual Paste Alternatif -->
+        <details style="margin-top:14px; font-size:0.78rem;">
+          <summary style="cursor:pointer; color:#1976D2; font-weight:700;">📝 Atau Tempel Teks Mutasi Manual (Salin dari SMS/Aplikasi):</summary>
+          <div style="margin-top:8px;">
+            <textarea id="bankRawText" class="form-input" style="height:90px; resize:none; font-family:monospace; font-size:0.75rem;" placeholder="Contoh: 04/11/2026 TRSF E-BANKING DB 50.000,00 INDOMARET..."></textarea>
+          </div>
+        </details>
+
+        <!-- Tombol Aksi Parse Mutasi -->
+        <div style="display:flex; gap:8px; margin-top:16px;">
+          <button class="btn-cute primary" id="btnProcessBankImport" style="flex:1; padding:13px; font-size:0.88rem; justify-content:center;">
+            ✨ Analisis & Deteksi Transaksi
+          </button>
+          <button class="btn-cute" onclick="resetBankImportForm()" style="padding:13px 16px; font-size:0.85rem;" title="Reset Form">
+            🔄 Reset
+          </button>
+        </div>
+
+        <!-- Status & Ringkasan Auto-Deduplikasi Hasil Parse -->
+        <div id="bankParseResultsCard" style="display:none; margin-top:16px; background:#FFF9FB; border:1.5px solid #FFD1DC; border-radius:16px; padding:14px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <div>
+              <strong style="font-size:0.9rem; color:#4A4A58;" id="parseSummaryTitle">Hasil Analisis Mutasi</strong>
+              <p style="font-size:0.72rem; color:var(--text-muted);" id="parseSummarySub">Auto-deduplikasi aktif: data duplikat tidak akan ditimpa ulang.</p>
+            </div>
+            <span id="parseBatchCountBadge" class="beta-badge" style="background:#7BDCB5; color:#1B4332;">0 Siap Catat</span>
+          </div>
+
+          <!-- Preview List Transaksi yang Ditemukan -->
+          <div id="bankParsedListPreview" style="max-height:180px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; margin-bottom:12px;"></div>
+
+          <button type="button" class="btn-cute mint" id="btnConfirmBankSave" onclick="saveParsedBankTransactions()" style="width:100%; padding:12px; font-size:0.88rem; justify-content:center;">
+            💾 Simpan Transaksi Baru ke Dompet (Lewati Duplikat)
+          </button>
+        </div>
+      </div>
+
+      <!-- Opsi 2: Integrasi Google Mail (Gmail) Notifikasi Bank -->
+      <div id="bankSectionGoogle" style="display:none; background:#fff; border-radius:18px; padding:20px; box-shadow:var(--shadow-soft);">
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:14px;">
+          <div style="width:44px; height:44px; border-radius:14px; background:linear-gradient(135deg, #FFEBE6 0%, #FFF5EB 100%); display:flex; align-items:center; justify-content:center; border:1px solid #FFD1DC;">
+            <svg style="width:24px; height:24px; color:#E76F51;"><use href="#icon-mail"></use></svg>
+          </div>
+          <div>
+            <h3 style="font-size:1rem; font-weight:800; color:#2D3142;">Koneksi Google Mail (Gmail)</h3>
+            <p style="font-size:0.75rem; color:var(--text-muted);">Baca notifikasi transaksi e-wallet & bank langsung ke STB</p>
+          </div>
+        </div>
+
+        <!-- Pemilih Metode Koneksi Gmail (Mudah vs Lanjutan) -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:16px;">
+          <button type="button" class="btn-cute primary" id="tabBtnGmailAppPass" onclick="switchGmailMethod('app_pass')" style="padding:8px 10px; font-size:0.75rem; justify-content:center;">
+            ⚡ Sandi Aplikasi (16-Digit)
+          </button>
+          <button type="button" class="btn-cute" id="tabBtnGmailOAuth" onclick="switchGmailMethod('oauth')" style="padding:8px 10px; font-size:0.75rem; justify-content:center;">
+            🌐 Google OAuth2
+          </button>
+        </div>
+
+        <!-- METODE A: Google App Password (16 Digit - Sangat Mudah & Anti Ribet) -->
+        <div id="gmailMethodAppPass" style="display:block;">
+          <div style="background:#FFF9E6; border-left:4px solid #FFA000; padding:12px; border-radius:12px; font-size:0.78rem; margin-bottom:14px; color:#5D4037; line-height:1.5;">
+            💡 <strong>Paling Mudah untuk Odroid / STB:</strong><br>
+            Tidak perlu repot membuat Client ID Google Cloud! Cukup buat <strong>Sandi Aplikasi (App Password)</strong> 16-digit sekali saja di akun Google Anda.
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Alamat Email Gmail Anda</label>
+            <input type="email" id="gmailUserEmail" class="form-input" placeholder="contoh: namaanda@gmail.com">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Sandi Aplikasi Google (16 Huruf)</label>
+            <input type="password" id="gmailAppPassword" class="form-input" placeholder="contoh: abcd efgh ijkl mnop" maxlength="20">
+          </div>
+
+          <div style="display:flex; gap:8px; margin-top:8px;">
+            <button class="btn-cute primary" onclick="saveAndTestGmailAppPass()" style="flex:1; padding:12px; font-size:0.85rem; justify-content:center;">
+              ✨ Sambungkan & Tes Gmail
+            </button>
+            <button class="btn-cute" onclick="openGmailAppPassGuide()" style="padding:12px 14px; font-size:0.85rem;" title="Lihat Cara Buat Sandi Aplikasi">
+              ❓ Cara Buat
+            </button>
+          </div>
+
+          <!-- Petunjuk 3 Langkah Buat App Password -->
+          <details id="gmailAppPassDetails" style="margin-top:14px; background:#F8F9FA; border-radius:12px; padding:10px 12px; font-size:0.76rem; color:#444;">
+            <summary style="cursor:pointer; color:#1976D2; font-weight:700;">📖 3 Langkah Mudah Membuat Sandi Aplikasi (Hanya 1 Menit):</summary>
+            <ol style="padding-left:18px; margin-top:8px; line-height:1.7;">
+              <li>Buka halaman <a href="https://myaccount.google.com/apppasswords" target="_blank" style="color:#1976D2; font-weight:700; text-decoration:underline;">myaccount.google.com/apppasswords</a> di browser Anda.</li>
+              <li>Beri nama aplikasi, ketik: <strong>DompetMungil</strong> lalu klik tombol <strong>Buat (Create)</strong>.</li>
+              <li>Google akan menampilkan <strong>16 karakter huruf kuning</strong> (contoh: <code>abcd efgh ijkl mnop</code>). Salin dan tempelkan ke kolom di atas!</li>
+            </ol>
+          </details>
+        </div>
+
+        <!-- METODE B: OAuth2 Client ID (Tipe Desktop App) -->
+        <div id="gmailMethodOAuth" style="display:none;">
+          <div style="background:#E8F5E9; border-left:4px solid #4CAF50; padding:12px; border-radius:12px; font-size:0.78rem; margin-bottom:14px; color:#2E7D32; line-height:1.45;">
+            ✨ <strong>Muncul di Akun Google Anda:</strong><br>
+            Setelah tautan ini aktif, <strong>DompetMungil</strong> akan otomatis terdaftar di halaman <em>Aplikasi Tertaut (myaccount.google.com/linkedapps)</em>.
+          </div>
+
+          <div style="background:#FFF8E1; border:1px solid #FFE082; border-radius:14px; padding:14px; margin-bottom:14px;">
+            <label class="form-label" style="font-weight:700; color:#5D4037; margin-bottom:4px;">🔑 Google Client ID Anda</label>
+            <p style="font-size:0.76rem; color:#666; line-height:1.4; margin-bottom:8px;">
+              Client ID dari Google Cloud Console (pilih tipe <strong>Desktop app</strong>):
+            </p>
+            <div style="display:flex; gap:8px;">
+              <input type="text" id="customGoogleClientId" class="form-input" placeholder="contoh: 123456-xxxx.apps.googleusercontent.com" style="font-size:0.8rem;">
+              <button class="btn-cute mint" onclick="saveGoogleClientId()" style="white-space:nowrap; padding:8px 12px; font-size:0.8rem;">Simpan ID</button>
+            </div>
+
+            <details style="margin-top:12px; font-size:0.76rem; color:#444;">
+              <summary style="cursor:pointer; color:#1565C0; font-weight:700; padding:4px 0;">📖 Langkah Buat Client ID (Desktop App):</summary>
+              <ol style="padding-left:18px; margin-top:8px; line-height:1.6;">
+                <li>Buka <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color:#1976D2; font-weight:700; text-decoration:underline;">Google Cloud Console</a>.</li>
+                <li>Pilih <strong>+ CREATE CREDENTIALS</strong> &raquo; <strong>OAuth client ID</strong>.</li>
+                <li>Pada <em>Application type</em>, pilih: <strong style="color:#C2185B;">Desktop app</strong>.</li>
+                <li>Beri nama <strong>DompetMungil</strong> lalu klik <strong>CREATE</strong>.</li>
+                <li>Salin Client ID tersebut dan tempelkan ke kolom di atas.</li>
+              </ol>
+            </details>
+          </div>
+
+          <!-- Tombol Tautkan dengan Redirect Resmi Google -->
+          <button type="button" id="btnRedirectGoogleOAuth" class="btn-cute primary" style="width:100%; padding:14px; font-weight:700; font-size:0.9rem; justify-content:center;">
+            <svg style="width:20px; height:20px; vertical-align:middle; margin-right:8px;" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+            </svg>
+            Tautkan Akun Google Sekarang (OAuth Redirect)
+          </button>
+        </div>
+
+        <!-- Status Terhubung Terpadu -->
+        <div id="googleConnectedCard" style="display:none; background:#F0FFF4; border-radius:14px; padding:14px; margin-top:16px; border:1px solid #A5D6A7;">
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <span style="font-size:1.4rem;">✅</span>
+              <div>
+                <strong id="connectedGoogleEmail" style="font-size:0.85rem; color:#2E7D32;">user@gmail.com</strong>
+                <p id="connectedGoogleMethod" style="font-size:0.75rem; color:#388E3C; font-weight:600;">Status: Terhubung & Aktif</p>
+              </div>
+            </div>
+            <button onclick="disconnectGoogleAccount()" class="btn-cute" style="padding:6px 10px; font-size:0.75rem; color:#D32F2F;">Putuskan</button>
+          </div>
+        </div>
+
+        <p style="text-align:center; font-size:0.75rem; color:#888; margin-top:10px;">
+          Setelah klik, Google akan meminta izin akses dan otomatis menambahkan DompetMungil ke daftar Aplikasi Tertaut Anda.
+        </p>
+      </div>
+    </main>
+
+    <!-- View: Panduan Penggunaan Interaktif (In-App Guide) -->
+    <main id="viewGuide" class="view-panel" style="display:none; padding: 20px 20px 90px;">
+      <div style="text-align:center; margin-bottom: 20px;">
+        <svg style="width:60px; height:60px;"><use href="#icon-cat-mascot"></use></svg>
+        <h2 style="font-weight:800; font-size:1.3rem; margin-top:8px;">Buku Panduan & Konfigurasi</h2>
+        <p style="font-size:0.85rem; color:var(--text-muted);">Panduan ramah untuk mengelola keuangan rumah tangga</p>
+      </div>
+
+      <!-- Tombol Re-Konfigurasi Cepat Akun & Mode -->
+      <div style="background:#FFF0F5; border:1.5px dashed var(--pink-pastel); border-radius:18px; padding:16px; margin-bottom:16px; text-align:center;">
+        <h4 style="font-size:0.95rem; font-weight:700; color:#4A4A58;">⚙️ Konfigurasi Ulang Profil / Peran</h4>
+        <p style="font-size:0.8rem; color:var(--text-muted); margin:4px 0 12px;">Ingin mengganti mode akun antara Personal atau Keluarga (Suami/Istri/Anak)?</p>
+        <button class="btn-cute primary" onclick="document.getElementById('onboardingModal').classList.add('active')" style="margin:0 auto; padding:10px 18px;">
+          Buka Wizard Konfigurasi Akun 👨‍👩‍👧‍👦
+        </button>
+      </div>
+
+      <!-- Kartu Panduan Langkah Instalasi Odroid C2 / STB -->
+      <div style="background:#FFFDFE; border:1.5px solid #FFD1DC; border-radius:18px; padding:18px; margin-bottom:16px; box-shadow:var(--shadow-soft);">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+          <span style="font-size:1.4rem;">🖥️</span>
+          <div>
+            <h4 style="font-size:0.98rem; font-weight:800; color:#2D3142;">Langkah Instalasi di Odroid C2 / STB HG680P</h4>
+            <p style="font-size:0.75rem; color:var(--text-muted);">Cara pasang dan update aplikasi di server Linux / DietPi</p>
+          </div>
+        </div>
+
+        <div style="background:#2D3142; color:#FFF; padding:12px; border-radius:12px; margin:10px 0; font-family:monospace; font-size:0.75rem; word-break:break-all; position:relative;">
+          <span id="installCmdText">sudo curl -sSL https://raw.githubusercontent.com/faisalfa123/DompetMungil/main/install.sh | sudo bash</span>
+          <button onclick="copyInstallCmd()" class="btn-cute mint" style="position:absolute; right:8px; top:8px; padding:4px 8px; font-size:0.7rem;">📋 Salin</button>
+        </div>
+
+        <ol style="font-size:0.78rem; color:#555; line-height:1.6; padding-left:18px; margin-top:8px;">
+          <li>Buka terminal SSH di Odroid C2 / DietPi Anda.</li>
+          <li>Salin dan jalankan perintah 1-baris di atas. Skrip akan mengunduh biner ARM64 otomatis tanpa kompilasi berat.</li>
+          <li>Pilih folder instalasi (tekan Enter untuk <code>/opt/dompetmungil</code>) dan port <code>1234</code>.</li>
+          <li>Buka di HP Anda melalui <code>http://[IP-Odroid]:1234</code> dan buat akun admin pertama!</li>
+        </ol>
+      </div>
+
+      <!-- Tombol Mengulang Panduan Interaktif Langkah Demi Langkah -->
+      <div style="background:#F0FFF4; border:1.5px dashed var(--mint-dark); border-radius:18px; padding:16px; margin-bottom:16px; text-align:center;">
+        <h4 style="font-size:0.95rem; font-weight:700; color:#2D5F52;">📖 Panduan Lengkap Awal Sampai Akhir</h4>
+        <p style="font-size:0.8rem; color:var(--text-muted); margin:4px 0 12px;">Pelajari alur penggunaan DompetMungil langkah demi langkah (Registrasi, Maskot, Saldo, Anggaran, Celengan Ayam, Gmail, hingga Backup):</p>
+        <div style="display:flex; justify-content:center; gap:8px; flex-wrap:wrap;">
+          <button class="btn-cute mint" onclick="openStepGuideModal()" style="padding:10px 18px;">
+            📖 Buka Langkah Demi Langkah
+          </button>
+          <button class="btn-cute primary" onclick="startDashboardTour()" style="padding:10px 18px;">
+            🎮 Mulai Tur Aplikasi ✨
+          </button>
+        </div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:16px;">
+        <div style="background:#fff; padding:18px; border-radius:18px; box-shadow:var(--shadow-soft);">
+          <h3 style="font-size:0.95rem; font-weight:700; color:var(--pink-pastel); margin-bottom:6px;">1. Offline-First & Keamanan STB</h3>
+          <p style="font-size:0.82rem; line-height:1.5; color:#555;">
+            Jika server Odroid/HG680P Anda sedang mati atau terhenti oleh OOM killer karena beban berat, aplikasi tetap bisa dipakai mencatat. Data disimpan aman di HP Anda dan otomatis disinkronkan saat server santai kembali.
+          </p>
+        </div>
+
+        <div style="background:#fff; padding:18px; border-radius:18px; box-shadow:var(--shadow-soft);">
+          <h3 style="font-size:0.95rem; font-weight:700; color:var(--mint-dark); margin-bottom:6px;">2. Enkripsi Database Khusus</h3>
+          <p style="font-size:0.82rem; line-height:1.5; color:#555;">
+            Catatan pengeluaran, pemasukan, dan mutasi bank Anda dienkripsi secara penuh dengan standar AES-256 menggunakan kunci rahasia per-perangkat. Aplikasi luar di STB tidak akan dapat membaca isi catatan keuangan Anda.
+          </p>
+        </div>
+
+        <div style="background:#fff; padding:18px; border-radius:18px; box-shadow:var(--shadow-soft);">
+          <h3 style="font-size:0.95rem; font-weight:700; color:#FF9800; margin-bottom:6px;">3. Cara Pasang di HP (PWA)</h3>
+          <p style="font-size:0.82rem; line-height:1.5; color:#555;">
+            Buka menu browser Chrome/Safari Anda, lalu pilih <strong>"Tambahkan ke Layar Utama" (Add to Home Screen)</strong> untuk mendapatkan pengalaman seperti aplikasi bawaan toko aplikasi.
+          </p>
+        </div>
+      </div>
+    </main>
+
+    <!-- View: Manajemen Anggaran (Budgeting) -->
+    <main id="viewBudget" class="view-panel" style="display:none; padding: 20px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <div>
+          <h2 style="font-size:1.2rem; font-weight:800; color:var(--text-primary);">🎯 Anggaran Bulanan Bersama</h2>
+          <p style="font-size:0.8rem; color:var(--text-muted);">Keputusan bersama Suami & Istri • Perubahan butuh persetujuan pasangan</p>
+        </div>
+        <button class="btn-cute primary" onclick="openSetBudgetModal()" style="padding:6px 12px; font-size:0.75rem;">
+          ⚙️ Atur Batas
+        </button>
+      </div>
+
+      <!-- Kotak Notifikasi Usulan Perubahan Anggaran dari Pasangan -->
+      <div id="budgetProposalContainer" style="display:none; margin-bottom:14px;"></div>
+
+      <!-- Ringkasan Progress Anggaran -->
+      <div id="budgetSummaryCard" style="background:#fff; border-radius:18px; padding:16px; margin-bottom:16px; box-shadow:var(--shadow-soft);">
+        <div style="display:flex; justify-content:space-between; font-size:0.85rem; font-weight:700; margin-bottom:6px;">
+          <span>Realisasi Bulan Ini</span>
+          <span id="budgetOverallText">Rp 0 / Rp 0</span>
+        </div>
+        <div style="width:100%; height:12px; background:#F0F0F5; border-radius:10px; overflow:hidden;">
+          <div id="budgetOverallBar" style="width:0%; height:100%; background:var(--mint-dark); border-radius:10px; transition:width 0.4s ease;"></div>
+        </div>
+      </div>
+
+      <!-- List Kategori & Batas Anggaran -->
+      <div id="budgetListContainer" style="display:flex; flex-direction:column; gap:12px;">
+        <!-- Dimuat dinamis -->
+      </div>
+    </main>
+
+    <!-- View: Target Menabung / Celengan Impian (Savings Goals) -->
+    <main id="viewSavings" class="view-panel" style="display:none; padding: 20px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <div>
+          <h2 style="font-size:1.2rem; font-weight:800; color:var(--text-primary);">🐔 Celengan Ayam Impian</h2>
+          <p style="font-size:0.8rem; color:var(--text-muted);">Wujudkan impian keluarga & target tabungan</p>
+        </div>
+        <button class="btn-cute primary" onclick="openAddGoalModal()" style="padding:6px 12px; font-size:0.75rem;">
+          ➕ Target Baru
+        </button>
+      </div>
+
+      <!-- Ringkasan Total Tabungan Impian -->
+      <div style="background:linear-gradient(135deg, #FFE4E8 0%, #FFF5EB 100%); border-radius:18px; padding:18px; margin-bottom:16px; border:1px solid #FFD1DC; box-shadow:var(--shadow-soft);">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <div style="font-size:0.78rem; color:#8E6E75; font-weight:600;">Total Terkumpul di Celengan</div>
+            <div style="font-size:1.4rem; font-weight:800; color:#4A4A58;" id="totalSavingsSavedDisplay">Rp 0</div>
+          </div>
+          <div style="font-size:2.2rem; animation: floatAnimation 3s infinite ease-in-out;">
+            🏺
+          </div>
+        </div>
+        <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:#8E6E75; margin-top:8px; border-top:1px dashed rgba(255,183,178,0.4); padding-top:6px;">
+          <span>Target Seluruhnya: <strong id="totalSavingsTargetDisplay">Rp 0</strong></span>
+          <span id="totalSavingsPercentDisplay" style="font-weight:700; color:#E76F51;">0%</span>
+        </div>
+      </div>
+
+      <!-- Daftar Kartu Celengan Impian -->
+      <div id="savingsGoalsListContainer" style="display:flex; flex-direction:column; gap:14px;">
+        <!-- Dimuat dinamis -->
+      </div>
+    </main>
+
+    <!-- View: Tagihan Rutin & Langganan Bulanan (Bills & Subscriptions) -->
+    <main id="viewBills" class="view-panel" style="display:none; padding: 20px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <div>
+          <h2 style="font-size:1.2rem; font-weight:800; color:var(--text-primary);">📌 Tagihan Rutin</h2>
+          <p style="font-size:0.8rem; color:var(--text-muted);">Checklist pembayaran listrik, wifi, SPP & langganan</p>
+        </div>
+        <button class="btn-cute primary" onclick="openAddBillModal()" style="padding:6px 12px; font-size:0.75rem;">
+          ➕ Tagihan Baru
+        </button>
+      </div>
+
+      <!-- Ringkasan Status Tagihan Bulan Ini -->
+      <div style="background:#FFF8FA; border-radius:18px; padding:16px; margin-bottom:16px; border:1px solid #FFE4E8; box-shadow:var(--shadow-soft);">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <div style="font-size:0.75rem; color:#8E8E9F;">Sisa Tagihan Belum Dibayar</div>
+            <div style="font-size:1.3rem; font-weight:800; color:#E76F51;" id="unpaidBillsTotalDisplay">Rp 0</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:0.75rem; color:#8E8E9F;">Sudah Dilunasi</div>
+            <div style="font-size:1.1rem; font-weight:800; color:#2E7D32;" id="paidBillsTotalDisplay">Rp 0</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- List Kartu Tagihan -->
+      <div id="billsListContainer" style="display:flex; flex-direction:column; gap:10px;">
+        <!-- Dimuat dinamis -->
+      </div>
+    </main>
+
+    <!-- View: Catatan Hutang & Piutang (Debts & Loans) -->
+    <main id="viewDebts" class="view-panel" style="display:none; padding: 20px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <div>
+          <h2 style="font-size:1.2rem; font-weight:800; color:var(--text-primary);">🤝 Hutang & Piutang</h2>
+          <p style="font-size:0.8rem; color:var(--text-muted);">Pantau pinjaman uang, kasbon, & uang yang dipinjam teman</p>
+        </div>
+        <button class="btn-cute primary" onclick="openAddDebtModal()" style="padding:6px 12px; font-size:0.75rem;">
+          ➕ Catat Hutang/Piutang
+        </button>
+      </div>
+
+      <!-- Ringkasan Hutang vs Piutang -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;">
+        <div style="background:#FFF5F5; border:1px solid #FFCDD2; border-radius:16px; padding:12px;">
+          <div style="font-size:0.75rem; color:#C62828; font-weight:600;">Saya Berhutang (Kewajiban)</div>
+          <div style="font-size:1.1rem; font-weight:800; color:#C62828;" id="totalMyDebtDisplay">Rp 0</div>
+        </div>
+        <div style="background:#F1F8E9; border:1px solid #C8E6C9; border-radius:16px; padding:12px;">
+          <div style="font-size:0.75rem; color:#2E7D32; font-weight:600;">Orang Berhutang (Piutang)</div>
+          <div style="font-size:1.1rem; font-weight:800; color:#2E7D32;" id="totalOthersDebtDisplay">Rp 0</div>
+        </div>
+      </div>
+
+      <!-- List Kartu Hutang / Piutang -->
+      <div id="debtsListContainer" style="display:flex; flex-direction:column; gap:10px;">
+        <!-- Dimuat dinamis -->
+      </div>
+    </main>
+
+    <!-- Floating Quick Add Expense Button (Kawaii Bouncing Action) -->
+    <button type="button" class="floating-quick-btn" onclick="openModal('expense')" title="Catat Pengeluaran Cepat" aria-label="Catat Cepat">
+      <svg viewBox="0 0 24 24" style="width:28px; height:28px; fill:none; stroke:#FFF; stroke-width:3; stroke-linecap:round;">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+    </button>
+
+    <!-- Bottom Navigation Bar -->
+    <nav class="bottom-nav">
+      <button type="button" class="nav-item active" onclick="switchTab('home')" style="background:none; border:none;">
+        <svg class="cute-icon"><use href="#icon-wallet"></use></svg>
+        <span>Dompet</span>
+      </button>
+      <button type="button" class="nav-item" onclick="switchTab('budget')" style="background:none; border:none;">
+        <svg class="cute-icon"><use href="#icon-budget"></use></svg>
+        <span>Anggaran</span>
+      </button>
+      <button type="button" class="nav-item" onclick="switchTab('savings')" style="background:none; border:none;">
+        <svg class="cute-icon"><use href="#icon-chicken"></use></svg>
+        <span>Celengan</span>
+      </button>
+      <button type="button" class="nav-item" onclick="switchTab('bank')" style="background:none; border:none;">
+        <svg class="cute-icon"><use href="#icon-bank"></use></svg>
+        <span>Bank Mutasi</span>
+      </button>
+      <button type="button" class="nav-item" onclick="switchTab('guide')" style="background:none; border:none;">
+        <svg class="cute-icon"><use href="#icon-book"></use></svg>
+        <span>Panduan</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- Spotlight Game-Style Interactive Tour Element -->
+  <div id="spotlightOverlay" class="spotlight-overlay">
+    <div id="spotlightHighlight" class="spotlight-highlight"></div>
+    <div id="spotlightTooltip" class="spotlight-tooltip">
+      <div class="spotlight-tooltip-title" id="tourTooltipTitle">
+        <span>🐾</span> Judul Langkah
+      </div>
+      <div class="spotlight-tooltip-desc" id="tourTooltipDesc">
+        Deskripsi panduan akan dijelaskan di sini.
+      </div>
+      <div class="spotlight-tooltip-footer">
+        <button class="btn-cute" onclick="stopDashboardTour()" style="padding:6px 10px; font-size:0.75rem;">Lewati</button>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button class="btn-cute" id="btnTourPrev" onclick="prevTourStep()" style="padding:6px 10px; font-size:0.75rem; display:none;">⬅️</button>
+          <span id="tourStepIndicator" style="font-size:0.75rem; font-weight:700; color:var(--text-muted);">1 / 14</span>
+          <button class="btn-cute primary" id="btnTourNext" onclick="nextTourStep()" style="padding:6px 14px; font-size:0.75rem;">Lanjut ➡️</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Konfigurasi Pendapatan Pokok Rutin / Gaji -->
+  <div class="modal-overlay" id="salaryModal">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3 class="modal-title">🗓️ Pengaturan Gaji / Pendapatan Pokok</h3>
+        <button onclick="closeSalaryModal()" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">✕</button>
+      </div>
+      <form id="salaryConfigForm">
+        <div class="form-group">
+          <label class="form-label">Pilih Tanggal Gajian (Kalender Visual)</label>
+          <input type="hidden" id="salaryDayInput" value="25">
+          <div style="font-size:0.8rem; font-weight:700; color:var(--pink-pastel); margin-bottom:4px;">
+            Terpilih: Tanggal <span id="selectedDayPreview">25</span> tiap bulan
+          </div>
+          <!-- Kalender Mini Picker -->
+          <div class="calendar-grid" id="salaryCalendarPicker">
+            <!-- 1 s.d 31 dimuat dinamis -->
+          </div>
+        </div>
+        <div class="form-group" style="margin-top:14px;">
+          <label class="form-label">Nominal Gaji Pokok Rutin (Rp)</label>
+          <input type="number" id="salaryAmountInput" class="form-input" placeholder="Contoh: 5000000" required min="1000">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Masuk ke Akun / Rekening</label>
+          <select id="salaryAccountSelect" class="form-select">
+            <option value="acc_bank">🏦 Rekening Bank</option>
+            <option value="acc_dompet">👛 Dompet Tunai</option>
+            <option value="acc_ewallet">📱 E-Wallet</option>
+          </select>
+        </div>
+        <button type="submit" class="btn-cute primary" style="width:100%; padding:14px; margin-top:8px;">
+          Simpan Jadwal Pendapatan Rutin ✨
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Pilih Karakter Maskot Kawaii -->
+  <div class="modal-overlay" id="themeModal">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3 class="modal-title">🐾 Pilih Karakter Maskot Cute</h3>
+        <button onclick="closeThemeModal()" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">✕</button>
+      </div>
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap:12px; margin-bottom:16px;">
+        <div onclick="selectMascotTheme('icon-cat-mascot')" style="text-align:center; padding:12px; border-radius:16px; background:#FFF0F5; cursor:pointer; border:2px solid transparent;" id="mascotCard-cat">
+          <svg style="width:48px; height:48px;"><use href="#icon-cat-mascot"></use></svg>
+          <p style="font-size:0.75rem; font-weight:700; margin-top:4px;">Neko (Kucing)</p>
+        </div>
+        <div onclick="selectMascotTheme('icon-dog-mascot')" style="text-align:center; padding:12px; border-radius:16px; background:#FFF4EC; cursor:pointer; border:2px solid transparent;" id="mascotCard-dog">
+          <svg style="width:48px; height:48px;"><use href="#icon-dog-mascot"></use></svg>
+          <p style="font-size:0.75rem; font-weight:700; margin-top:4px;">Shiba (Anjing)</p>
+        </div>
+        <div onclick="selectMascotTheme('icon-capybara-mascot')" style="text-align:center; padding:12px; border-radius:16px; background:#F5EBE0; cursor:pointer; border:2px solid transparent;" id="mascotCard-capy">
+          <svg style="width:48px; height:48px;"><use href="#icon-capybara-mascot"></use></svg>
+          <p style="font-size:0.75rem; font-weight:700; margin-top:4px;">Capybara</p>
+        </div>
+        <div onclick="selectMascotTheme('icon-bunny-mascot')" style="text-align:center; padding:12px; border-radius:16px; background:#FFF0F3; cursor:pointer; border:2px solid transparent;" id="mascotCard-bunny">
+          <svg style="width:48px; height:48px;"><use href="#icon-bunny-mascot"></use></svg>
+          <p style="font-size:0.75rem; font-weight:700; margin-top:4px;">Usagi (Kelinci)</p>
+        </div>
+        <div onclick="selectMascotTheme('icon-panda-mascot')" style="text-align:center; padding:12px; border-radius:16px; background:#EDF6F9; cursor:pointer; border:2px solid transparent;" id="mascotCard-panda">
+          <svg style="width:48px; height:48px;"><use href="#icon-panda-mascot"></use></svg>
+          <p style="font-size:0.75rem; font-weight:700; margin-top:4px;">Panda</p>
+        </div>
+      </div>
+      <button onclick="closeThemeModal()" class="btn-cute primary" style="width:100%; padding:12px;">Terapkan Tema Manis ✨</button>
+    </div>
+  </div>
+
+  <!-- Modal Langkah Demi Langkah (Interactive Step Guide) -->
+  <div class="modal-overlay" id="stepGuideModal">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3 class="modal-title">📖 Panduan Langkah Demi Langkah</h3>
+        <button onclick="closeStepGuideModal()" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">✕</button>
+      </div>
+      
+      <div id="guideStepContent" style="padding:10px 0;">
+        <!-- Konten Langkah Dimuat Dinamis -->
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px;">
+        <button class="btn-cute" id="btnGuidePrev" onclick="prevGuideStep()">⬅️ Sebelumnya</button>
+        <span id="guideStepIndicator" style="font-size:0.8rem; font-weight:700; color:var(--text-muted);">1 dari 4</span>
+        <button class="btn-cute primary" id="btnGuideNext" onclick="nextGuideStep()">Lanjut ➡️</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Registrasi & Pemilihan Mode (Personal vs Keluarga) -->
+  <div class="modal-overlay" id="onboardingModal">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3 class="modal-title">🌸 Selamat Datang di DompetMungil</h3>
+        <!-- Tombol Silang / Batal -->
+        <button onclick="closeOnboardingModal()" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:var(--text-muted); padding:4px 8px;" title="Batal / Tutup">✕</button>
+      </div>
+
+      <!-- Quick Interactive Guide / Langkah Penggunaan -->
+      <div style="background:#FFF9FB; border:1px solid #FFE4E8; border-radius:14px; padding:12px; margin-bottom:14px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+          <span style="font-size:1.1rem;">💡</span>
+          <strong style="font-size:0.8rem; color:#4A4A58;">Petunjuk Penggunaan Cepat:</strong>
+        </div>
+        <p style="font-size:0.75rem; color:#666; line-height:1.4;">
+          1. Pilih <strong>Mode Keluarga</strong> jika ingin berbagi & memantau keuangan bersama Suami, Istri, atau Anak.<br>
+          2. Pilih <strong>Mode Personal</strong> jika ingin mencatat keuangan pribadi secara mandiri.<br>
+          3. Anda bisa menutup jendela ini kapan saja (tombol ✕) dan mengaturnya nanti melalui menu <strong>⚙️</strong> di atas.
+        </p>
+      </div>
+
+      <div id="stepSelectAccountType">
+        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:16px;">
+          Pilih jenis penggunaan aplikasi ini untuk rumah tangga atau pribadi Anda:
+        </p>
+        <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:16px;">
+          <button class="btn-cute" onclick="chooseAccountMode('family')" style="padding:16px; text-align:left; justify-content:flex-start; border:2px solid var(--pink-pastel);">
+            <span style="font-size:1.8rem; margin-right:8px;">👨‍👩‍👧‍👦</span>
+            <div>
+              <strong style="display:block; font-size:0.95rem;">Mode Keluarga (Kolaborasi)</strong>
+              <small style="color:var(--text-muted);">Pilih peran Suami, Istri, atau Anak dengan transparansi terkontrol.</small>
+            </div>
+          </button>
+          <button class="btn-cute" onclick="chooseAccountMode('personal')" style="padding:16px; text-align:left; justify-content:flex-start;">
+            <span style="font-size:1.8rem; margin-right:8px;">👤</span>
+            <div>
+              <strong style="display:block; font-size:0.95rem;">Mode Personal (Pribadi)</strong>
+              <small style="color:var(--text-muted);">Langsung ke formulir pendaftaran untuk pencatatan keuangan mandiri.</small>
+            </div>
+          </button>
+        </div>
+
+        <div style="text-align:center; margin-top:12px; border-top:1px dashed #FFD1DC; padding-top:12px;">
+          <p style="font-size:0.8rem; color:var(--text-muted);">Sudah pernah membuat akun?</p>
+          <button type="button" class="btn-cute mint" onclick="showLoginForm()" style="padding:8px 16px; font-size:0.8rem; margin-top:6px;">
+            🔑 Masuk dengan Akun yang Ada
+          </button>
+        </div>
+      </div>
+
+      <!-- Form Pendaftaran -->
+      <form id="onboardingForm" style="display:none;">
+        <input type="hidden" id="selectedMode" value="personal">
+        <div class="form-group" id="groupFamilyRole" style="display:none;">
+          <label class="form-label">Pilih Peran Anggota Keluarga</label>
+          <select id="userFamilyRoleSelect" class="form-select">
+            <option value="suami">👨 Suami (Akses Penuh & Anggaran)</option>
+            <option value="istri">👩 Istri (Akses Penuh & Anggaran)</option>
+            <option value="anak">👧👦 Anak (Transparansi Terkontrol & Uang Saku)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Username</label>
+          <input type="text" id="onboardUsername" class="form-input" placeholder="contoh: ayah_budi" required minlength="3">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" id="onboardPassword" class="form-input" placeholder="Minimal 6 karakter" required minlength="6">
+        </div>
+        <button type="submit" class="btn-cute primary" style="width:100%; padding:14px; margin-top:8px;">
+          Mulai Gunakan DompetMungil ✨
+        </button>
+        <button type="button" class="btn-cute" onclick="showSelectAccountType()" style="width:100%; padding:10px; margin-top:8px; font-size:0.8rem;">
+          ⬅️ Kembali ke Pilihan Mode
+        </button>
+      </form>
+
+      <!-- Form Masuk / Login Akun -->
+      <form id="loginForm" style="display:none;">
+        <h4 style="font-size:0.95rem; font-weight:700; margin-bottom:12px; color:var(--text-primary);">🔑 Masuk ke DompetMungil</h4>
+        <div class="form-group">
+          <label class="form-label">Username</label>
+          <input type="text" id="loginUsername" class="form-input" placeholder="Masukkan username Anda" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" id="loginPassword" class="form-input" placeholder="Masukkan password Anda" required>
+        </div>
+        <button type="submit" class="btn-cute primary" style="width:100%; padding:14px; margin-top:8px;">
+          Masuk ke Akun ✨
+        </button>
+        <button type="button" class="btn-cute" onclick="showSelectAccountType()" style="width:100%; padding:10px; margin-top:8px; font-size:0.8rem;">
+          ⬅️ Buat Akun Baru
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Atur Anggaran Kategori -->
+  <div class="modal-overlay" id="budgetModal">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3 class="modal-title">🎯 Atur Batas Anggaran Bulanan</h3>
+        <button onclick="closeBudgetModal()" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">✕</button>
+      </div>
+      <form id="budgetForm">
+        <div class="form-group">
+          <label class="form-label">Pilih Kategori Pengeluaran</label>
+          <select id="budgetCategorySelect" class="form-select" required>
+            <!-- Dimuat dinamis -->
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Batas Anggaran Bulanan (Rp)</label>
+          <input type="text" inputmode="numeric" id="budgetAmountInput" class="form-input" placeholder="contoh: 1.500 RB / 2.000.000" required autocomplete="off" oninput="onNominalInput(this, 'budgetAmountGhostPreview')">
+          <div id="budgetAmountGhostPreview" style="font-size:0.78rem; font-weight:700; color:#E76F51; margin-top:6px; min-height:18px;"></div>
+        </div>
+        <button type="submit" class="btn-cute primary" style="width:100%; padding:14px; margin-top:8px;">
+          Simpan Anggaran ✨
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Tambah Transaksi -->
+  <div class="modal-overlay" id="txModal">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modalFormTitle">Catat Transaksi</h3>
+        <button onclick="closeModal()" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">✕</button>
+      </div>
+      <form id="txForm">
+        <input type="hidden" id="formType" value="expense">
+        <input type="hidden" id="txEditClientTxId" value="">
+        <div class="form-group">
+          <label class="form-label" style="display:flex; justify-content:space-between; align-items:center;">
+            <span>Nominal Transaksi (Rp)</span>
+            <span style="font-size:0.72rem; color:var(--text-muted); font-weight:600;">Otomatis: 1000 RB &rarr; 1.000.000</span>
+          </label>
+          <input type="text" inputmode="numeric" id="formAmount" class="form-input form-amount-input" placeholder="contoh: 1.000 RB / 50.000" required autocomplete="off" oninput="onNominalInput(this, 'formAmountGhostPreview')">
+          <div id="formAmountGhostPreview" class="ghost-typing-badge"></div>
+          
+          <!-- Tombol Pilihan Nominal Cepat (+10rb, +50rb, +100rb, +500rb) -->
+          <div class="quick-preset-amounts">
+            <button type="button" class="btn-preset-pill" onclick="addQuickPresetAmount(10000)">+10 rb</button>
+            <button type="button" class="btn-preset-pill" onclick="addQuickPresetAmount(50000)">+50 rb</button>
+            <button type="button" class="btn-preset-pill" onclick="addQuickPresetAmount(100000)">+100 rb</button>
+            <button type="button" class="btn-preset-pill" onclick="addQuickPresetAmount(500000)">+500 rb</button>
+            <button type="button" class="btn-preset-pill clear-pill" onclick="clearPresetAmount()">✕ Reset</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <label class="form-label" style="margin-bottom:0;">Kategori Lucu</label>
+            <button type="button" onclick="openCategoryManagerModal()" style="background:none; border:none; color:#E76F51; font-size:0.75rem; font-weight:700; cursor:pointer;">
+              ➕ Kustom Kategori
+            </button>
+          </div>
+          <select id="formCategory" class="form-select" required>
+            <option value="cat_makan">🍱 Makanan & Minuman</option>
+            <option value="cat_belanja">🛒 Belanja Harian</option>
+            <option value="cat_tagihan">💡 Listrik & Tagihan</option>
+            <option value="cat_pendidikan">📚 Pendidikan</option>
+            <option value="cat_gaji">💰 Gaji / Pemasukan</option>
+            <option value="cat_bonus">🎁 Bonus / Hadiah</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Sumber Dana</label>
+          <select id="formAccount" class="form-select" required>
+            <option value="acc_dompet">👛 Dompet Tunai</option>
+            <option value="acc_bank">🏦 Rekening Bank</option>
+            <option value="acc_ewallet">📱 E-Wallet</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Catatan Pribadi (Terenkripsi)</label>
+          <input type="text" id="formNote" class="form-input" placeholder="Contoh: Beli sayur & susu anak">
+        </div>
+        <button type="submit" class="btn-cute primary" style="width:100%; padding:14px; margin-top:8px;">
+          Simpan Transaksi Aman ✨
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Buat/Edit Target Menabung Celengan -->
+  <div class="modal-overlay" id="goalModal">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3 class="modal-title">🐔 Target Celengan Ayam Baru</h3>
+        <button onclick="closeGoalModal()" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">✕</button>
+      </div>
+      <form id="goalForm">
+        <div class="form-group">
+          <label class="form-label">Nama Impian / Keinginan</label>
+          <input type="text" id="goalTitleInput" class="form-input" placeholder="contoh: Liburan Keluarga ke Bali 🏖️" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Pilih Ikon Celengan</label>
+          <div style="display:flex; gap:8px; flex-wrap:wrap; font-size:1.4rem;">
+            <label style="cursor:pointer;"><input type="radio" name="goalIcon" value="🐔" checked> 🐔</label>
+            <label style="cursor:pointer;"><input type="radio" name="goalIcon" value="🏖️"> 🏖️</label>
+            <label style="cursor:pointer;"><input type="radio" name="goalIcon" value="🏍️"> 🏍️</label>
+            <label style="cursor:pointer;"><input type="radio" name="goalIcon" value="🏠"> 🏠</label>
+            <label style="cursor:pointer;"><input type="radio" name="goalIcon" value="💻"> 💻</label>
+            <label style="cursor:pointer;"><input type="radio" name="goalIcon" value="🎓"> 🎓</label>
+            <label style="cursor:pointer;"><input type="radio" name="goalIcon" value="💍"> 💍</label>
+            <label style="cursor:pointer;"><input type="radio" name="goalIcon" value="🚗"> 🚗</label>
+            <label style="cursor:pointer;"><input type="radio" name="goalIcon" value="📱"> 📱</label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Target Nominal (Rp)</label>
+          <input type="number" id="goalTargetInput" class="form-input" placeholder="contoh: 5000000" min="10000" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Saldo Awal Terkumpul (Rp)</label>
+          <input type="number" id="goalCurrentInput" class="form-input" placeholder="0" min="0" value="0">
+        </div>
+        <button type="submit" class="btn-cute primary" style="width:100%; padding:14px; margin-top:8px;">
+          Mulai Menabung Impian ✨
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Tambah Isi Celengan (Deposit) -->
+  <div class="modal-overlay" id="depositGoalModal">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3 class="modal-title">💰 Isi Celengan Impian</h3>
+        <button onclick="closeDepositGoalModal()" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">✕</button>
+      </div>
+      <form id="depositGoalForm">
+        <input type="hidden" id="depositGoalId">
+        <div style="background:#FFF9FB; border-radius:14px; padding:12px; margin-bottom:14px; border:1px solid #FFE4E8;">
+          <strong id="depositGoalTitle" style="font-size:0.95rem; color:#4A4A58;">Target</strong>
+          <p id="depositGoalProgress" style="font-size:0.8rem; color:#E76F51; margin-top:4px;">Terkumpul Rp 0 dari Rp 0</p>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nominal Tambahan (Rp)</label>
+          <input type="number" id="depositAmountInput" class="form-input" placeholder="contoh: 100000" min="1000" required>
+        </div>
+        <button type="submit" class="btn-cute mint" style="width:100%; padding:14px; margin-top:8px;">
+          🪙 Masukkan ke Celengan ✨
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Kelola / Kustomisasi Kategori -->
+  <div class="modal-overlay" id="categoryManagerModal">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3 class="modal-title">🎨 Kustom Kategori & Icon Picker</h3>
+        <button onclick="closeCategoryManagerModal()" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">✕</button>
+      </div>
+      <form id="newCategoryForm" style="margin-bottom:16px; background:#FFF8FA; padding:14px; border-radius:14px; border:1px dashed #FFAAA6;">
+        <strong style="font-size:0.85rem; display:block; margin-bottom:8px; color:#4A4A58;">➕ Tambah Kategori Baru</strong>
+        <div class="form-group" style="margin-bottom:8px;">
+          <label class="form-label">Jenis</label>
+          <select id="customCatType" class="form-select" style="padding:8px;">
+            <option value="expense">Pengeluaran</option>
+            <option value="income">Pemasukan</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom:8px;">
+          <label class="form-label">Pilih Ikon Emoji</label>
+          <div style="display:flex; gap:6px; flex-wrap:wrap; font-size:1.3rem;">
+            <label style="cursor:pointer;"><input type="radio" name="customCatIcon" value="☕" checked> ☕</label>
+            <label style="cursor:pointer;"><input type="radio" name="customCatIcon" value="🎮"> 🎮</label>
+            <label style="cursor:pointer;"><input type="radio" name="customCatIcon" value="💄"> 💄</label>
+            <label style="cursor:pointer;"><input type="radio" name="customCatIcon" value="🐾"> 🐾</label>
+            <label style="cursor:pointer;"><input type="radio" name="customCatIcon" value="🎁"> 🎁</label>
+            <label style="cursor:pointer;"><input type="radio" name="customCatIcon" value="👶"> 👶</label>
+            <label style="cursor:pointer;"><input type="radio" name="customCatIcon" value="🪴"> 🪴</label>
+            <label style="cursor:pointer;"><input type="radio" name="customCatIcon" value="🚴"> 🚴</label>
+            <label style="cursor:pointer;"><input type="radio" name="customCatIcon" value="📦"> 📦</label>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:8px;">
+          <label class="form-label">Nama Kategori</label>
+          <input type="text" id="customCatNameInput" class="form-input" placeholder="contoh: Kopi & Nongkrong" required>
+        </div>
+        <button type="submit" class="btn-cute primary" style="width:100%; padding:10px; font-size:0.85rem;">
+          Tambahkan Kategori Ini ✨
+        </button>
+      </form>
+      <div style="max-height:200px; overflow-y:auto;">
+        <strong style="font-size:0.8rem; color:#8E8E9F; display:block; margin-bottom:8px;">Kategori Saat Ini:</strong>
+        <div id="customCatListContainer" style="display:flex; flex-direction:column; gap:6px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Tambah Tagihan Rutin -->
+  <div class="modal-overlay" id="billModal">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3 class="modal-title">📌 Tambah Tagihan Rutin</h3>
+        <button onclick="closeBillModal()" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">✕</button>
+      </div>
+      <form id="billForm">
+        <div class="form-group">
+          <label class="form-label">Nama Tagihan</label>
+          <input type="text" id="billNameInput" class="form-input" placeholder="contoh: Tagihan WiFi Indihome" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Perkiraan Nominal (Rp)</label>
+          <input type="number" id="billAmountInput" class="form-input" placeholder="contoh: 350000" min="1000" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Jatuh Tempo (Tanggal Tiap Bulan)</label>
+          <input type="number" id="billDayInput" class="form-input" placeholder="contoh: 15" min="1" max="31" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Ikon Tagihan</label>
+          <div style="display:flex; gap:8px; flex-wrap:wrap; font-size:1.4rem;">
+            <label style="cursor:pointer;"><input type="radio" name="billIcon" value="💡" checked> 💡</label>
+            <label style="cursor:pointer;"><input type="radio" name="billIcon" value="📶"> 📶</label>
+            <label style="cursor:pointer;"><input type="radio" name="billIcon" value="💧"> 💧</label>
+            <label style="cursor:pointer;"><input type="radio" name="billIcon" value="🎓"> 🎓</label>
+            <label style="cursor:pointer;"><input type="radio" name="billIcon" value="📺"> 📺</label>
+            <label style="cursor:pointer;"><input type="radio" name="billIcon" value="🏥"> 🏥</label>
+            <label style="cursor:pointer;"><input type="radio" name="billIcon" value="💳"> 💳</label>
+          </div>
+        </div>
+        <button type="submit" class="btn-cute primary" style="width:100%; padding:14px; margin-top:8px;">
+          Simpan Tagihan Rutin ✨
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Tambah Hutang / Piutang -->
+  <div class="modal-overlay" id="debtModal">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3 class="modal-title">🤝 Catat Hutang / Piutang</h3>
+        <button onclick="closeDebtModal()" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">✕</button>
+      </div>
+      <form id="debtForm">
+        <div class="form-group">
+          <label class="form-label">Jenis Catatan</label>
+          <select id="debtTypeSelect" class="form-select" required>
+            <option value="my_debt">🔴 Saya Berhutang (Saya Meminjam Uang)</option>
+            <option value="others_debt">🟢 Orang Berhutang (Piutang / Teman Meminjam)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nama Orang / Lembaga</label>
+          <input type="text" id="debtPersonInput" class="form-input" placeholder="contoh: Paman Budi / Toko Maju" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nominal Pinjaman (Rp)</label>
+          <input type="number" id="debtAmountInput" class="form-input" placeholder="contoh: 500000" min="1000" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Catatan / Alasan</label>
+          <input type="text" id="debtNoteInput" class="form-input" placeholder="contoh: Talangan belanja motor">
+        </div>
+        <button type="submit" class="btn-cute primary" style="width:100%; padding:14px; margin-top:8px;">
+          Simpan Catatan Pinjaman ✨
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Konfigurasi Kunci PIN 4 Digit -->
+  <div class="modal-overlay" id="pinConfigModal">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3 class="modal-title">🔐 Kunci Layar Aplikasi (PIN Lock)</h3>
+        <button onclick="closePinConfigModal()" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">✕</button>
+      </div>
+      <div style="background:#FFF8FA; border-radius:14px; padding:14px; margin-bottom:14px; border:1px solid #FFE4E8;">
+        <p style="font-size:0.82rem; color:#555; line-height:1.5; margin-bottom:10px;">
+          Kunci PIN 4 digit melindungi layar saat aplikasi dibuka di HP agar keluarga atau teman tidak sengaja melihat saldo privasi Anda.
+        </p>
+        <div id="pinStatusText" style="font-size:0.82rem; font-weight:700; color:#2E7D32; margin-bottom:10px;">
+          Status: Tidak Aktif
+        </div>
+        <div class="form-group">
+          <label class="form-label">Atur 4 Digit PIN Baru</label>
+          <input type="password" id="newPinInput" class="form-input" maxlength="4" pattern="[0-9]*" inputmode="numeric" placeholder="4 Angka (contoh: 1234)" style="letter-spacing:6px; font-size:1.2rem; text-align:center;">
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button type="button" onclick="saveNewPin()" class="btn-cute primary" style="flex:1; padding:10px; font-size:0.85rem;">Simpan PIN 🔐</button>
+          <button type="button" id="btnDisablePin" onclick="disablePin()" class="btn-cute" style="display:none; padding:10px; font-size:0.85rem; color:#C62828;">Hapus PIN</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Manajemen & Reset Transaksi (Hapus Per Rentang, Mutasi Bank, atau Semua) -->
+  <div class="modal-overlay" id="txManagerModal">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3 class="modal-title">🗑️ Kelola & Reset Transaksi</h3>
+        <button onclick="closeTxManagerModal()" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">✕</button>
+      </div>
+      
+      <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:14px; line-height:1.4;">
+        Gunakan menu ini jika salah mengunggah file mutasi, data terbaca aneh, atau ingin membersihkan catatan dompet dengan aman.
+      </p>
+
+      <!-- Opsi 1: Hapus Transaksi Mutasi Bank yang Terakhir Diunggah / Seluruh Mutasi Bank -->
+      <div style="background:#FFF9FB; border:1px solid #FFD1DC; border-radius:14px; padding:14px; margin-bottom:12px;">
+        <strong style="font-size:0.88rem; color:#4A4A58; display:block; margin-bottom:4px;">🏦 1. Hapus Khusus Mutasi Bank</strong>
+        <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:10px;">
+          Hanya menghapus transaksi yang berasal dari import mutasi bank / CSV tanpa mengganggu catatan manual harian Anda.
+        </p>
+        <button type="button" class="btn-cute" onclick="deleteBankTransactionsOnly()" style="width:100%; justify-content:center; padding:10px; font-size:0.82rem; color:#E76F51; border-color:#FFD1DC;">
+          🧹 Hapus Semua Catatan Mutasi Bank
+        </button>
+      </div>
+
+      <!-- Opsi 2: Hapus Transaksi Berdasarkan Rentang Tanggal -->
+      <div style="background:#F8F8FC; border:1px solid #ECECF0; border-radius:14px; padding:14px; margin-bottom:12px;">
+        <strong style="font-size:0.88rem; color:#4A4A58; display:block; margin-bottom:4px;">📅 2. Hapus Berdasarkan Rentang Tanggal</strong>
+        <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:10px;">
+          Hapus seluruh transaksi pada periode tanggal tertentu (misal: bulan Oktober 2026 yang salah impor).
+        </p>
+        <div style="display:flex; gap:8px; margin-bottom:10px;">
+          <div style="flex:1;">
+            <label style="font-size:0.72rem; color:var(--text-muted); display:block; margin-bottom:2px;">Dari Tanggal:</label>
+            <input type="date" id="resetStartDateInput" class="form-input" style="font-size:0.78rem; padding:6px 8px;">
+          </div>
+          <div style="flex:1;">
+            <label style="font-size:0.72rem; color:var(--text-muted); display:block; margin-bottom:2px;">Sampai Tanggal:</label>
+            <input type="date" id="resetEndDateInput" class="form-input" style="font-size:0.78rem; padding:6px 8px;">
+          </div>
+        </div>
+        <button type="button" class="btn-cute" onclick="deleteTransactionsByDateRange()" style="width:100%; justify-content:center; padding:10px; font-size:0.82rem; color:#3F51B5; border-color:#C5CAE9;">
+          🗑️ Hapus Transaksi Pada Rentang Tanggal
+        </button>
+      </div>
+
+      <!-- Opsi 3: Reset Total Seluruh Data Transaksi -->
+      <div style="background:#FFF5F5; border:1px solid #FFCDD2; border-radius:14px; padding:14px; margin-bottom:8px;">
+        <strong style="font-size:0.88rem; color:#C62828; display:block; margin-bottom:4px;">⚠️ 3. Reset Total (Hapus Semua Transaksi)</strong>
+        <p style="font-size:0.75rem; color:#777; margin-bottom:10px;">
+          Mengosongkan seluruh riwayat catatan transaksi dan mengembalikan saldo dompet ke Rp 0.
+        </p>
+        <button type="button" class="btn-cute" onclick="resetAllTransactionsTotal()" style="width:100%; justify-content:center; padding:10px; font-size:0.82rem; background:#C62828; color:#FFF; font-weight:700;">
+          💥 Reset Semua Transaksi Dompet
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Layar Penuh Lockscreen PIN (App Lock) -->
+  <div id="appLockScreen" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:linear-gradient(135deg, #FFB7B2 0%, #FFDAC1 100%); z-index:9999; flex-direction:column; align-items:center; justify-content:center; padding:20px; text-align:center;">
+    <div style="width:80px; height:80px; border-radius:50%; background:#FFF; display:flex; align-items:center; justify-content:center; font-size:2.5rem; box-shadow:0 8px 24px rgba(0,0,0,0.15); margin-bottom:16px;">
+      🔒
+    </div>
+    <h2 style="font-size:1.3rem; font-weight:800; color:#4A4A58; margin-bottom:6px;">DompetMungil Terkunci</h2>
+    <p style="font-size:0.85rem; color:#5D5D6D; margin-bottom:20px;">Masukkan 4 digit PIN Anda untuk membuka catatan keuangan:</p>
+    <div style="display:flex; gap:10px; margin-bottom:24px;">
+      <input type="password" id="unlockPinInput" maxlength="4" pattern="[0-9]*" inputmode="numeric" style="width:180px; padding:12px; font-size:1.5rem; text-align:center; border-radius:18px; border:2px solid #FFF; letter-spacing:10px; outline:none; box-shadow:0 4px 16px rgba(0,0,0,0.1);" autofocus onkeyup="checkUnlockPin(this.value)">
+    </div>
+    <button onclick="verifyUnlockPinBtn()" class="btn-cute primary" style="padding:12px 28px; font-size:0.95rem; font-weight:700;">Buka Kunci ✨</button>
+  </div>
+
+  <!-- Area Dokumen Cetak / Struk Laporan Keuangan (Hanya Tampil Saat Cetak/PDF) -->
+  <div id="printableReportSection" class="printable-report" style="display:none;"></div>
+
+  <!-- 🌸 Custom Kawaii Alert & Confirm Popup Dialog (Pengganti Alert/Confirm Bawaan Browser) -->
+  <div id="customDialogOverlay" class="custom-dialog-overlay">
+    <div class="custom-dialog-box">
+      <div class="custom-dialog-mascot">
+        <svg id="customDialogMascotSvg" style="width:58px; height:58px;"><use href="#icon-cat-mascot"></use></svg>
+      </div>
+      <h4 id="customDialogTitle" class="custom-dialog-title">Pemberitahuan 🌸</h4>
+      <p id="customDialogMessage" class="custom-dialog-message">Pesan konfirmasi...</p>
+      <div id="customDialogActions" class="custom-dialog-actions">
+        <button type="button" id="customDialogCancelBtn" class="btn-cute" style="flex:1; justify-content:center; padding:10px 14px; font-size:0.85rem;">Batal</button>
+        <button type="button" id="customDialogConfirmBtn" class="btn-cute primary" style="flex:1; justify-content:center; padding:10px 14px; font-size:0.85rem;">Ya, Lanjutkan ✨</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 🐾 Modal Konfirmasi Buat Kategori Baru Otomatis dari Mutasi Bank -->
+  <div class="modal-overlay" id="confirmNewCategoryModal" style="z-index:9999;">
+    <div class="modal-sheet" style="max-width:440px;">
+      <div class="modal-header">
+        <h3 class="modal-title">✨ Buat Kategori Baru?</h3>
+        <button onclick="closeConfirmNewCategoryModal(false)" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">✕</button>
+      </div>
+      <div style="text-align:center; padding:10px 0 16px;">
+        <div style="width:68px; height:68px; border-radius:50%; background:var(--theme-tag-bg, #FFF0F3); border:2px dashed var(--pink-pastel); display:flex; align-items:center; justify-content:center; margin:0 auto 12px;">
+          <svg id="confirmNewCatMascotSvg" style="width:48px; height:48px;"><use href="#icon-cat-mascot"></use></svg>
+        </div>
+        <p style="font-size:0.88rem; color:var(--text-primary); font-weight:700; margin-bottom:6px;">
+          Transaksi mutasi berikut belum memiliki kategori khusus:
+        </p>
+        <div style="background:#FFFDF7; border:1px solid #FFE082; border-radius:12px; padding:10px 14px; margin-bottom:14px; text-align:left;">
+          <div style="font-size:0.75rem; color:var(--text-muted);" id="confirmNewCatTxDate">-</div>
+          <div style="font-size:0.85rem; font-weight:800; color:var(--text-primary); margin:2px 0;" id="confirmNewCatTxNote">-</div>
+          <div style="font-size:0.88rem; font-weight:800; color:#E76F51;" id="confirmNewCatTxAmount">-</div>
+        </div>
+        <div style="background:var(--bg-primary, #FFF8FA); border-radius:12px; padding:12px; margin-bottom:14px; text-align:left;">
+          <label style="font-size:0.78rem; font-weight:700; color:var(--text-primary); display:block; margin-bottom:6px;">
+            Rekomendasi Kategori Baru:
+          </label>
+          <div style="display:flex; gap:8px;">
+            <input type="text" id="confirmNewCatNameInput" class="form-input" style="font-size:0.85rem; font-weight:700;" placeholder="contoh: 📱 Topup & E-Money">
+          </div>
+          <small style="font-size:0.72rem; color:var(--text-muted); display:block; margin-top:4px;">
+            *Jika disetujui, kategori ini otomatis dibuat dan mutasi sejenis ke depan langsung tergolongkan rapi!
+          </small>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button type="button" class="btn-cute" onclick="closeConfirmNewCategoryModal(false)" style="flex:1; justify-content:center; padding:10px; font-size:0.82rem;">
+            Lewati (Pakai 'Lainnya')
+          </button>
+          <button type="button" class="btn-cute primary" onclick="closeConfirmNewCategoryModal(true)" style="flex:1.3; justify-content:center; padding:10px; font-size:0.85rem; font-weight:800;">
+            ✅ Ya, Buat Kategori Ini
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Script Logika PWA, IndexedDB & Sync dengan cache busting dinamis (v0.9.8-atm-priority-fix) -->
+  <script src="js/app.js?v=20261112_atmfix"></script>
+</body>
+</html>
