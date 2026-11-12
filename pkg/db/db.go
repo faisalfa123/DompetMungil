@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -169,12 +170,22 @@ func (d *Database) migrate() error {
 		('cat_pendidikan', 'Pendidikan Anak', 'expense', 'cute-book-pencil', '#C7CEEA'),
 		('cat_hiburan', 'Jalan-jalan & Liburan', 'expense', 'cute-ticket-star', '#FFDAC1'),
 		('cat_kesehatan', 'Kesehatan & Obat', 'expense', 'cute-heart-pill', '#FF9AA2'),
+		('cat_kendaraan', 'Bensin & Transportasi', 'expense', 'cute-scooter', '#F4A261'),
+		('cat_tarik_tunai', 'Tarik Tunai ATM', 'expense', 'cute-atm', '#7BDCB5'),
 		('cat_gaji', 'Gaji Bulanan', 'income', 'cute-money-bag', '#A0E7E5'),
 		('cat_bonus', 'Bonus & Hadiah', 'income', 'cute-gift-ribbon', '#B4F8C8'),
 		('cat_invest', 'Hasil Investasi', 'income', 'cute-plant-growth', '#FBE7C6');
 		`
 		_, _ = d.conn.Exec(defaultCats)
+	} else {
+		// Pastikan kategori baru tetap ada di database yang sudah dibuat sebelumnya
+		_, _ = d.conn.Exec(`INSERT OR IGNORE INTO categories (id, name, type, icon, color) VALUES 
+			('cat_kendaraan', 'Bensin & Transportasi', 'expense', 'cute-scooter', '#F4A261'),
+			('cat_tarik_tunai', 'Tarik Tunai ATM', 'expense', 'cute-atm', '#7BDCB5')`)
 	}
+
+	// Auto-migrasi transaksi tarik tunai ATM yang sempat tersimpan sebagai bensin / cat_kendaraan
+	d.migrateAtmTransactions()
 
 	// Masukkan akun dompet default jika belum ada
 	var accCount int
@@ -223,3 +234,37 @@ func (d *Database) DecryptNote(cipherNote string) string {
 	}
 	return dec
 }
+
+// migrateAtmTransactions memeriksa semua transaksi ber-kategori cat_kendaraan,
+// jika catatannya mengindikasikan penarikan tunai ATM, pindahkan ke cat_tarik_tunai.
+func (d *Database) migrateAtmTransactions() {
+	rows, err := d.conn.Query("SELECT id, note_enc FROM transactions WHERE category_id = 'cat_kendaraan'")
+	if err != nil {
+		return
+	}
+	defer rows.Close()
+
+	type toUpdate struct {
+		id string
+	}
+	var updates []toUpdate
+
+	for rows.Next() {
+		var id, noteEnc sql.NullString
+		if err := rows.Scan(&id, &noteEnc); err == nil && id.Valid {
+			note := ""
+			if noteEnc.Valid {
+				note = d.DecryptNote(noteEnc.String)
+			}
+			nLower := strings.ToLower(note)
+			if strings.Contains(nLower, "tarik tunai") || strings.Contains(nLower, "penarikan tunai") || strings.Contains(nLower, "atm") || strings.Contains(nLower, "tarik") {
+				updates = append(updates, toUpdate{id: id.String})
+			}
+		}
+	}
+
+	for _, u := range updates {
+		_, _ = d.conn.Exec("UPDATE transactions SET category_id = 'cat_tarik_tunai' WHERE id = ?", u.id)
+	}
+}
+

@@ -295,7 +295,7 @@ func (h *APIHandler) handleTransactions(w http.ResponseWriter, r *http.Request) 
 		// Anak: hanya melihat transaksi yang dicatat oleh dirinya sendiri
 		if currentRole == "anak" {
 			query = `
-				SELECT t.id, t.client_tx_id, t.type, t.amount, t.date, t.note_enc, a.name, c.name, c.color, c.icon, COALESCE(u.role, 'suami')
+				SELECT t.id, t.client_tx_id, t.type, t.amount, t.date, t.note_enc, a.name, t.category_id, COALESCE(c.name, ''), COALESCE(c.color, ''), COALESCE(c.icon, ''), COALESCE(u.role, 'suami')
 				FROM transactions t
 				LEFT JOIN accounts a ON t.account_id = a.id
 				LEFT JOIN categories c ON t.category_id = c.id
@@ -306,7 +306,7 @@ func (h *APIHandler) handleTransactions(w http.ResponseWriter, r *http.Request) 
 			args = append(args, currentUser)
 		} else {
 			query = `
-				SELECT t.id, t.client_tx_id, t.type, t.amount, t.date, t.note_enc, a.name, c.name, c.color, c.icon, COALESCE(u.role, 'suami')
+				SELECT t.id, t.client_tx_id, t.type, t.amount, t.date, t.note_enc, a.name, t.category_id, COALESCE(c.name, ''), COALESCE(c.color, ''), COALESCE(c.icon, ''), COALESCE(u.role, 'suami')
 				FROM transactions t
 				LEFT JOIN accounts a ON t.account_id = a.id
 				LEFT JOIN categories c ON t.category_id = c.id
@@ -330,6 +330,7 @@ func (h *APIHandler) handleTransactions(w http.ResponseWriter, r *http.Request) 
 			Date         string  `json:"date"`
 			Note         string  `json:"note"`
 			AccountName  string  `json:"account_name"`
+			CategoryID   string  `json:"category_id"`
 			CategoryName string  `json:"category_name"`
 			Color        string  `json:"color"`
 			Icon         string  `json:"icon"`
@@ -340,7 +341,7 @@ func (h *APIHandler) handleTransactions(w http.ResponseWriter, r *http.Request) 
 		for rows.Next() {
 			var item TxItem
 			var noteEnc, clientTxID sql.NullString
-			if err := rows.Scan(&item.ID, &clientTxID, &item.Type, &item.Amount, &item.Date, &noteEnc, &item.AccountName, &item.CategoryName, &item.Color, &item.Icon, &item.Author); err == nil {
+			if err := rows.Scan(&item.ID, &clientTxID, &item.Type, &item.Amount, &item.Date, &noteEnc, &item.AccountName, &item.CategoryID, &item.CategoryName, &item.Color, &item.Icon, &item.Author); err == nil {
 				if clientTxID.Valid {
 					item.ClientTxID = clientTxID.String
 				}
@@ -453,6 +454,33 @@ func (h *APIHandler) handleTransactions(w http.ResponseWriter, r *http.Request) 
 		}
 
 		respondError(w, http.StatusBadRequest, "ERR_BAD_PARAMS_400", "Parameter client_tx_id, id, atau scope diperlukan")
+		return
+	}
+
+	if r.Method == http.MethodPut {
+		var req struct {
+			ClientTxID string  `json:"client_tx_id"`
+			CategoryID string  `json:"category_id"`
+			Note       string  `json:"note"`
+			Amount     float64 `json:"amount"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.ClientTxID == "" {
+			respondError(w, http.StatusBadRequest, "ERR_BAD_PARAMS_400", "Parameter client_tx_id diperlukan")
+			return
+		}
+
+		conn := h.db.GetConn()
+		if req.CategoryID != "" && req.Note != "" {
+			noteEnc, _ := h.db.EncryptNote(req.Note)
+			_, _ = conn.Exec("UPDATE transactions SET category_id = ?, note_enc = ? WHERE client_tx_id = ?", req.CategoryID, noteEnc, req.ClientTxID)
+		} else if req.CategoryID != "" {
+			_, _ = conn.Exec("UPDATE transactions SET category_id = ? WHERE client_tx_id = ?", req.CategoryID, req.ClientTxID)
+		} else if req.Note != "" {
+			noteEnc, _ := h.db.EncryptNote(req.Note)
+			_, _ = conn.Exec("UPDATE transactions SET note_enc = ? WHERE client_tx_id = ?", noteEnc, req.ClientTxID)
+		}
+
+		respondJSON(w, http.StatusOK, map[string]interface{}{"status": "updated", "client_tx_id": req.ClientTxID})
 		return
 	}
 

@@ -1543,6 +1543,21 @@ async function loadServerData() {
       // Simpan juga ke IndexedDB lokal agar cache offline tetap utuh & terupdate
       if (Array.isArray(serverTxs) && serverTxs.length > 0) {
         for (const stx of serverTxs) {
+          // Auto-koreksi transaksi tarik tunai ATM yang sempat tersimpan sebagai bensin / cat_kendaraan
+          const noteLower = (stx.note || '').toLowerCase();
+          if ((noteLower.includes('tarik tunai') || noteLower.includes('penarikan tunai') || noteLower.includes('atm') || noteLower.includes('tarik')) &&
+              (stx.category_id === 'cat_kendaraan' || (stx.category_name || '').toLowerCase().includes('bensin'))) {
+            stx.category_id = 'cat_tarik_tunai';
+            stx.category_name = '🏧 Tarik Tunai ATM';
+            // Perbarui di server secara async
+            if (stx.client_tx_id && authToken) {
+              fetch('/api/v1/transactions', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'X-Auth-Token': authToken },
+                body: JSON.stringify({ client_tx_id: stx.client_tx_id, category_id: 'cat_tarik_tunai' })
+              }).catch(() => {});
+            }
+          }
           await saveLocalTx(stx, false);
         }
       }
@@ -2151,12 +2166,16 @@ function renderTransactions(list) {
   container.innerHTML = list.map(tx => {
     const isGmailTx = tx.source === 'gmail' || tx.is_gmail || (tx.client_tx_id && tx.client_tx_id.startsWith('gmail_'));
     const cat = (tx.category_id || '').toLowerCase();
-    
+    const noteLower = (tx.note || '').toLowerCase();
+    const isAtmTx = noteLower.includes('tarik tunai') || noteLower.includes('penarikan tunai') || noteLower.includes('atm') || (noteLower.includes('tarik') && tx.amount >= 50000);
+
     // Pilih ikon SVG kawaii yang cocok dengan kategori
     let iconSvgId = '';
     let emojiFallback = tx.type === 'income' ? '🌱' : '🌸';
     if (isGmailTx) {
       emojiFallback = '📧';
+    } else if (isAtmTx || cat.includes('tarik') || cat.includes('atm')) {
+      emojiFallback = '🏧';
     } else if (cat.includes('makan') || cat.includes('food')) {
       iconSvgId = 'icon-cat-bento';
     } else if (cat.includes('belanja') || cat.includes('groceries')) {
@@ -2169,8 +2188,6 @@ function renderTransactions(list) {
       iconSvgId = 'icon-cat-scooter';
     } else if (cat.includes('sehat') || cat.includes('obat') || cat.includes('health')) {
       iconSvgId = 'icon-cat-health';
-    } else if (cat.includes('tarik') || cat.includes('atm')) {
-      emojiFallback = '🏧';
     } else if (cat.includes('bonus') || cat.includes('kado') || cat.includes('gift')) {
       iconSvgId = 'icon-cat-gift';
     } else if (cat.includes('gaji')) {
@@ -2181,6 +2198,13 @@ function renderTransactions(list) {
       ? `<svg style="width:24px; height:24px;"><use href="#${iconSvgId}"></use></svg>`
       : `<span style="font-size:1.2rem;">${emojiFallback}</span>`;
 
+    let displayCategory = tx.category_name;
+    if (isAtmTx && (!displayCategory || displayCategory.toLowerCase().includes('bensin') || cat === 'cat_kendaraan')) {
+      displayCategory = '🏧 Tarik Tunai ATM';
+    } else if (!displayCategory) {
+      displayCategory = getCategoryDisplayName(tx.category_id, tx.type === 'income' ? '🌱 Pemasukan' : '🌸 Pengeluaran');
+    }
+
     return `
       <div class="tx-card" style="position:relative;">
         <div class="tx-info-left" style="flex:1;">
@@ -2189,12 +2213,12 @@ function renderTransactions(list) {
           </div>
           <div>
             <div class="tx-title">
-              ${escapeHtml(tx.note || tx.category_name || 'Transaksi')}
+              ${escapeHtml(tx.note || displayCategory || 'Transaksi')}
               ${isGmailTx ? '<span style="font-size:0.65rem; background:#E3F2FD; color:#1976D2; padding:2px 6px; border-radius:8px; margin-left:4px; font-weight:700;">Mutasi Gmail (Permanen)</span>' : ''}
             </div>
             <div class="tx-meta">
               <span style="display:inline-block; background:var(--theme-tag-bg, #FFF0F3); color:var(--text-primary); border-radius:6px; padding:1px 6px; font-size:0.7rem; font-weight:700; margin-right:4px;">
-                ${escapeHtml(tx.category_name || getCategoryDisplayName(tx.category_id, tx.type === 'income' ? '🌱 Pemasukan' : '🌸 Pengeluaran'))}
+                ${escapeHtml(displayCategory)}
               </span>
               ${tx.date} • ${tx.account_name || 'Dompet'} ${tx.author ? '• 👤 ' + escapeHtml(tx.author) : ''}
             </div>
@@ -2783,6 +2807,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (editId) {
       alert('✨ Perubahan transaksi berhasil disimpan!');
+      if (authToken) {
+        fetch('/api/v1/transactions', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Token': authToken },
+          body: JSON.stringify({
+            client_tx_id: editId,
+            category_id: category,
+            note: note,
+            amount: amount
+          })
+        }).catch(() => {});
+      }
     }
 
     // 2. Coba kirim langsung ke server
