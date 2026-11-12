@@ -1233,6 +1233,7 @@ const DEFAULT_CATEGORIES = {
     { id: 'cat_hiburan', name: '🎡 Rekreasi & Jalan-jalan' },
     { id: 'cat_kesehatan', name: '💊 Kesehatan & Obat' },
     { id: 'cat_kendaraan', name: '⛽ Bensin & Transportasi' },
+    { id: 'cat_tarik_tunai', name: '🏧 Tarik Tunai ATM' },
     { id: 'cat_lain_keluar', name: '🌸 Pengeluaran Lainnya' }
   ],
   income: [
@@ -2168,6 +2169,8 @@ function renderTransactions(list) {
       iconSvgId = 'icon-cat-scooter';
     } else if (cat.includes('sehat') || cat.includes('obat') || cat.includes('health')) {
       iconSvgId = 'icon-cat-health';
+    } else if (cat.includes('tarik') || cat.includes('atm')) {
+      emojiFallback = '🏧';
     } else if (cat.includes('bonus') || cat.includes('kado') || cat.includes('gift')) {
       iconSvgId = 'icon-cat-gift';
     } else if (cat.includes('gaji')) {
@@ -2426,8 +2429,20 @@ async function renderLocalTransactions() {
   let migrated = false;
 
   for (const t of localList) {
+    let changed = false;
     if (!t.author) {
       t.author = defaultAuthor;
+      changed = true;
+    }
+    // Auto-koreksi transaksi tarik tunai ATM yang sebelumnya sempat salah terdeteksi sebagai bensin/kendaraan
+    const tNoteLower = (t.note || '').toLowerCase();
+    if ((tNoteLower.includes('tarik tunai') || tNoteLower.includes('penarikan tunai') || tNoteLower.includes('atm')) && 
+        (t.category_id === 'cat_kendaraan' || t.category_name?.toLowerCase().includes('bensin'))) {
+      t.category_id = 'cat_tarik_tunai';
+      t.category_name = '🏧 Tarik Tunai ATM';
+      changed = true;
+    }
+    if (changed) {
       await saveLocalTx(t, false);
       migrated = true;
     }
@@ -3886,25 +3901,23 @@ function detectBankTransactionCategory(note, type, amount) {
     return { catId: 'cat_makan', needsConfirmation: false };
   }
 
+  // Tarik Tunai ATM (Wajib dicek SEBELUM Bensin/SPBU karena lokasi ATM sering berada di SPBU!)
+  if (noteLower.includes('tarik tunai') || noteLower.includes('penarikan tunai') || noteLower.includes('atm') || noteLower.includes('tarik') || noteLower.includes('cash out')) {
+    const existingAtm = allCats.find(c => c.id === 'cat_tarik_tunai' || c.name.toLowerCase().includes('tarik tunai') || c.name.toLowerCase().includes('atm'));
+    if (existingAtm) {
+      return { catId: existingAtm.id, needsConfirmation: false };
+    }
+    return {
+      catId: 'cat_tarik_tunai',
+      needsConfirmation: false
+    };
+  }
+
   // Bensin & Kendaraan
   if (noteLower.includes('spbu') || noteLower.includes('pertamina') || noteLower.includes('shell') || 
       noteLower.includes('bensin') || noteLower.includes('parkir') || noteLower.includes('toll') || 
       noteLower.includes('bengkel') || noteLower.includes('tambal')) {
     return { catId: 'cat_kendaraan', needsConfirmation: false };
-  }
-
-  // Tarik Tunai ATM
-  if (noteLower.includes('tarik tunai') || noteLower.includes('atm') || noteLower.includes('penarikan tunai')) {
-    const existingAtm = allCats.find(c => c.name.toLowerCase().includes('tarik tunai') || c.name.toLowerCase().includes('atm'));
-    if (existingAtm) {
-      return { catId: existingAtm.id, needsConfirmation: false };
-    }
-    return {
-      catId: null,
-      needsConfirmation: true,
-      suggestedName: '🏧 Tarik Tunai ATM',
-      suggestedIcon: '🏧'
-    };
   }
 
   // Gaji / Payroll (Pemasukan)
