@@ -399,6 +399,63 @@ func (h *APIHandler) handleTransactions(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	if r.Method == http.MethodDelete {
+		clientTxID := r.URL.Query().Get("client_tx_id")
+		txID := r.URL.Query().Get("id")
+		deleteScope := r.URL.Query().Get("scope") // "all", "bank", "range", or single
+		startDate := r.URL.Query().Get("start_date")
+		endDate := r.URL.Query().Get("end_date")
+
+		conn := h.db.GetConn()
+
+		if deleteScope == "all" {
+			_, err := conn.Exec("DELETE FROM transactions")
+			if err != nil {
+				respondError(w, http.StatusInternalServerError, "ERR_DB_DELETE_500", "Gagal mereset transaksi")
+				return
+			}
+			_, _ = conn.Exec("UPDATE accounts SET balance = 0")
+			respondJSON(w, http.StatusOK, map[string]interface{}{"status": "deleted", "message": "Semua transaksi berhasil direset"})
+			return
+		} else if deleteScope == "bank" {
+			// Hapus transaksi yang berasal dari import mutasi bank
+			_, err := conn.Exec("DELETE FROM transactions WHERE client_tx_id LIKE 'ctx_bank_%' OR note_enc LIKE '%Mutasi Bank%'")
+			if err != nil {
+				respondError(w, http.StatusInternalServerError, "ERR_DB_DELETE_500", "Gagal menghapus mutasi bank")
+				return
+			}
+			respondJSON(w, http.StatusOK, map[string]interface{}{"status": "deleted", "message": "Transaksi mutasi bank berhasil dihapus"})
+			return
+		} else if deleteScope == "range" && startDate != "" && endDate != "" {
+			_, err := conn.Exec("DELETE FROM transactions WHERE date >= ? AND date <= ?", startDate, endDate)
+			if err != nil {
+				respondError(w, http.StatusInternalServerError, "ERR_DB_DELETE_500", "Gagal menghapus transaksi rentang tanggal")
+				return
+			}
+			respondJSON(w, http.StatusOK, map[string]interface{}{"status": "deleted", "message": "Transaksi pada rentang tanggal berhasil dihapus"})
+			return
+		} else if clientTxID != "" {
+			_, err := conn.Exec("DELETE FROM transactions WHERE client_tx_id = ?", clientTxID)
+			if err != nil {
+				respondError(w, http.StatusInternalServerError, "ERR_DB_DELETE_500", "Gagal menghapus transaksi")
+				return
+			}
+			respondJSON(w, http.StatusOK, map[string]interface{}{"status": "deleted", "client_tx_id": clientTxID})
+			return
+		} else if txID != "" {
+			_, err := conn.Exec("DELETE FROM transactions WHERE id = ?", txID)
+			if err != nil {
+				respondError(w, http.StatusInternalServerError, "ERR_DB_DELETE_500", "Gagal menghapus transaksi")
+				return
+			}
+			respondJSON(w, http.StatusOK, map[string]interface{}{"status": "deleted", "id": txID})
+			return
+		}
+
+		respondError(w, http.StatusBadRequest, "ERR_BAD_PARAMS_400", "Parameter client_tx_id, id, atau scope diperlukan")
+		return
+	}
+
 	respondError(w, http.StatusMethodNotAllowed, "ERR_METHOD_405", "Metode tidak diizinkan")
 }
 

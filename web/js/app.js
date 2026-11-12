@@ -273,6 +273,35 @@ async function deleteLocalTx(clientTxId) {
   });
 }
 
+// Hapus batch transaksi dari IndexedDB
+async function deleteBatchLocalTx(clientTxIds) {
+  if (!localDB) await initIndexedDB();
+  if (!Array.isArray(clientTxIds) || clientTxIds.length === 0) return;
+  return new Promise((resolve, reject) => {
+    const txSession = localDB.transaction(['transactions', 'sync_queue'], 'readwrite');
+    const txStore = txSession.objectStore('transactions');
+    const syncStore = txSession.objectStore('sync_queue');
+    clientTxIds.forEach(id => {
+      txStore.delete(id);
+      syncStore.delete(id);
+    });
+    txSession.oncomplete = () => resolve();
+    txSession.onerror = (err) => reject(err);
+  });
+}
+
+// Reset dan kosongkan seluruh data transaksi dari IndexedDB
+async function clearAllLocalTx() {
+  if (!localDB) await initIndexedDB();
+  return new Promise((resolve, reject) => {
+    const txSession = localDB.transaction(['transactions', 'sync_queue'], 'readwrite');
+    txSession.objectStore('transactions').clear();
+    txSession.objectStore('sync_queue').clear();
+    txSession.oncomplete = () => resolve();
+    txSession.onerror = (err) => reject(err);
+  });
+}
+
 // Ambil seluruh transaksi dari IndexedDB
 async function getAllLocalTx() {
   if (!localDB) await initIndexedDB();
@@ -2181,8 +2210,162 @@ async function deleteTransactionItem(clientTxId) {
   if (!ok) return;
 
   await deleteLocalTx(clientTxId);
+  try {
+    if (authToken) {
+      await fetch(`/api/v1/transactions?client_tx_id=${encodeURIComponent(clientTxId)}`, {
+        method: 'DELETE',
+        headers: { 'X-Auth-Token': authToken }
+      });
+    }
+  } catch (e) {
+    console.warn('Gagal menghapus di server:', e);
+  }
   await renderLocalTransactions();
   alert('✨ Catatan transaksi berhasil dihapus!');
+}
+
+// 🗑️ Modal & Logika Reset / Hapus Transaksi (Bank Mutasi, Rentang Tanggal, atau Total)
+function openTxManagerModal() {
+  const modal = document.getElementById('txManagerModal');
+  if (modal) {
+    const today = new Date().toISOString().split('T')[0];
+    const startDateInp = document.getElementById('resetStartDateInput');
+    const endDateInp = document.getElementById('resetEndDateInput');
+    if (startDateInp && !startDateInp.value) startDateInp.value = today.substring(0, 8) + '01'; // awal bulan ini
+    if (endDateInp && !endDateInp.value) endDateInp.value = today;
+    modal.classList.add('active');
+  }
+}
+
+function closeTxManagerModal() {
+  const modal = document.getElementById('txManagerModal');
+  if (modal) modal.classList.remove('active');
+}
+
+// Hapus khusus mutasi bank (yang diimpor dari CSV/PDF)
+async function deleteBankTransactionsOnly() {
+  const localList = await getAllLocalTx();
+  const bankTxs = localList.filter(t => 
+    (t.client_tx_id && t.client_tx_id.startsWith('ctx_bank_')) || 
+    (t.note && (t.note.includes('Mutasi Bank') || t.note.includes('Mutasi BRImo') || t.note.includes('TRSF E-BANKING')))
+  );
+
+  if (bankTxs.length === 0) {
+    alert('Tidak ditemukan catatan mutasi bank di dompet Anda.');
+    return;
+  }
+
+  const ok = await showCuteConfirm(
+    `Ditemukan ${bankTxs.length} catatan mutasi bank.\n\nYakin ingin menghapus semua catatan mutasi bank ini? Catatan manual harian Anda akan tetap aman tersimpan.`,
+    'Hapus Mutasi Bank 🏦',
+    'Ya, Hapus Semua Mutasi',
+    'Batal'
+  );
+  if (!ok) return;
+
+  const ids = bankTxs.map(t => t.client_tx_id);
+  await deleteBatchLocalTx(ids);
+
+  try {
+    if (authToken) {
+      await fetch('/api/v1/transactions?scope=bank', {
+        method: 'DELETE',
+        headers: { 'X-Auth-Token': authToken }
+      });
+    }
+  } catch (e) {
+    console.warn('Gagal sinkronisasi hapus mutasi bank ke server:', e);
+  }
+
+  closeTxManagerModal();
+  await renderLocalTransactions();
+  alert(`🎉 Berhasil menghapus ${bankTxs.length} catatan mutasi bank!`);
+}
+
+// Hapus transaksi berdasarkan rentang tanggal
+async function deleteTransactionsByDateRange() {
+  const start = document.getElementById('resetStartDateInput').value;
+  const end = document.getElementById('resetEndDateInput').value;
+
+  if (!start || !end) {
+    alert('Harap pilih rentang tanggal awal dan akhir.');
+    return;
+  }
+  if (start > end) {
+    alert('Tanggal awal tidak boleh lebih besar dari tanggal akhir.');
+    return;
+  }
+
+  const localList = await getAllLocalTx();
+  const matched = localList.filter(t => t.date >= start && t.date <= end);
+
+  if (matched.length === 0) {
+    alert(`Tidak ada transaksi yang ditemukan pada rentang tanggal ${start} s/d ${end}.`);
+    return;
+  }
+
+  const ok = await showCuteConfirm(
+    `Ditemukan ${matched.length} catatan transaksi antara ${start} s/d ${end}.\n\nYakin ingin menghapus seluruh catatan pada rentang tanggal ini?`,
+    'Hapus Rentang Tanggal 📅',
+    `Ya, Hapus ${matched.length} Catatan`,
+    'Batal'
+  );
+  if (!ok) return;
+
+  const ids = matched.map(t => t.client_tx_id);
+  await deleteBatchLocalTx(ids);
+
+  try {
+    if (authToken) {
+      await fetch(`/api/v1/transactions?scope=range&start_date=${start}&end_date=${end}`, {
+        method: 'DELETE',
+        headers: { 'X-Auth-Token': authToken }
+      });
+    }
+  } catch (e) {
+    console.warn('Gagal sinkronisasi hapus rentang ke server:', e);
+  }
+
+  closeTxManagerModal();
+  await renderLocalTransactions();
+  alert(`✨ Berhasil menghapus ${matched.length} transaksi pada rentang ${start} s/d ${end}!`);
+}
+
+// Reset total seluruh transaksi dompet
+async function resetAllTransactionsTotal() {
+  const localList = await getAllLocalTx();
+  const ok1 = await showCuteConfirm(
+    `PERINGATAN: Anda akan menghapus SEMUA ${localList.length} catatan transaksi dompet dan mengembalikan saldo ke Rp 0.\n\nApakah Anda benar-benar yakin?`,
+    'Reset Total Transaksi ⚠️',
+    'Ya, Saya Yakin',
+    'Batal'
+  );
+  if (!ok1) return;
+
+  const ok2 = await showCuteConfirm(
+    'Konfirmasi Terakhir: Tindakan ini permanen dan tidak dapat dibatalkan. Lanjutkan reset total?',
+    'Yakin Reset Permanen? 💥',
+    'Reset Semua Sekarang',
+    'Batal'
+  );
+  if (!ok2) return;
+
+  await clearAllLocalTx();
+
+  try {
+    if (authToken) {
+      await fetch('/api/v1/transactions?scope=all', {
+        method: 'DELETE',
+        headers: { 'X-Auth-Token': authToken }
+      });
+    }
+  } catch (e) {
+    console.warn('Gagal reset total ke server:', e);
+  }
+
+  closeTxManagerModal();
+  await renderLocalTransactions();
+  alert('✨ Seluruh transaksi berhasil direset bersih ke Rp 0!');
 }
 
 async function renderLocalTransactions() {
@@ -3172,28 +3355,59 @@ async function computeSha256Hex(str) {
   }
 }
 
-// Normalisasi nominal uang dari teks mutasi (contoh: "1.250.000,00" atau "50,000" atau "50000")
+// Pisahkan baris CSV dengan mempertimbangkan tanda kutip ganda RFC-4180
+function splitCsvLine(text, delimiter = ',') {
+  let result = [];
+  let cur = '';
+  let inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    let c = text[i];
+    if (c === '"') {
+      if (inQuotes && text[i + 1] === '"') {
+        cur += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (c === delimiter && !inQuotes) {
+      result.push(cur.trim().replace(/^["']|["']$/g, ''));
+      cur = '';
+    } else {
+      cur += c;
+    }
+  }
+  result.push(cur.trim().replace(/^["']|["']$/g, ''));
+  return result;
+}
+
+// Normalisasi nominal uang dari teks mutasi (contoh: "1.250.000,00" atau "50000.00" atau "50,000")
 function parseBankAmountString(amtStr) {
   if (!amtStr) return 0;
   let s = String(amtStr).trim();
   // Hilangkan Rp, IDR, spasi
   s = s.replace(/^(Rp\.?|IDR)\s*/i, '').trim();
 
-  // Pola format Indonesia: 1.250.000,00 (titik ribuan, koma desimal)
+  // Pola A: Format Indonesia standar 1.250.000,00 (titik ribuan, koma desimal)
   if (s.includes('.') && s.includes(',')) {
     s = s.replace(/\./g, '').replace(',', '.');
-  } else if (s.includes(',') && !s.includes('.')) {
-    // Bisa jadi 50,00 (desimal) atau 50,000 (ribuan gaya Inggris)
+  } 
+  // Pola B: Koma saja (contoh 50000,00 atau 50,000)
+  else if (s.includes(',') && !s.includes('.')) {
     const parts = s.split(',');
     if (parts.length === 2 && parts[1].length === 2) {
-      s = parts[0] + '.' + parts[1]; // desimal 2 angka
+      s = parts[0] + '.' + parts[1]; // desimal 2 angka (Indonesia)
     } else {
-      s = s.replace(/,/g, ''); // ribuan
+      s = s.replace(/,/g, ''); // ribuan gaya barat
     }
-  } else if (s.includes('.') && !s.includes(',')) {
+  } 
+  // Pola C: Titik saja (contoh 50000.00 atau 50.000 atau 15.000.000)
+  else if (s.includes('.') && !s.includes(',')) {
     const parts = s.split('.');
-    if (parts.length > 2 || (parts.length === 2 && parts[1].length === 3)) {
-      s = s.replace(/\./g, ''); // ribuan titik tanpa desimal
+    if (parts.length === 2 && parts[1].length === 2) {
+      // Dua angka desimal di belakang titik (format standar ekspor sistem/DB bank seperti BRImo 50000.00)
+      s = parts[0] + '.' + parts[1];
+    } else if (parts.length > 2 || (parts.length === 2 && parts[1].length === 3)) {
+      s = s.replace(/\./g, ''); // ribuan titik tanpa desimal (misal 50.000)
     }
   }
 
@@ -3201,11 +3415,12 @@ function parseBankAmountString(amtStr) {
   return isNaN(num) ? 0 : Math.abs(num);
 }
 
-// Normalisasi format tanggal DD/MM/YYYY atau DD-MM-YYYY ke format YYYY-MM-DD
+// Normalisasi format tanggal DD/MM/YYYY, YYYY-MM-DD, atau YYYY-MM-DD HH:MM:SS ke YYYY-MM-DD
 function normalizeBankDate(dateStr) {
   if (!dateStr) return new Date().toISOString().split('T')[0];
-  const parts = dateStr.trim().split(/[\/\-\.]/);
-  const curYear = new Date().getFullYear();
+  // Ambil hanya komponen tanggal jika ada jam (contoh: "2026-10-26 11:02:42" -> "2026-10-26")
+  const cleanDate = dateStr.trim().split(/\s+/)[0];
+  const parts = cleanDate.split(/[\/\-\.]/);
 
   if (parts.length >= 3) {
     let day = parts[0];
@@ -3286,71 +3501,142 @@ function extractTextFromPdfBuffer(arrayBuffer) {
   return extractedLines.join('\n');
 }
 
-// Parser cerdas mutasi rekening Indonesia (BCA, Mandiri, BRI, BNI, Jago, CSV Standar)
+// Parser cerdas mutasi rekening Indonesia (BCA, Mandiri, BRI / BRImo, BNI, Jago, CSV Standar)
 function parseBankTextContent(rawText, bankHint = 'AUTO') {
   const lines = rawText.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
   const results = [];
 
-  for (let line of lines) {
-    // Lewati baris header umum
+  // 1. Deteksi Delimiter CSV (koma atau titik koma)
+  let detectedDelimiter = ',';
+  for (let l of lines.slice(0, 5)) {
+    if ((l.match(/;/g) || []).length > (l.match(/,/g) || []).length) {
+      detectedDelimiter = ';';
+      break;
+    }
+  }
+
+  // 2. Cek apakah ada Baris Header Kolom (Khususnya Format BRImo / Mandiri / Standar CSV)
+  let headerIndex = -1;
+  let headers = [];
+  let dateIdx = -1, descIdx = -1, debitIdx = -1, creditIdx = -1, amountIdx = -1, typeIdx = -1, balanceIdx = -1;
+
+  for (let i = 0; i < Math.min(lines.length, 10); i++) {
+    const cols = splitCsvLine(lines[i], detectedDelimiter);
+    const lowerCols = cols.map(c => c.toLowerCase());
+    const hasDate = lowerCols.some(c => c.includes('tanggal') || c.includes('date') || c.includes('tgl') || c.includes('waktu'));
+    const hasMoney = lowerCols.some(c => c.includes('debet') || c.includes('debit') || c.includes('kredit') || c.includes('credit') || c.includes('nominal') || c.includes('amount') || c.includes('mutasi'));
+
+    if (hasDate && hasMoney) {
+      headerIndex = i;
+      headers = lowerCols;
+      break;
+    }
+  }
+
+  if (headerIndex !== -1) {
+    headers.forEach((h, idx) => {
+      if (h.includes('tanggal') || h.includes('date') || h.includes('tgl') || h.includes('waktu')) dateIdx = idx;
+      else if (h.includes('uraian') || h.includes('keterangan') || h.includes('deskripsi') || h.includes('transaksi') || h.includes('description') || h.includes('remark')) descIdx = idx;
+      else if (h.includes('debet') || h.includes('debit') || h.includes('keluar') || h === 'db') debitIdx = idx;
+      else if (h.includes('kredit') || h.includes('credit') || h.includes('masuk') || h === 'cr') creditIdx = idx;
+      else if (h.includes('nominal') || h.includes('amount') || h.includes('jumlah')) amountIdx = idx;
+      else if (h.includes('tipe') || h.includes('jenis') || h.includes('type')) typeIdx = idx;
+      else if (h.includes('saldo') || h.includes('balance')) balanceIdx = idx;
+    });
+  }
+
+  // 3. Proses Pembacaan Tiap Baris
+  const startRow = headerIndex !== -1 ? headerIndex + 1 : 0;
+  for (let r = startRow; r < lines.length; r++) {
+    const line = lines[r];
+
+    // Lewati baris header berulang
     if (/^(tanggal|date|tgl|keterangan|description|mutasi|saldo|uraian|transaksi)/i.test(line)) {
       continue;
     }
 
-    // Pola A: CSV Standard dengan koma / titik-koma / tab
-    // Format: Tanggal, Keterangan, Debet/Kredit, Nominal, ...
-    if (line.includes(';') || (line.includes(',') && (line.match(/,/g) || []).length >= 2)) {
-      const delimiter = line.includes(';') ? ';' : ',';
-      const cols = line.split(delimiter).map(c => c.trim().replace(/^["']|["']$/g, ''));
+    // Pola A: Baris CSV dengan pemetaan header kolom terstruktur
+    if (line.includes(detectedDelimiter)) {
+      const cols = splitCsvLine(line, detectedDelimiter);
+
       if (cols.length >= 3) {
-        // Cari kolom tanggal
-        let dateColIndex = -1;
-        for (let i = 0; i < cols.length; i++) {
-          if (/\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}/.test(cols[i])) {
-            dateColIndex = i;
-            break;
+        let dateStr = '';
+        let note = '';
+        let amount = 0;
+        let type = 'expense';
+
+        // Gunakan posisi kolom dari header jika terdeteksi
+        if (dateIdx !== -1 && cols[dateIdx]) {
+          dateStr = normalizeBankDate(cols[dateIdx]);
+        } else {
+          // Cari kolom yang berisi format tanggal
+          for (let i = 0; i < cols.length; i++) {
+            if (/\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}/.test(cols[i]) || /\d{4}[\/\-\.]\d{1,2}[\/\-\.]\d{1,2}/.test(cols[i])) {
+              dateStr = normalizeBankDate(cols[i]);
+              break;
+            }
           }
         }
 
-        if (dateColIndex !== -1) {
-          const dateStr = normalizeBankDate(cols[dateColIndex]);
-          let note = '';
-          let amount = 0;
-          let type = 'expense';
+        if (descIdx !== -1 && cols[descIdx]) {
+          note = cols[descIdx];
+        }
 
-          // Cari kolom nominal dan tipe DB/CR
+        // Cek kolom Debit vs Kredit terpisah (seperti format e-Statement BRImo)
+        if (debitIdx !== -1 || creditIdx !== -1) {
+          const debitVal = debitIdx !== -1 ? parseBankAmountString(cols[debitIdx]) : 0;
+          const creditVal = creditIdx !== -1 ? parseBankAmountString(cols[creditIdx]) : 0;
+
+          if (creditVal > 0) {
+            type = 'income';
+            amount = creditVal;
+          } else if (debitVal > 0) {
+            type = 'expense';
+            amount = debitVal;
+          }
+        }
+
+        // Cek kolom Nominal + Tipe jika tidak menggunakan kolom terpisah
+        if (amount === 0 && amountIdx !== -1 && cols[amountIdx]) {
+          amount = parseBankAmountString(cols[amountIdx]);
+          if (typeIdx !== -1 && cols[typeIdx]) {
+            const tUpper = cols[typeIdx].toUpperCase();
+            if (tUpper.includes('CR') || tUpper.includes('KREDIT') || tUpper.includes('IN')) type = 'income';
+            else type = 'expense';
+          }
+        }
+
+        // Fallback untuk CSV generik: scan kolom yang cocok
+        if (amount === 0) {
           cols.forEach((col, idx) => {
-            if (idx === dateColIndex) return;
+            if (idx === dateIdx || idx === descIdx || idx === balanceIdx) return;
             const upper = col.toUpperCase();
-            if (upper === 'CR' || upper === 'KREDIT' || upper === 'IN' || upper === 'PEMASUKAN') {
-              type = 'income';
-            } else if (upper === 'DB' || upper === 'DEBET' || upper === 'OUT' || upper === 'PENGELUARAN') {
-              type = 'expense';
-            }
+            if (upper === 'CR' || upper === 'KREDIT' || upper === 'IN') type = 'income';
+            else if (upper === 'DB' || upper === 'DEBET' || upper === 'OUT') type = 'expense';
 
             const parsedVal = parseBankAmountString(col);
             if (parsedVal > 0 && amount === 0) {
               amount = parsedVal;
-            } else if (col.length > note.length && isNaN(parsedVal)) {
+            } else if (col.length > note.length && isNaN(parsedVal) && !/\d{4}-\d{2}-\d{2}/.test(col)) {
               note = col;
             }
           });
+        }
 
-          if (amount > 0) {
-            results.push({
-              date: dateStr,
-              type: type,
-              amount: amount,
-              note: note || 'Mutasi Bank ' + bankHint,
-              bank: bankHint
-            });
-            continue;
-          }
+        if (amount > 0 && dateStr) {
+          results.push({
+            date: dateStr,
+            type: type,
+            amount: amount,
+            note: note || ('Mutasi Bank ' + bankHint),
+            bank: bankHint
+          });
+          continue;
         }
       }
     }
 
-    // Pola B: Format baris e-statement m-Banking (contoh BCA KlikBCA: "04/11 TRSF E-BANKING DB 150.000,00 TRANSFER KE 123...")
+    // Pola B: Format baris e-statement m-Banking / teks mentah (contoh BCA KlikBCA: "04/11 TRSF E-BANKING DB 150.000,00 TRANSFER...")
     const dateMatch = line.match(/(\d{1,2}[\/\-\.]\d{1,2}(?:[\/\-\.]\d{2,4})?)/);
     if (!dateMatch) continue;
 
@@ -3359,14 +3645,12 @@ function parseBankTextContent(rawText, bankHint = 'AUTO') {
     const isDebit = /\b(DB|DEBIT|DEBET|PENGELUARAN|TRSF|QRIS|TARIK)\b/i.test(line);
     const type = isCredit ? 'income' : 'expense';
 
-    // Cari nominal uang: contoh 100.000,00 atau 50000
     const amtMatches = line.match(/\b\d{1,3}(?:\.\d{3})*(?:,\d{2})?\b|\b\d{4,}\b/g);
     let amount = 0;
     if (amtMatches) {
       for (let cand of amtMatches) {
         const val = parseBankAmountString(cand);
-        // Abaikan tanggal atau angka kecil misal "04" atau tahun "2026"
-        if (val >= 1000) {
+        if (val >= 100) {
           amount = val;
           break;
         }

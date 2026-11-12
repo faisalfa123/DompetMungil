@@ -418,6 +418,9 @@
             <button onclick="printFinancialReport()" class="btn-cute primary" style="padding:4px 8px; font-size:0.75rem;" title="Cetak struk laporan bulanan / Simpan sebagai PDF">
               🖨️ Cetak / PDF
             </button>
+            <button onclick="openTxManagerModal()" class="btn-cute" style="padding:4px 8px; font-size:0.75rem; color:#C62828; border-color:#FFCDD2; background:#FFF5F5;" title="Reset atau Hapus Data Transaksi Berdasarkan Kriteria / Rentang Tanggal">
+              🗑️ Reset / Hapus
+            </button>
             <span style="font-size: 0.8rem; color: var(--text-muted);" id="txCounter">0 Catatan</span>
           </div>
         </div>
@@ -1399,6 +1402,63 @@
     </div>
   </div>
 
+  <!-- Modal Manajemen & Reset Transaksi (Hapus Per Rentang, Mutasi Bank, atau Semua) -->
+  <div class="modal-overlay" id="txManagerModal">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3 class="modal-title">🗑️ Kelola & Reset Transaksi</h3>
+        <button onclick="closeTxManagerModal()" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">✕</button>
+      </div>
+      
+      <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:14px; line-height:1.4;">
+        Gunakan menu ini jika salah mengunggah file mutasi, data terbaca aneh, atau ingin membersihkan catatan dompet dengan aman.
+      </p>
+
+      <!-- Opsi 1: Hapus Transaksi Mutasi Bank yang Terakhir Diunggah / Seluruh Mutasi Bank -->
+      <div style="background:#FFF9FB; border:1px solid #FFD1DC; border-radius:14px; padding:14px; margin-bottom:12px;">
+        <strong style="font-size:0.88rem; color:#4A4A58; display:block; margin-bottom:4px;">🏦 1. Hapus Khusus Mutasi Bank</strong>
+        <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:10px;">
+          Hanya menghapus transaksi yang berasal dari import mutasi bank / CSV tanpa mengganggu catatan manual harian Anda.
+        </p>
+        <button type="button" class="btn-cute" onclick="deleteBankTransactionsOnly()" style="width:100%; justify-content:center; padding:10px; font-size:0.82rem; color:#E76F51; border-color:#FFD1DC;">
+          🧹 Hapus Semua Catatan Mutasi Bank
+        </button>
+      </div>
+
+      <!-- Opsi 2: Hapus Transaksi Berdasarkan Rentang Tanggal -->
+      <div style="background:#F8F8FC; border:1px solid #ECECF0; border-radius:14px; padding:14px; margin-bottom:12px;">
+        <strong style="font-size:0.88rem; color:#4A4A58; display:block; margin-bottom:4px;">📅 2. Hapus Berdasarkan Rentang Tanggal</strong>
+        <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:10px;">
+          Hapus seluruh transaksi pada periode tanggal tertentu (misal: bulan Oktober 2026 yang salah impor).
+        </p>
+        <div style="display:flex; gap:8px; margin-bottom:10px;">
+          <div style="flex:1;">
+            <label style="font-size:0.72rem; color:var(--text-muted); display:block; margin-bottom:2px;">Dari Tanggal:</label>
+            <input type="date" id="resetStartDateInput" class="form-input" style="font-size:0.78rem; padding:6px 8px;">
+          </div>
+          <div style="flex:1;">
+            <label style="font-size:0.72rem; color:var(--text-muted); display:block; margin-bottom:2px;">Sampai Tanggal:</label>
+            <input type="date" id="resetEndDateInput" class="form-input" style="font-size:0.78rem; padding:6px 8px;">
+          </div>
+        </div>
+        <button type="button" class="btn-cute" onclick="deleteTransactionsByDateRange()" style="width:100%; justify-content:center; padding:10px; font-size:0.82rem; color:#3F51B5; border-color:#C5CAE9;">
+          🗑️ Hapus Transaksi Pada Rentang Tanggal
+        </button>
+      </div>
+
+      <!-- Opsi 3: Reset Total Seluruh Data Transaksi -->
+      <div style="background:#FFF5F5; border:1px solid #FFCDD2; border-radius:14px; padding:14px; margin-bottom:8px;">
+        <strong style="font-size:0.88rem; color:#C62828; display:block; margin-bottom:4px;">⚠️ 3. Reset Total (Hapus Semua Transaksi)</strong>
+        <p style="font-size:0.75rem; color:#777; margin-bottom:10px;">
+          Mengosongkan seluruh riwayat catatan transaksi dan mengembalikan saldo dompet ke Rp 0.
+        </p>
+        <button type="button" class="btn-cute" onclick="resetAllTransactionsTotal()" style="width:100%; justify-content:center; padding:10px; font-size:0.82rem; background:#C62828; color:#FFF; font-weight:700;">
+          💥 Reset Semua Transaksi Dompet
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Layar Penuh Lockscreen PIN (App Lock) -->
   <div id="appLockScreen" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:linear-gradient(135deg, #FFB7B2 0%, #FFDAC1 100%); z-index:9999; flex-direction:column; align-items:center; justify-content:center; padding:20px; text-align:center;">
     <div style="width:80px; height:80px; border-radius:50%; background:#FFF; display:flex; align-items:center; justify-content:center; font-size:2.5rem; box-shadow:0 8px 24px rgba(0,0,0,0.15); margin-bottom:16px;">
@@ -1430,7 +1490,7 @@
     </div>
   </div>
 
-  <!-- Script Logika PWA, IndexedDB & Sync dengan cache busting dinamis (v0.9.5-bank-import) -->
-  <script src="js/app.js?v=20261111_v095bank"></script>
+  <!-- Script Logika PWA, IndexedDB & Sync dengan cache busting dinamis (v0.9.6-brimo-reset) -->
+  <script src="js/app.js?v=20261112_brimofix"></script>
 </body>
 </html>
