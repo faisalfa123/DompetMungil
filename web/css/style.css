@@ -17,6 +17,10 @@
   --shadow-hover: 0 12px 28px rgba(255, 183, 178, 0.25);
   --danger-pastel: #FF9AA2;
   --success-pastel: #7BDCB5;
+  --theme-accent: #E76F51;
+  --theme-nav-active: #E76F51;
+  --theme-tag-bg: #FFF0F3;
+  --theme-border: #FFAAA6;
 }
 
 * {
@@ -868,13 +872,13 @@ body {
 }
 
 .nav-item.active {
-  color: #E76F51;
+  color: var(--theme-nav-active);
   font-weight: 800;
 }
 
 .nav-item.active svg {
   transform: translateY(-2px) scale(1.15);
-  filter: drop-shadow(0 3px 6px rgba(231, 111, 81, 0.35));
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.15));
 }
 
 /* Cute SVG Icons Helper */

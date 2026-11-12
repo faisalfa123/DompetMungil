@@ -487,42 +487,62 @@ let accountMode = localStorage.getItem('dm_mode') || 'personal';
 let currentMascot = localStorage.getItem('dm_mascot') || 'icon-cat-mascot';
 let currentTab = 'home';
 
-// Tema & Karakter Maskot Kawaii dengan Palet Warna Lengkap
+// Tema & Karakter Maskot Kawaii dengan Palet Warna Lengkap Menyeluruh
 const MASCOT_THEMES = {
   'icon-cat-mascot': {
     name: 'Kucing Kawaii (Neko)',
     primary: '#FFB7B2',
     hover: '#FFAAA6',
     bg: '#FFF8FA',
-    cardGradient: 'linear-gradient(135deg, #FFB7B2 0%, #FFDAC1 100%)'
+    cardGradient: 'linear-gradient(135deg, #FFB7B2 0%, #FFDAC1 100%)',
+    accent: '#E76F51',
+    navActive: '#E76F51',
+    tagBg: '#FFF0F3',
+    borderColor: '#FFAAA6'
   },
   'icon-dog-mascot': {
     name: 'Shiba Inu Lucu',
     primary: '#F4A261',
     hover: '#E76F51',
-    bg: '#FFFDF9',
-    cardGradient: 'linear-gradient(135deg, #F4A261 0%, #E9C46A 100%)'
+    bg: '#FFFDF7',
+    cardGradient: 'linear-gradient(135deg, #F4A261 0%, #E9C46A 100%)',
+    accent: '#D97706',
+    navActive: '#D97706',
+    tagBg: '#FEF3C7',
+    borderColor: '#F59E0B'
   },
   'icon-capybara-mascot': {
     name: 'Capybara Santai',
     primary: '#B08968',
     hover: '#7F5539',
     bg: '#FAF7F2',
-    cardGradient: 'linear-gradient(135deg, #B08968 0%, #DDB892 100%)'
+    cardGradient: 'linear-gradient(135deg, #B08968 0%, #DDB892 100%)',
+    accent: '#7F5539',
+    navActive: '#7F5539',
+    tagBg: '#EDE0D4',
+    borderColor: '#9C6644'
   },
   'icon-bunny-mascot': {
     name: 'Usagi (Kelinci Imut)',
     primary: '#FFCAD4',
     hover: '#F4ACB7',
     bg: '#FFFBFD',
-    cardGradient: 'linear-gradient(135deg, #FFCAD4 0%, #D8E2DC 100%)'
+    cardGradient: 'linear-gradient(135deg, #FFCAD4 0%, #D8E2DC 100%)',
+    accent: '#E07A5F',
+    navActive: '#D64045',
+    tagBg: '#FFE5EC',
+    borderColor: '#F4ACB7'
   },
   'icon-panda-mascot': {
     name: 'Panda Menggemaskan',
     primary: '#52B788',
     hover: '#40916C',
     bg: '#F8FCF9',
-    cardGradient: 'linear-gradient(135deg, #74C69D 0%, #B7E4C7 100%)'
+    cardGradient: 'linear-gradient(135deg, #74C69D 0%, #B7E4C7 100%)',
+    accent: '#2D6A4F',
+    navActive: '#2D6A4F',
+    tagBg: '#D8F3DC',
+    borderColor: '#52B788'
   }
 };
 
@@ -531,26 +551,47 @@ function selectMascotTheme(mascotId) {
   currentMascot = mascotId;
   localStorage.setItem('dm_mascot', mascotId);
 
-  // Ubah ikon maskot
+  // Ubah ikon maskot utama di header dan dialog
   const mascotUse = document.getElementById('currentMascotUse');
   if (mascotUse) mascotUse.setAttribute('href', '#' + mascotId);
 
-  // Ubah palet warna CSS dinamis root variable
+  const dialogMascot = document.querySelector('#customDialogMascotSvg use');
+  if (dialogMascot) dialogMascot.setAttribute('href', '#' + mascotId);
+
+  const confirmCatMascot = document.querySelector('#confirmNewCatMascotSvg use');
+  if (confirmCatMascot) confirmCatMascot.setAttribute('href', '#' + mascotId);
+
+  // Ubah seluruh variabel CSS root agar nuansa aplikasi berubah total tanpa mengubah layout
   document.documentElement.style.setProperty('--pink-pastel', theme.primary);
   document.documentElement.style.setProperty('--pink-hover', theme.hover);
   document.documentElement.style.setProperty('--bg-primary', theme.bg);
   document.documentElement.style.setProperty('--wallet-gradient', theme.cardGradient);
+  document.documentElement.style.setProperty('--theme-accent', theme.accent);
+  document.documentElement.style.setProperty('--theme-nav-active', theme.navActive);
+  document.documentElement.style.setProperty('--theme-tag-bg', theme.tagBg);
+  document.documentElement.style.setProperty('--theme-border', theme.borderColor);
 
-  // Paksa update langsung ke kartu dompet
+  // Ubah style kartu dompet & avatar secara dinamis
   const cardWallet = document.querySelector('.card-wallet');
   if (cardWallet) {
     cardWallet.style.setProperty('background', theme.cardGradient, 'important');
   }
 
-  // Update avatar background
   const avatar = document.querySelector('.mascot-avatar');
   if (avatar) {
     avatar.style.background = theme.primary;
+  }
+
+  // Update highlight kartu maskot aktif di modal pilihan
+  document.querySelectorAll('[id^="mascotCard-"]').forEach(card => {
+    card.style.borderColor = 'transparent';
+    card.style.transform = 'scale(1)';
+  });
+  const shortKey = mascotId.replace('icon-', '').replace('-mascot', '');
+  const activeCard = document.getElementById('mascotCard-' + (shortKey === 'cat' ? 'cat' : shortKey === 'dog' ? 'dog' : shortKey === 'capybara' ? 'capy' : shortKey === 'bunny' ? 'bunny' : 'panda'));
+  if (activeCard) {
+    activeCard.style.borderColor = theme.primary;
+    activeCard.style.transform = 'scale(1.05)';
   }
 }
 
@@ -637,12 +678,6 @@ function closeThemeModal() {
   document.getElementById('themeModal').classList.remove('active');
 }
 
-function selectMascotTheme(mascotId, name, accentColor) {
-  currentMascot = mascotId;
-  localStorage.setItem('dm_mascot', mascotId);
-  document.getElementById('currentMascotUse').setAttribute('href', '#' + mascotId);
-  document.documentElement.style.setProperty('--pink-pastel', accentColor);
-}
 
 // 🌸 Sistem Ghost Typing & Auto-Format Nominal Rupiah (Otomatis: 1000 RB -> 1.000 RB / 1.000.000)
 function parseNominalToNumber(rawStr) {
@@ -1226,6 +1261,15 @@ function saveStoredCategories(cats) {
 
 let CATEGORIES = getStoredCategories();
 
+// Dapatkan nama kategori cantik beserta ikon emoji berdasarkan ID
+function getCategoryDisplayName(catId, defaultFallback = '🌸 Pengeluaran Lainnya') {
+  if (!catId) return defaultFallback;
+  CATEGORIES = getStoredCategories();
+  const all = [...(CATEGORIES.expense || []), ...(CATEGORIES.income || [])];
+  const found = all.find(c => c.id === catId);
+  return found ? found.name : defaultFallback;
+}
+
 function populateCategoryOptions(type) {
   const select = document.getElementById('formCategory');
   if (!select) return;
@@ -1610,7 +1654,7 @@ function renderExpensePieChart(list) {
   let totalExpense = 0;
 
   expenses.forEach(t => {
-    const catName = t.category_name || 'Lainnya';
+    const catName = t.category_name || getCategoryDisplayName(t.category_id, '🌸 Pengeluaran Lainnya');
     catTotals[catName] = (catTotals[catName] || 0) + Number(t.amount);
     totalExpense += Number(t.amount);
   });
@@ -2145,7 +2189,12 @@ function renderTransactions(list) {
               ${escapeHtml(tx.note || tx.category_name || 'Transaksi')}
               ${isGmailTx ? '<span style="font-size:0.65rem; background:#E3F2FD; color:#1976D2; padding:2px 6px; border-radius:8px; margin-left:4px; font-weight:700;">Mutasi Gmail (Permanen)</span>' : ''}
             </div>
-            <div class="tx-meta">${tx.date} • ${tx.account_name || 'Dompet'} ${tx.author ? '• 👤 ' + escapeHtml(tx.author) : ''}</div>
+            <div class="tx-meta">
+              <span style="display:inline-block; background:var(--theme-tag-bg, #FFF0F3); color:var(--text-primary); border-radius:6px; padding:1px 6px; font-size:0.7rem; font-weight:700; margin-right:4px;">
+                ${escapeHtml(tx.category_name || getCategoryDisplayName(tx.category_id, tx.type === 'income' ? '🌱 Pemasukan' : '🌸 Pengeluaran'))}
+              </span>
+              ${tx.date} • ${tx.account_name || 'Dompet'} ${tx.author ? '• 👤 ' + escapeHtml(tx.author) : ''}
+            </div>
           </div>
         </div>
         <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
@@ -3745,16 +3794,9 @@ async function processSelectedBankInput() {
       newCount++;
     }
 
-    // Tentukan kategori default otomatis
-    let catId = item.type === 'income' ? 'cat_gaji' : 'cat_makan';
-    const noteLower = item.note.toLowerCase();
-    if (noteLower.includes('pln') || noteLower.includes('listrik') || noteLower.includes('wifi') || noteLower.includes('indihome')) {
-      catId = 'cat_tagihan';
-    } else if (noteLower.includes('superindo') || noteLower.includes('alfamart') || noteLower.includes('indomaret') || noteLower.includes('sayur')) {
-      catId = 'cat_belanja';
-    } else if (noteLower.includes('gaji') || noteLower.includes('payroll') || noteLower.includes('salary')) {
-      catId = 'cat_gaji';
-    }
+    // Tentukan kategori otomatis (QRIS, Topup, Transfer, Tagihan, Minimarket, dll)
+    const catDetection = detectBankTransactionCategory(item.note, item.type, item.amount);
+    let catId = catDetection.catId;
 
     parsedBankBatch.push({
       client_tx_id: clientTxId,
@@ -3764,12 +3806,223 @@ async function processSelectedBankInput() {
       note: item.note,
       category_id: catId,
       account_id: 'acc_bank',
-      isDuplicate: isDuplicate
+      isDuplicate: isDuplicate,
+      needsConfirmation: catDetection.needsConfirmation,
+      suggestedName: catDetection.suggestedName,
+      suggestedIcon: catDetection.suggestedIcon
     });
   }
 
-  // 4. Render Preview
+  // 4. Periksa apakah ada transaksi baru yang butuh konfirmasi pembuatan kategori baru
+  await confirmPendingNewCategories();
+
+  // 5. Render Preview
   renderBankParsedPreview(newCount, dupCount);
+}
+
+// Deteksi otomatis kategori cerdas berdasarkan teks mutasi
+function detectBankTransactionCategory(note, type, amount) {
+  const noteLower = (note || '').toLowerCase();
+  const cats = getStoredCategories();
+  const allCats = [...(cats.expense || []), ...(cats.income || [])];
+
+  // 1. Cek kecocokan langsung dengan kategori yang sudah ada
+  for (const c of allCats) {
+    const cleanName = c.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (cleanName && noteLower.includes(cleanName)) {
+      return { catId: c.id, needsConfirmation: false };
+    }
+  }
+
+  // 2. Deteksi Pola Transaksi Populer Indonesia
+  // QRIS Payment
+  if (noteLower.includes('qris') || noteLower.includes('qr payment') || noteLower.includes('qris pay')) {
+    const existingQris = allCats.find(c => c.id === 'cat_qris' || c.name.toLowerCase().includes('qris'));
+    if (existingQris) {
+      return { catId: existingQris.id, needsConfirmation: false };
+    }
+    return {
+      catId: null,
+      needsConfirmation: true,
+      suggestedName: '📱 Belanja QRIS',
+      suggestedIcon: '📱'
+    };
+  }
+
+  // Top Up & E-Money (ShopeePay, GoPay, OVO, DANA, LinkAja, Maxim, Grab)
+  if (noteLower.includes('topup') || noteLower.includes('top up') || noteLower.includes('shopeepay') || 
+      noteLower.includes('gopay') || noteLower.includes('ovo') || noteLower.includes('dana') || 
+      noteLower.includes('linkaja') || noteLower.includes('e-money') || noteLower.includes('flazz')) {
+    const existingTopup = allCats.find(c => c.id === 'cat_topup' || c.name.toLowerCase().includes('topup') || c.name.toLowerCase().includes('top up') || c.name.toLowerCase().includes('e-wallet'));
+    if (existingTopup) {
+      return { catId: existingTopup.id, needsConfirmation: false };
+    }
+    return {
+      catId: null,
+      needsConfirmation: true,
+      suggestedName: '💳 Top Up E-Wallet',
+      suggestedIcon: '💳'
+    };
+  }
+
+  // Listrik / PLN / Wifi / Tagihan
+  if (noteLower.includes('pln') || noteLower.includes('listrik') || noteLower.includes('wifi') || 
+      noteLower.includes('indihome') || noteLower.includes('telkom') || noteLower.includes('pdam') || 
+      noteLower.includes('bpjs') || noteLower.includes('tagihan')) {
+    return { catId: 'cat_tagihan', needsConfirmation: false };
+  }
+
+  // Belanja Minimarket & Supermarket
+  if (noteLower.includes('indomaret') || noteLower.includes('alfamart') || noteLower.includes('superindo') || 
+      noteLower.includes('alfamidi') || noteLower.includes('hypermart') || noteLower.includes('sayur') || 
+      noteLower.includes('pasar') || noteLower.includes('sembako')) {
+    return { catId: 'cat_belanja', needsConfirmation: false };
+  }
+
+  // Makanan / Resto / Cafe
+  if (noteLower.includes('kopi') || noteLower.includes('cafe') || noteLower.includes('resto') || 
+      noteLower.includes('warung') || noteLower.includes('bakso') || noteLower.includes('mie') || 
+      noteLower.includes('food') || noteLower.includes('gofood') || noteLower.includes('shopeefood')) {
+    return { catId: 'cat_makan', needsConfirmation: false };
+  }
+
+  // Bensin & Kendaraan
+  if (noteLower.includes('spbu') || noteLower.includes('pertamina') || noteLower.includes('shell') || 
+      noteLower.includes('bensin') || noteLower.includes('parkir') || noteLower.includes('toll') || 
+      noteLower.includes('bengkel') || noteLower.includes('tambal')) {
+    return { catId: 'cat_kendaraan', needsConfirmation: false };
+  }
+
+  // Tarik Tunai ATM
+  if (noteLower.includes('tarik tunai') || noteLower.includes('atm') || noteLower.includes('penarikan tunai')) {
+    const existingAtm = allCats.find(c => c.name.toLowerCase().includes('tarik tunai') || c.name.toLowerCase().includes('atm'));
+    if (existingAtm) {
+      return { catId: existingAtm.id, needsConfirmation: false };
+    }
+    return {
+      catId: null,
+      needsConfirmation: true,
+      suggestedName: '🏧 Tarik Tunai ATM',
+      suggestedIcon: '🏧'
+    };
+  }
+
+  // Gaji / Payroll (Pemasukan)
+  if (type === 'income' && (noteLower.includes('gaji') || noteLower.includes('payroll') || noteLower.includes('salary'))) {
+    return { catId: 'cat_gaji', needsConfirmation: false };
+  }
+
+  // Transfer Masuk
+  if (type === 'income' && (noteLower.includes('trsf') || noteLower.includes('transfer') || noteLower.includes('dari') || noteLower.includes('kirim'))) {
+    const existingTrf = allCats.find(c => c.name.toLowerCase().includes('transfer masuk'));
+    if (existingTrf) {
+      return { catId: existingTrf.id, needsConfirmation: false };
+    }
+    return {
+      catId: null,
+      needsConfirmation: true,
+      suggestedName: '💸 Transfer Masuk',
+      suggestedIcon: '💸'
+    };
+  }
+
+  // Kategori default jika tidak masuk pola di atas
+  return {
+    catId: type === 'income' ? 'cat_lain_masuk' : 'cat_lain_keluar',
+    needsConfirmation: false
+  };
+}
+
+let confirmNewCategoryResolve = null;
+
+// Tampilkan modal manis konfirmasi kategori baru satu per satu
+function promptUserForNewCategory(tx) {
+  return new Promise((resolve) => {
+    confirmNewCategoryResolve = resolve;
+    const modal = document.getElementById('confirmNewCategoryModal');
+    const dateEl = document.getElementById('confirmNewCatTxDate');
+    const noteEl = document.getElementById('confirmNewCatTxNote');
+    const amtEl = document.getElementById('confirmNewCatTxAmount');
+    const inputEl = document.getElementById('confirmNewCatNameInput');
+    const mascotSvg = document.querySelector('#confirmNewCatMascotSvg use');
+
+    if (!modal) {
+      resolve(null);
+      return;
+    }
+
+    if (mascotSvg && typeof currentMascot !== 'undefined') {
+      mascotSvg.setAttribute('href', '#' + currentMascot);
+    }
+
+    if (dateEl) dateEl.innerText = tx.date;
+    if (noteEl) noteEl.innerText = tx.note;
+    if (amtEl) amtEl.innerText = `${tx.type === 'income' ? '+ ' : '- '}${formatRupiah(tx.amount)}`;
+    if (inputEl) inputEl.value = tx.suggestedName || 'Kategori Baru';
+
+    modal.classList.add('active');
+  });
+}
+
+function closeConfirmNewCategoryModal(confirmed) {
+  const modal = document.getElementById('confirmNewCategoryModal');
+  const inputEl = document.getElementById('confirmNewCatNameInput');
+  if (modal) modal.classList.remove('active');
+
+  if (confirmNewCategoryResolve) {
+    if (confirmed && inputEl && inputEl.value.trim()) {
+      confirmNewCategoryResolve(inputEl.value.trim());
+    } else {
+      confirmNewCategoryResolve(null);
+    }
+    confirmNewCategoryResolve = null;
+  }
+}
+
+// Iterasi transaksi baru yang membutuhkan konfirmasi kategori baru
+async function confirmPendingNewCategories() {
+  const pendingItems = parsedBankBatch.filter(tx => !tx.isDuplicate && tx.needsConfirmation);
+  if (pendingItems.length === 0) return;
+
+  // Grupkan berdasarkan suggestedName agar user tidak ditanya berkali-kali untuk kategori yang sama
+  const uniqueSuggestions = {};
+  pendingItems.forEach(tx => {
+    if (!uniqueSuggestions[tx.suggestedName]) {
+      uniqueSuggestions[tx.suggestedName] = [];
+    }
+    uniqueSuggestions[tx.suggestedName].push(tx);
+  });
+
+  for (const [suggestedName, items] of Object.entries(uniqueSuggestions)) {
+    const representativeTx = items[0];
+    const userCategoryName = await promptUserForNewCategory(representativeTx);
+
+    if (userCategoryName) {
+      // Buat kategori baru di sistem penyimpanan lokal
+      const cats = getStoredCategories();
+      const type = representativeTx.type || 'expense';
+      const newCatId = 'cat_custom_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+
+      if (!cats[type]) cats[type] = [];
+      cats[type].push({ id: newCatId, name: userCategoryName });
+      saveStoredCategories(cats);
+
+      // Terapkan kategori baru ke seluruh transaksi sejenis dalam batch ini
+      items.forEach(t => {
+        t.category_id = newCatId;
+        t.needsConfirmation = false;
+      });
+
+      // Update dropdown kategori jika sedang terbuka
+      populateCategoryOptions(type);
+    } else {
+      // User memilih lewati, gunakan kategori umum bawaan
+      items.forEach(t => {
+        t.category_id = t.type === 'income' ? 'cat_lain_masuk' : 'cat_lain_keluar';
+        t.needsConfirmation = false;
+      });
+    }
+  }
 }
 
 // Render tampilan preview hasil analisis dengan penanda Baru vs Duplikat
@@ -3807,19 +4060,23 @@ function renderBankParsedPreview(newCount, dupCount) {
     const badgeClass = isDup ? 'badge-dup' : 'badge-new';
     const amountSign = tx.type === 'income' ? '+ ' : '- ';
     const amountColor = tx.type === 'income' ? '#2E7D32' : '#E76F51';
+    const catName = getCategoryDisplayName(tx.category_id, tx.type === 'income' ? '🌱 Pemasukan' : '🌸 Pengeluaran');
 
     html += `
       <div class="parsed-tx-item ${isDup ? 'duplicate' : 'new-item'}">
         <div style="flex:1; overflow:hidden;">
-          <div style="display:flex; align-items:center; gap:6px;">
+          <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
             <span class="file-badge ${badgeClass}" style="font-size:0.65rem; padding:2px 6px;">${badgeText}</span>
             <span style="font-size:0.75rem; color:var(--text-muted);">${tx.date}</span>
+            <span style="font-size:0.7rem; font-weight:700; background:var(--theme-tag-bg, #FFF0F3); color:var(--text-primary); border-radius:6px; padding:1px 6px;">
+              ${escapeHtml(catName)}
+            </span>
           </div>
           <div style="font-size:0.82rem; font-weight:700; color:var(--text-primary); text-overflow:ellipsis; white-space:nowrap; overflow:hidden; margin-top:2px;">
             ${tx.note}
           </div>
         </div>
-        <div style="text-align:right; font-weight:800; font-size:0.88rem; color:${amountColor};">
+        <div style="text-align:right; font-weight:800; font-size:0.88rem; color:${amountColor}; white-space:nowrap; margin-left:8px;">
           ${amountSign}${formatRupiah(tx.amount)}
         </div>
       </div>
