@@ -1,0 +1,4 @@
+{
+  "name": "DompetMungil-dev",
+  "postCreateCommand": "git submodule update --init --recursive"
+}
