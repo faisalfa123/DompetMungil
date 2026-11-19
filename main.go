@@ -10,6 +10,8 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"syscall"
 
 	"github.com/faisalfa123/DompetMungil/pkg/api"
@@ -18,7 +20,7 @@ import (
 )
 
 // Embed seluruh direktori web statis PWA langsung ke dalam binary Go
-//go:embed web/*
+//go:embed web
 var webFS embed.FS
 
 func getAppDirectory() string {
@@ -47,12 +49,19 @@ func main() {
 	// Deteksi otomatis direktori di mana aplikasi ini terpasang / berjalan
 	appDir := getAppDirectory()
 
+	defaultPort := 1234
+	if envPort := os.Getenv("PORT"); envPort != "" {
+		if p, err := strconv.Atoi(envPort); err == nil && p > 0 && p < 65536 {
+			defaultPort = p
+		}
+	}
+
 	// Parse CLI flags
-	port := flag.Int("port", 1234, "Port kustom server PWA")
-	dataDir := flag.String("data-dir", "", "Direktori penyimpanan database dan kunci rahasia (kosong = autodetect)")
+	port := flag.Int("port", defaultPort, "Port kustom server PWA (atau env PORT)")
+	dataDir := flag.String("data-dir", os.Getenv("DATA_DIR"), "Direktori penyimpanan database dan kunci rahasia (kosong = autodetect)")
 	flag.Parse()
 
-	// Jika dataDir tidak dispesifikasikan via flag, autodetect lokasi terbaik:
+	// Jika dataDir tidak dispesifikasikan via flag/env, autodetect lokasi terbaik:
 	// Prioritas:
 	// 1. <appDir>/data (lokasi folder tempat aplikasi berada, misal /opt/dompetmungil/data)
 	// 2. /opt/dompetmungil/data jika direktori /opt/dompetmungil ada
@@ -75,7 +84,7 @@ func main() {
 	}
 
 	log.Printf("=====================================================")
-	log.Printf(" Catatan Keuangan Keluarga (Cute & Ultra-Light PWA) ")
+	log.Printf(" DompetMungil - Catatan Keuangan Keluarga (PWA)      ")
 	log.Printf(" Server Target: Odroid C2 / STB HG680P (Amlogic S905X)")
 	log.Printf(" Lokasi Terdeteksi (App Dir): %s", appDir)
 	log.Printf(" Lokasi Data (Data Dir)    : %s", resolvedDataDir)
@@ -123,7 +132,7 @@ func main() {
 	// Custom 404 & SPA router fallback
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		// Jika request adalah API yang tidak ditemukan, berikan custom JSON 404
-		if len(r.URL.Path) >= 4 && r.URL.Path[:5] == "/api/" {
+		if strings.HasPrefix(r.URL.Path, "/api/") {
 			w.Header().Set("Content-Type", "application/json; charset=utf-8")
 			w.WriteHeader(http.StatusNotFound)
 			fmt.Fprintf(w, `{"error":true,"code":"ERR_ENDPOINT_NOT_FOUND_404","message":"Endpoint API '%s' tidak ditemukan di server"}`, r.URL.Path)
@@ -131,11 +140,13 @@ func main() {
 		}
 
 		// Sajikan file statis atau index.html
-		f, err := subFS.Open(filepath.Clean(r.URL.Path[1:]))
-		if err == nil {
-			f.Close()
-			fileServer.ServeHTTP(w, r)
-			return
+		cleanPath := strings.TrimPrefix(filepath.Clean(r.URL.Path), "/")
+		if cleanPath != "" && cleanPath != "." {
+			if f, err := subFS.Open(cleanPath); err == nil {
+				f.Close()
+				fileServer.ServeHTTP(w, r)
+				return
+			}
 		}
 
 		// Fallback ke index.html untuk Single Page Application PWA

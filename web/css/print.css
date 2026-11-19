@@ -1,0 +1,66 @@
+/* DompetMungil Print Studio Styles (@page A4 & Struk) */
+
+@page {
+  size: A4 portrait;
+  margin: 14mm;
+}
+
+@media print {
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  html, body {
+    background: #FFFFFF !important;
+    color: #1A1A1A !important;
+    font-size: 11pt;
+  }
+
+  #ghibli-canvas,
+  .sidebar,
+  .topbar,
+  .mobile-nav,
+  .fab,
+  .toast-region,
+  .no-print {
+    display: none !important;
+  }
+
+  .shell,
+  .main-wrap,
+  .main-content {
+    display: block !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  .print-paper {
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+  }
+
+  .print-paper.style-receipt {
+    max-width: 80mm !important;
+    margin: 0 auto !important;
+    font-size: 9pt;
+  }
+
+  table.data-table {
+    page-break-inside: auto;
+  }
+
+  table.data-table tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+
+  table.data-table thead {
+    display: table-header-group;
+  }
+}

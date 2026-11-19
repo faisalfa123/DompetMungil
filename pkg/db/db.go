@@ -146,6 +146,43 @@ func (d *Database) migrate() error {
 		expires_at DATETIME NOT NULL,
 		FOREIGN KEY (user_id) REFERENCES users(id)
 	);
+
+	CREATE TABLE IF NOT EXISTS savings_goals (
+		id TEXT PRIMARY KEY,
+		title TEXT NOT NULL,
+		icon TEXT NOT NULL DEFAULT 'sprout',
+		target_amount REAL NOT NULL,
+		current_amount REAL NOT NULL DEFAULT 0,
+		color TEXT NOT NULL DEFAULT '#2F6F4E',
+		created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+	);
+
+	CREATE TABLE IF NOT EXISTS recurring_bills (
+		id TEXT PRIMARY KEY,
+		title TEXT NOT NULL,
+		amount REAL NOT NULL,
+		category_id TEXT NOT NULL,
+		account_id TEXT NOT NULL,
+		due_day INTEGER NOT NULL DEFAULT 1,
+		type TEXT NOT NULL DEFAULT 'expense',
+		last_paid_month TEXT NOT NULL DEFAULT '',
+		active INTEGER NOT NULL DEFAULT 1,
+		created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+	);
+
+	CREATE TABLE IF NOT EXISTS category_rules (
+		id TEXT PRIMARY KEY,
+		keyword TEXT NOT NULL,
+		category_id TEXT NOT NULL,
+		tx_type TEXT NOT NULL DEFAULT 'any',
+		priority INTEGER NOT NULL DEFAULT 10,
+		created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+	);
+
+	CREATE TABLE IF NOT EXISTS app_settings (
+		key TEXT PRIMARY KEY,
+		value TEXT NOT NULL
+	);
 	`
 	_, err := d.conn.Exec(schema)
 	if err != nil {
@@ -156,7 +193,7 @@ func (d *Database) migrate() error {
 	_, _ = d.conn.Exec("ALTER TABLE users ADD COLUMN account_mode TEXT NOT NULL DEFAULT 'personal'")
 	_, _ = d.conn.Exec("ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'member'")
 	_, _ = d.conn.Exec("ALTER TABLE transactions ADD COLUMN user_id TEXT")
-
+	_, _ = d.conn.Exec("ALTER TABLE transactions ADD COLUMN transfer_to_account_id TEXT DEFAULT ''")
 
 	// Masukkan kategori default jika belum ada
 	var count int
@@ -164,24 +201,24 @@ func (d *Database) migrate() error {
 	if count == 0 {
 		defaultCats := `
 		INSERT INTO categories (id, name, type, icon, color) VALUES
-		('cat_makan', 'Makanan & Minuman', 'expense', 'cute-cat-food', '#FFB7B2'),
-		('cat_belanja', 'Belanja Harian', 'expense', 'cute-shopping-basket', '#B5EAD7'),
-		('cat_tagihan', 'Listrik & Air & Wifi', 'expense', 'cute-bill-light', '#E2F0CB'),
-		('cat_pendidikan', 'Pendidikan Anak', 'expense', 'cute-book-pencil', '#C7CEEA'),
-		('cat_hiburan', 'Jalan-jalan & Liburan', 'expense', 'cute-ticket-star', '#FFDAC1'),
-		('cat_kesehatan', 'Kesehatan & Obat', 'expense', 'cute-heart-pill', '#FF9AA2'),
-		('cat_kendaraan', 'Bensin & Transportasi', 'expense', 'cute-scooter', '#F4A261'),
-		('cat_tarik_tunai', 'Tarik Tunai ATM', 'expense', 'cute-atm', '#7BDCB5'),
-		('cat_gaji', 'Gaji Bulanan', 'income', 'cute-money-bag', '#A0E7E5'),
-		('cat_bonus', 'Bonus & Hadiah', 'income', 'cute-gift-ribbon', '#B4F8C8'),
-		('cat_invest', 'Hasil Investasi', 'income', 'cute-plant-growth', '#FBE7C6');
+		('cat_makan', 'Makanan & Minuman', 'expense', 'utensils', '#C85A3F'),
+		('cat_belanja', 'Belanja Harian', 'expense', 'basket', '#2F6F4E'),
+		('cat_tagihan', 'Listrik, Air & Internet', 'expense', 'bolt', '#8F5B14'),
+		('cat_pendidikan', 'Pendidikan Anak', 'expense', 'book', '#3A5F8A'),
+		('cat_hiburan', 'Jalan-jalan & Hiburan', 'expense', 'compass', '#9A4C72'),
+		('cat_kesehatan', 'Kesehatan & Obat', 'expense', 'heart', '#B53D4B'),
+		('cat_kendaraan', 'Bensin & Transportasi', 'expense', 'bike', '#B45D24'),
+		('cat_tarik_tunai', 'Tarik Tunai ATM', 'expense', 'banknote', '#2A6F68'),
+		('cat_gaji', 'Gaji Bulanan', 'income', 'wallet', '#2A7A50'),
+		('cat_bonus', 'Bonus & Hadiah', 'income', 'gift', '#3D7A3B'),
+		('cat_invest', 'Hasil Investasi', 'income', 'sprout', '#2F6B7A');
 		`
 		_, _ = d.conn.Exec(defaultCats)
 	} else {
 		// Pastikan kategori baru tetap ada di database yang sudah dibuat sebelumnya
 		_, _ = d.conn.Exec(`INSERT OR IGNORE INTO categories (id, name, type, icon, color) VALUES 
-			('cat_kendaraan', 'Bensin & Transportasi', 'expense', 'cute-scooter', '#F4A261'),
-			('cat_tarik_tunai', 'Tarik Tunai ATM', 'expense', 'cute-atm', '#7BDCB5')`)
+			('cat_kendaraan', 'Bensin & Transportasi', 'expense', 'bike', '#B45D24'),
+			('cat_tarik_tunai', 'Tarik Tunai ATM', 'expense', 'banknote', '#2A6F68')`)
 	}
 
 	// Auto-migrasi transaksi tarik tunai ATM yang sempat tersimpan sebagai bensin / cat_kendaraan
@@ -193,12 +230,41 @@ func (d *Database) migrate() error {
 	if accCount == 0 {
 		defaultAccs := `
 		INSERT INTO accounts (id, name, type, balance, icon, color) VALUES
-		('acc_dompet', 'Dompet Tunai', 'cash', 0, 'cute-wallet', '#FFB7B2'),
-		('acc_bank', 'Rekening Bank', 'bank', 0, 'cute-bank-vault', '#B5EAD7'),
-		('acc_ewallet', 'E-Wallet', 'ewallet', 0, 'cute-phone-pay', '#C7CEEA');
+		('acc_dompet', 'Dompet Tunai', 'cash', 0, 'wallet', '#C85A3F'),
+		('acc_bank', 'Rekening Bank', 'bank', 0, 'landmark', '#2F6F4E'),
+		('acc_ewallet', 'E-Wallet', 'ewallet', 0, 'smartphone', '#3A5F8A');
 		`
 		_, _ = d.conn.Exec(defaultAccs)
 	}
+
+	// Masukkan aturan auto-kategorisasi default untuk mutasi bank Indonesia jika masih kosong
+	var ruleCount int
+	_ = d.conn.QueryRow("SELECT COUNT(*) FROM category_rules").Scan(&ruleCount)
+	if ruleCount == 0 {
+		defaultRules := `
+		INSERT INTO category_rules (id, keyword, category_id, tx_type, priority) VALUES
+		('rule_1', 'indomaret,alfamart,alfamidi,superindo,hypermart,transmart,tokopedia,shopee,blibli', 'cat_belanja', 'expense', 10),
+		('rule_2', 'gofood,grabfood,shopeefood,kopi,warung,resto,mcd,kfc,hokben,starbucks,bakso,soto,nasi', 'cat_makan', 'expense', 10),
+		('rule_3', 'pln,pdam,indihome,biznet,firstmedia,telkomsel,xl,indosat,tri,by.u,bpjs,listrik,wifi', 'cat_tagihan', 'expense', 10),
+		('rule_4', 'pertamina,shell,spbu,bensin,gojek,grab,maxim,kai,commuter,mrt,transjakarta,tol,parkir', 'cat_kendaraan', 'expense', 10),
+		('rule_5', 'tarik tunai,penarikan tunai,atm,cash withdrawal', 'cat_tarik_tunai', 'expense', 20),
+		('rule_6', 'apotek,kimia farma,k24,halodoc,rumah sakit,klinik,dokter,obat', 'cat_kesehatan', 'expense', 10),
+		('rule_7', 'spp,sekolah,kuliah,gramedia,buku,kursus,les', 'cat_pendidikan', 'expense', 10),
+		('rule_8', 'bioskop,xxi,cgv,netflix,spotify,tiket,hotel,traveloka', 'cat_hiburan', 'expense', 10),
+		('rule_9', 'gaji,payroll,salary,honor,upah', 'cat_gaji', 'income', 20),
+		('rule_10', 'dividen,bunga,kupon,reksadana,bibit,bareksa,deposito', 'cat_invest', 'income', 15),
+		('rule_11', 'bonus,thr,cashback,hadiah,komisi', 'cat_bonus', 'income', 10);
+		`
+		_, _ = d.conn.Exec(defaultRules)
+	}
+
+	// Pengaturan default aplikasi
+	_, _ = d.conn.Exec(`INSERT OR IGNORE INTO app_settings (key, value) VALUES
+		('family_title', 'DompetMungil'),
+		('family_subtitle', 'Buku Catatan Keuangan Keluarga'),
+		('theme', 'meadow'),
+		('anim_mode', 'full'),
+		('currency', 'IDR')`)
 
 	return nil
 }

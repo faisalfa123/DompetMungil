@@ -1,49 +1,54 @@
-const CACHE_NAME = 'dompetmungil-v13';
-const ASSETS_TO_CACHE = [
+const CACHE_NAME = 'dompetmungil-v2.0.0';
+const ASSETS = [
   '/',
   '/index.html',
-  '/css/style.css',
-  '/js/app.js',
-  '/manifest.json'
+  '/manifest.json',
+  '/favicon.svg',
+  '/css/tokens.css',
+  '/css/base.css',
+  '/css/components.css',
+  '/css/print.css',
+  '/js/main.js',
+  '/js/api.js',
+  '/js/store.js',
+  '/js/icons.js',
+  '/js/ghibli-scene.js',
+  '/js/bank-parser.js',
+  '/js/views/auth.js',
+  '/js/views/dashboard.js',
+  '/js/views/transactions.js',
+  '/js/views/bank-import.js',
+  '/js/views/planning.js',
+  '/js/views/print-view.js',
+  '/js/views/settings.js',
+  '/js/views/tx-modal.js',
 ];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
-    }).then(() => self.skipWaiting())
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)).then(() => self.skipWaiting()),
   );
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys.map((key) => {
-          if (key !== CACHE_NAME) {
-            return caches.delete(key);
-          }
-        })
-      );
-    }).then(() => self.clients.claim())
+    caches.keys().then((keys) =>
+      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))),
+    ).then(() => self.clients.claim()),
   );
 });
 
-// Bypass cache untuk file script utama agar selalu up to date di browser
 self.addEventListener('fetch', (event) => {
-  if (event.request.method !== 'GET') return;
-
-  const url = new URL(event.request.url);
-
-  // Jangan pernah cache file js / html / api agar klik dan update langsung aktif
-  if (url.pathname.endsWith('.js') || url.pathname.endsWith('.html') || url.pathname === '/' || url.pathname.startsWith('/api/')) {
-    event.respondWith(
-      fetch(event.request).catch(() => caches.match(event.request))
-    );
+  if (event.request.method !== 'GET' || event.request.url.includes('/api/')) {
     return;
   }
-
   event.respondWith(
-    caches.match(event.request).then((cached) => cached || fetch(event.request))
+    fetch(event.request)
+      .then((res) => {
+        const clone = res.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+        return res;
+      })
+      .catch(() => caches.match(event.request)),
   );
 });

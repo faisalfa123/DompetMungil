@@ -1,0 +1,19 @@
+[app]
+name = "dompetmungil"
+title = "DompetMungil"
+description = "Catatan keuangan keluarga ringan, tema Ghibli, pembaca mutasi seluruh bank Indonesia, dan studio cetak laporan."
+version = "2.0.0"
+
+[runtime]
+binary = "dompetmungil"
+port = 1234
+health_path = "/api/v1/health"
+data_dir = "data"
+
+[build]
+type = "go"
+command = "go build -ldflags='-s -w' -o dompetmungil ."
+
+[limits]
+memory_max = "64M"
+cpu_quota = "50%"
