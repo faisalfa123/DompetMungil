@@ -53,6 +53,12 @@ jobs:
           mkdir -p dist
           go build -ldflags="-s -w" -o dist/keuangan-server-linux-x86_64 main.go
 
+      - name: Generate SHA256 Checksums
+        run: |
+          cd dist
+          sha256sum * > checksums.txt
+          cat checksums.txt
+
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:

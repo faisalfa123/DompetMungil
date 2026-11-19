@@ -1,19 +1,18 @@
 [app]
-name = "dompetmungil"
-title = "DompetMungil"
-description = "Catatan keuangan keluarga ringan, tema Ghibli, pembaca mutasi seluruh bank Indonesia, dan studio cetak laporan."
-version = "2.0.0"
+id = "dompetmungil"
+repo = "faisalfa123/DompetMungil"
+asset = "keuangan-server-linux-aarch64"
+language = "go"
+description = "Catatan keuangan keluarga ringan bergaya Ghibli, pembaca mutasi bank, dan studio cetak"
 
-[runtime]
-binary = "dompetmungil"
-port = 1234
-health_path = "/api/v1/health"
-data_dir = "data"
-
-[build]
-type = "go"
-command = "go build -ldflags='-s -w' -o dompetmungil ."
+[run]
+port = 1100
+priority = 50
 
 [limits]
-memory_max = "64M"
-cpu_quota = "50%"
+memory_max_mb = 64
+cpu_quota_pct = 50
+tasks_max = 64
+
+[permissions]
+paths_rw = ["/var/lib/mastermind/dompetmungil"]

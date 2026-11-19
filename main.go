@@ -49,7 +49,7 @@ func main() {
 	// Deteksi otomatis direktori di mana aplikasi ini terpasang / berjalan
 	appDir := getAppDirectory()
 
-	defaultPort := 1234
+	defaultPort := 1100
 	if envPort := os.Getenv("PORT"); envPort != "" {
 		if p, err := strconv.Atoi(envPort); err == nil && p > 0 && p < 65536 {
 			defaultPort = p
