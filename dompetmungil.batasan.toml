@@ -7,6 +7,7 @@ description = "Catatan keuangan keluarga ringan bergaya Ghibli, pembaca mutasi b
 
 [run]
 port = 1100
+args = ["-data-dir", "/var/lib/mastermind/dompetmungil"]
 priority = 50
 
 [limits]

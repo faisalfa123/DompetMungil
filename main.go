@@ -20,6 +20,7 @@ import (
 )
 
 // Embed seluruh direktori web statis PWA langsung ke dalam binary Go
+//
 //go:embed web
 var webFS embed.FS
 
@@ -45,6 +46,21 @@ func getAppDirectory() string {
 	return "."
 }
 
+func isWritableDir(dir string) bool {
+	if dir == "" {
+		return false
+	}
+	if err := os.MkdirAll(dir, 0700); err != nil {
+		return false
+	}
+	testFile := filepath.Join(dir, fmt.Sprintf(".perm_test_%d", os.Getpid()))
+	if err := os.WriteFile(testFile, []byte("1"), 0600); err != nil {
+		return false
+	}
+	_ = os.Remove(testFile)
+	return true
+}
+
 func main() {
 	// Deteksi otomatis direktori di mana aplikasi ini terpasang / berjalan
 	appDir := getAppDirectory()
@@ -61,25 +77,60 @@ func main() {
 	dataDir := flag.String("data-dir", os.Getenv("DATA_DIR"), "Direktori penyimpanan database dan kunci rahasia (kosong = autodetect)")
 	flag.Parse()
 
-	// Jika dataDir tidak dispesifikasikan via flag/env, autodetect lokasi terbaik:
-	// Prioritas:
-	// 1. <appDir>/data (lokasi folder tempat aplikasi berada, misal /opt/dompetmungil/data)
-	// 2. /opt/dompetmungil/data jika direktori /opt/dompetmungil ada
-	// 3. /var/lib/dompetmungil (legacy fallback)
+	// Deteksi otomatis direktori data yang aman dan memiliki izin tulis (writable)
 	resolvedDataDir := *dataDir
 	if resolvedDataDir == "" {
-		localDataDir := filepath.Join(appDir, "data")
-		optDataDir := "/opt/dompetmungil/data"
-		systemDataDir := "/var/lib/dompetmungil"
+		candidates := []string{}
 
-		if info, err := os.Stat(localDataDir); err == nil && info.IsDir() {
-			resolvedDataDir = localDataDir
-		} else if info, err := os.Stat("/opt/dompetmungil"); err == nil && info.IsDir() {
-			resolvedDataDir = optDataDir
-		} else if info, err := os.Stat(systemDataDir); err == nil && info.IsDir() {
-			resolvedDataDir = systemDataDir
-		} else {
-			resolvedDataDir = localDataDir
+		// 1. STATE_DIRECTORY (standar systemd saat StateDirectory=mastermind/dompetmungil aktif)
+		if stateDir := os.Getenv("STATE_DIRECTORY"); stateDir != "" {
+			for _, part := range strings.Split(stateDir, ":") {
+				if part != "" {
+					candidates = append(candidates, part)
+				}
+			}
+		}
+
+		// 2. Direktori jail Mastermind resmi
+		candidates = append(candidates, "/var/lib/mastermind/dompetmungil")
+
+		// 3. Current Working Directory (dalam jail Mastermind, WorkingDirectory adalah /var/lib/mastermind/dompetmungil)
+		if pwd, err := os.Getwd(); err == nil && pwd != "/" {
+			candidates = append(candidates, pwd, filepath.Join(pwd, "data"))
+		}
+
+		// 4. Folder instalasi binary / local
+		candidates = append(candidates, filepath.Join(appDir, "data"))
+
+		// 5. Direktori legacy Debian/Linux
+		candidates = append(candidates, "/var/lib/dompetmungil", "/opt/dompetmungil/data")
+
+		for _, candidate := range candidates {
+			if isWritableDir(candidate) {
+				resolvedDataDir = candidate
+				break
+			}
+		}
+
+		if resolvedDataDir == "" {
+			resolvedDataDir = filepath.Join(appDir, "data")
+		}
+	}
+
+	// Validasi kepastian izin tulis pada direktori yang terpilih
+	if !isWritableDir(resolvedDataDir) {
+		log.Printf("PERINGATAN: Direktori data terpilih (%s) tidak memiliki izin tulis!", resolvedDataDir)
+		fallbacks := []string{
+			os.Getenv("STATE_DIRECTORY"),
+			"/var/lib/mastermind/dompetmungil",
+			filepath.Join(os.TempDir(), "dompetmungil-data"),
+		}
+		for _, fb := range fallbacks {
+			if fb != "" && isWritableDir(fb) {
+				log.Printf("Mengalihkan lokasi data ke fallback yang aman: %s", fb)
+				resolvedDataDir = fb
+				break
+			}
 		}
 	}
 
@@ -96,6 +147,26 @@ func main() {
 
 	keyPath := filepath.Join(resolvedDataDir, "secret.key")
 	dbPath := filepath.Join(resolvedDataDir, "data.db")
+
+	// Coba pulihkan/salin data lama jika di lokasi baru masih kosong
+	if _, err := os.Stat(keyPath); os.IsNotExist(err) {
+		for _, legacyDir := range []string{"/opt/dompetmungil/data", "/var/lib/dompetmungil"} {
+			if legacyDir == resolvedDataDir {
+				continue
+			}
+			legacyKey := filepath.Join(legacyDir, "secret.key")
+			legacyDB := filepath.Join(legacyDir, "data.db")
+			if kData, err := os.ReadFile(legacyKey); err == nil && len(kData) == 32 {
+				log.Printf("Menemukan kunci enkripsi lama di %s, menyalin ke %s...", legacyKey, keyPath)
+				_ = os.WriteFile(keyPath, kData, 0600)
+				break
+			}
+			if dbData, err := os.ReadFile(legacyDB); err == nil && len(dbData) > 0 {
+				log.Printf("Menemukan database lama di %s, menyalin ke %s...", legacyDB, dbPath)
+				_ = os.WriteFile(dbPath, dbData, 0600)
+			}
+		}
+	}
 
 	// 1. Muat atau buat kunci enkripsi AES-256 lokal
 	log.Printf("[1/3] Memeriksa kunci enkripsi lokal...")
