@@ -1,5 +1,8 @@
 # Binaries
-bin/
+bin/*
+!bin/keuangan-server-*
+!bin/dompetmungil-*
+!bin/checksums.txt
 *.exe
 *.exe~
 *.dll

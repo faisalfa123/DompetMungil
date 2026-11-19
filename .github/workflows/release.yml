@@ -56,6 +56,8 @@ jobs:
       - name: Generate SHA256 Checksums
         run: |
           cd dist
+          cp keuangan-server-linux-aarch64 dompetmungil-linux-arm64
+          cp keuangan-server-linux-aarch64 dompetmungil-linux-aarch64
           sha256sum * > checksums.txt
           cat checksums.txt
 
