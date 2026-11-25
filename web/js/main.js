@@ -104,13 +104,22 @@ function renderApp() {
             <button type="button" class="btn btn-sm btn-icon" id="btn-privacy" aria-label="${state.privacyMode ? 'Tampilkan nominal saldo' : 'Sembunyikan nominal saldo'}" title="${state.privacyMode ? 'Tampilkan saldo' : 'Sembunyikan saldo'}">
               ${icon(state.privacyMode ? 'eyeOff' : 'eye', 18)}
             </button>
-            <button type="button" class="btn btn-sm btn-primary" id="btn-top-add">
-              ${icon('plus', 16)} Catat
+            <button type="button" class="btn btn-sm btn-icon ${state.partnerView ? 'btn-primary' : ''}" id="btn-partner-view"
+              aria-label="${state.user?.account_mode === 'family' ? 'Lihat keuangan pasangan (Hanya Baca)' : 'Profil pengguna'}"
+              title="${state.user?.account_mode === 'family' ? (state.partnerView ? 'Kembali ke keuangan saya' : 'Lihat keuangan pasangan (Hanya Baca)') : `Role: ${state.user?.role || 'personal'}`}">
+              ${state.user?.role === 'istri' ? '👩' : state.user?.role === 'suami' ? '👨' : '👤'}
             </button>
           </div>
         </header>
 
-        <main id="main-content" class="main-content" tabindex="-1"></main>
+        ${state.partnerView ? `
+          <div class="partner-banner" role="status">
+            <span>👀 <strong>Mode Lihat Pasangan (Hanya Baca)</strong> — Anda sedang melihat catatan pasangan tanpa izin ubah.</span>
+            <button type="button" class="btn btn-sm" id="btn-exit-partner">Kembali</button>
+          </div>
+        ` : ''}
+
+        <main id="main-content" class="main-content ${state.partnerView ? 'read-only-mode' : ''}" tabindex="-1"></main>
       </div>
     </div>
 
@@ -123,9 +132,11 @@ function renderApp() {
       `).join('')}
     </nav>
 
-    <button type="button" class="fab" id="btn-fab-add" aria-label="Catat transaksi baru">
-      ${icon('plus', 20)} Catat
-    </button>
+    ${!state.partnerView ? `
+      <button type="button" class="fab" id="btn-fab-add" aria-label="Catat transaksi baru">
+        ${icon('plus', 20)} Catat
+      </button>
+    ` : ''}
   `;
 
   // Bind shell actions
@@ -150,7 +161,18 @@ function renderApp() {
     await refreshAll(scene);
   });
 
-  root.querySelector('#btn-top-add')?.addEventListener('click', openTxModal);
+  root.querySelector('#btn-partner-view')?.addEventListener('click', () => {
+    if (state.user?.account_mode !== 'family') {
+      toast(`Mode saat ini: ${state.user?.role || 'personal'}. Aktifkan Mode Pasutri di Pengaturan untuk melihat keuangan pasangan.`);
+      return;
+    }
+    state.partnerView = !state.partnerView;
+    renderApp();
+  });
+  root.querySelector('#btn-exit-partner')?.addEventListener('click', () => {
+    state.partnerView = false;
+    renderApp();
+  });
   root.querySelector('#btn-fab-add')?.addEventListener('click', openTxModal);
 
   root.querySelector('#btn-logout')?.addEventListener('click', async () => {

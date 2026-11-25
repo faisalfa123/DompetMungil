@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dompetmungil-v2.0.0';
+const CACHE_NAME = 'dompetmungil-v2.1.0';
 const ASSETS = [
   '/',
   '/index.html',
@@ -42,13 +42,20 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET' || event.request.url.includes('/api/')) {
     return;
   }
+  // Stale-While-Revalidate: buka instan dari cache, lalu perbarui di background
   event.respondWith(
-    fetch(event.request)
-      .then((res) => {
-        const clone = res.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-        return res;
-      })
-      .catch(() => caches.match(event.request)),
+    caches.open(CACHE_NAME).then((cache) =>
+      cache.match(event.request).then((cached) => {
+        const networkFetch = fetch(event.request)
+          .then((res) => {
+            if (res && res.status === 200) {
+              cache.put(event.request, res.clone());
+            }
+            return res;
+          })
+          .catch(() => cached);
+        return cached || networkFetch;
+      }),
+    ),
   );
 });

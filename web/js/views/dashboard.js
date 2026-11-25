@@ -118,6 +118,48 @@ export function renderDashboard(container, { openTxModal, navigate, scene }) {
 
     <div class="grid-main-side">
       <div class="stack-20">
+        ${(() => {
+          const days = [];
+          for (let i = 6; i >= 0; i--) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            const iso = d.toISOString().slice(0, 10);
+            const label = d.toLocaleDateString('id-ID', { weekday: 'short' });
+            const total = state.transactions
+              .filter((t) => t.type === 'expense' && t.date === iso)
+              .reduce((sum, t) => sum + t.amount, 0);
+            days.push({ iso, label, total });
+          }
+          const maxVal = Math.max(...days.map((d) => d.total), 1);
+          return `
+            <section class="card" aria-label="Grafik Pengeluaran Mingguan">
+              <div class="card-header">
+                <div>
+                  <h2 class="card-title">Pengeluaran 7 Hari Terakhir</h2>
+                  <p class="card-sub">Visualisasi cepat arus keluar harian</p>
+                </div>
+              </div>
+              <div class="svg-chart-wrap">
+                <svg viewBox="0 0 350 110" class="svg-bar-chart" role="img" aria-label="Grafik batang pengeluaran 7 hari terakhir">
+                  ${days.map((d, idx) => {
+                    const barH = Math.max(4, Math.round((d.total / maxVal) * 70));
+                    const x = idx * 50 + 10;
+                    const y = 82 - barH;
+                    const isToday = idx === 6;
+                    return `
+                      <g class="chart-bar-group">
+                        <title>${esc(d.label)} (${esc(d.iso)}): ${esc(formatRupiah(d.total))}</title>
+                        <rect x="${x}" y="${y}" width="30" height="${barH}" rx="6"
+                          fill="${isToday ? 'var(--accent, #2F6F4E)' : 'var(--accent-soft, #A7D7B8)'}" />
+                        <text x="${x + 15}" y="100" text-anchor="middle" font-size="10" fill="var(--ink-muted, #666)">${esc(d.label)}</text>
+                      </g>
+                    `;
+                  }).join('')}
+                </svg>
+              </div>
+            </section>
+          `;
+        })()}
         <section class="card" aria-label="Pengeluaran per Kategori">
           <div class="card-header">
             <div>
@@ -128,6 +170,43 @@ export function renderDashboard(container, { openTxModal, navigate, scene }) {
               ${icon('printer', 16)} Cetak Laporan
             </button>
           </div>
+          ${(() => {
+            const expTxs = monthTxs.filter((t) => t.type === 'expense');
+            const totalExp = expTxs.reduce((s, t) => s + t.amount, 0);
+            if (totalExp <= 0) return '';
+            const byCat = {};
+            expTxs.forEach((t) => {
+              const k = t.category_name || 'Lainnya';
+              if (!byCat[k]) byCat[k] = { name: k, amount: 0, color: t.color || '#2F6F4E' };
+              byCat[k].amount += t.amount;
+            });
+            const slices = Object.values(byCat).sort((a, b) => b.amount - a.amount).slice(0, 6);
+            const r = 36;
+            const circ = 2 * Math.PI * r;
+            let offset = 0;
+            return `
+              <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:16px;">
+                <svg width="100" height="100" viewBox="0 0 100 100" role="img" aria-label="Pie chart penggunaan dana">
+                  ${slices.map((s) => {
+                    const pct = s.amount / totalExp;
+                    const dash = pct * circ;
+                    const seg = `<circle cx="50" cy="50" r="${r}" fill="transparent" stroke="${esc(s.color)}" stroke-width="14" stroke-dasharray="${dash} ${circ}" stroke-dashoffset="-${offset}" transform="rotate(-90 50 50)"><title>${esc(s.name)}: ${Math.round(pct * 100)}%</title></circle>`;
+                    offset += dash;
+                    return seg;
+                  }).join('')}
+                  <text x="50" y="53" text-anchor="middle" font-size="11" font-weight="700" fill="var(--ink, #1f2937)">100%</text>
+                </svg>
+                <div style="display:flex;flex-wrap:wrap;gap:8px;flex:1;">
+                  ${slices.map((s) => `
+                    <span style="display:inline-flex;align-items:center;gap:5px;font-size:0.8rem;">
+                      <span style="width:10px;height:10px;border-radius:50%;background:${esc(s.color)};display:inline-block;"></span>
+                      ${esc(s.name)} (${Math.round((s.amount / totalExp) * 100)}%)
+                    </span>
+                  `).join('')}
+                </div>
+              </div>
+            `;
+          })()}
           ${renderCategoryChart(monthTxs)}
         </section>
 

@@ -207,7 +207,10 @@ export function renderSettings(container, { scene }) {
                 <strong style="font-size:0.88rem;">${esc(r.category_name || r.category_id)}</strong>
                 <div class="card-sub">${esc(r.keyword)}</div>
               </div>
-              <button type="button" class="btn btn-sm btn-ghost text-expense" data-del-rule="${esc(r.id)}" aria-label="Hapus aturan">${icon('trash', 15)}</button>
+              <div class="row" style="gap:4px;">
+                <button type="button" class="btn btn-sm btn-ghost" data-edit-rule="${esc(r.id)}" aria-label="Edit aturan">${icon('edit', 15)}</button>
+                <button type="button" class="btn btn-sm btn-ghost text-expense" data-del-rule="${esc(r.id)}" aria-label="Hapus aturan">${icon('trash', 15)}</button>
+              </div>
             </div>
           `).join('')}
         </div>
@@ -366,6 +369,29 @@ export function renderSettings(container, { scene }) {
     } catch (err) {
       toast(err.message, 'error');
     }
+  });
+
+  container.querySelectorAll('[data-edit-rule]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const id = btn.getAttribute('data-edit-rule');
+      const rule = state.rules.find((r) => r.id === id);
+      if (!rule) return;
+      const newKeyword = prompt('Ubah kata kunci auto-kategori (pisahkan dengan koma):', rule.keyword);
+      if (newKeyword === null || !newKeyword.trim()) return;
+      try {
+        await api.deleteRule(id);
+        await api.createRule({
+          keyword: newKeyword.trim(),
+          category_id: rule.category_id,
+          tx_type: rule.tx_type || 'any',
+          priority: rule.priority || 15,
+        });
+        toast('Aturan auto-kategori diperbarui.');
+        await refreshAll(scene);
+      } catch (err) {
+        toast(err.message, 'error');
+      }
+    });
   });
 
   container.querySelectorAll('[data-del-rule]').forEach((btn) => {

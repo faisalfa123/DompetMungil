@@ -195,6 +195,11 @@ func (d *Database) migrate() error {
 	_, _ = d.conn.Exec("ALTER TABLE transactions ADD COLUMN user_id TEXT")
 	_, _ = d.conn.Exec("ALTER TABLE transactions ADD COLUMN transfer_to_account_id TEXT DEFAULT ''")
 
+	// Indeks performa untuk query riwayat transaksi, filter kategori, dan multi-user
+	_, _ = d.conn.Exec("CREATE INDEX IF NOT EXISTS idx_transactions_date ON transactions(date DESC, created_at DESC)")
+	_, _ = d.conn.Exec("CREATE INDEX IF NOT EXISTS idx_transactions_category_id ON transactions(category_id)")
+	_, _ = d.conn.Exec("CREATE INDEX IF NOT EXISTS idx_transactions_user_id ON transactions(user_id)")
+
 	// Masukkan kategori default jika belum ada
 	var count int
 	_ = d.conn.QueryRow("SELECT COUNT(*) FROM categories").Scan(&count)

@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -362,6 +363,20 @@ func (h *APIHandler) handleTransactions(w http.ResponseWriter, r *http.Request) 
 			args = append(args, txType)
 		}
 
+		limit := 1000
+		if lStr := r.URL.Query().Get("limit"); lStr != "" {
+			if lVal, err := strconv.Atoi(lStr); err == nil && lVal > 0 && lVal <= 1000 {
+				limit = lVal
+			}
+		}
+		offset := 0
+		if oStr := r.URL.Query().Get("offset"); oStr != "" {
+			if oVal, err := strconv.Atoi(oStr); err == nil && oVal >= 0 {
+				offset = oVal
+			}
+		}
+
+		args = append(args, limit, offset)
 		query := fmt.Sprintf(`
 			SELECT t.id, t.client_tx_id, t.type, t.amount, t.date, t.note_enc,
 			       t.account_id, COALESCE(a.name, ''), COALESCE(t.transfer_to_account_id, ''), COALESCE(a2.name, ''),
@@ -372,7 +387,7 @@ func (h *APIHandler) handleTransactions(w http.ResponseWriter, r *http.Request) 
 			LEFT JOIN categories c ON t.category_id = c.id
 			LEFT JOIN users u ON t.user_id = u.id
 			WHERE %s
-			ORDER BY t.date DESC, t.created_at DESC LIMIT 1000
+			ORDER BY t.date DESC, t.created_at DESC LIMIT ? OFFSET ?
 		`, strings.Join(where, " AND "))
 
 		rows, err := h.db.GetConn().Query(query, args...)

@@ -95,6 +95,16 @@ export function toast(message, type = 'info') {
   }, 3600);
 }
 
+export function haptic(ms = 50) {
+  if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
+    try {
+      navigator.vibrate(ms);
+    } catch {
+      // Ignore if blocked by browser policy
+    }
+  }
+}
+
 export function applyTheme(theme, animMode, scene) {
   const validTheme = ['meadow', 'bakery', 'lantern'].includes(theme) ? theme : 'meadow';
   const validAnim = ['full', 'light', 'off'].includes(animMode) ? animMode : 'full';

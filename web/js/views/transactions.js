@@ -1,6 +1,6 @@
 /* Transactions View with Search, Filters, Inline Quick Edit, and Bulk Delete */
 
-import { state, esc, formatRupiah, formatDateId, toast, refreshAll } from '../store.js';
+import { state, esc, formatRupiah, formatDateId, toast, refreshAll, haptic } from '../store.js';
 import { api } from '../api.js';
 import { icon } from '../icons.js';
 
@@ -11,6 +11,7 @@ const viewState = {
   account_id: '',
   editingId: '',
   selectedIds: new Set(),
+  visibleCount: 20,
 };
 
 export function renderTransactions(container, { openTxModal, scene }) {
@@ -27,8 +28,11 @@ export function renderTransactions(container, { openTxModal, scene }) {
 
   const sumIn = filtered.filter((t) => t.type === 'income').reduce((a, b) => a + b.amount, 0);
   const sumOut = filtered.filter((t) => t.type === 'expense').reduce((a, b) => a + b.amount, 0);
+  const visible = filtered.slice(0, viewState.visibleCount);
+  const hasMore = visible.length < filtered.length;
 
   container.innerHTML = `
+    <div id="ptr-indicator" class="ptr-indicator" aria-hidden="true">Tarik ke bawah untuk menyegarkan...</div>
     <div class="stack-20">
       <section class="card" aria-label="Filter Transaksi">
         <div class="grid-3" style="margin-bottom:12px;">
@@ -98,7 +102,7 @@ export function renderTransactions(container, { openTxModal, scene }) {
           </div>
         ` : `
           <div class="tx-list">
-            ${filtered.map((tx) => {
+            ${visible.map((tx) => {
               const isEditing = viewState.editingId === tx.id;
               const sign = tx.type === 'income' ? '+' : tx.type === 'transfer' ? '' : '-';
               const cls = tx.type === 'income' ? 'text-income' : tx.type === 'transfer' ? 'text-info' : 'text-expense';
@@ -268,4 +272,56 @@ export function renderTransactions(container, { openTxModal, scene }) {
       }
     });
   });
+
+  // Infinite Scroll (Lazy Loading 20 item per batch)
+  if (hasMore) {
+    const txListEl = container.querySelector('.tx-list');
+    if (txListEl) {
+      const sentinel = document.createElement('div');
+      sentinel.id = 'tx-scroll-sentinel';
+      sentinel.className = 'skeleton-row';
+      sentinel.innerHTML = '<div class="skeleton" style="height:48px;width:100%;border-radius:12px;"></div>';
+      txListEl.appendChild(sentinel);
+
+      const io = new IntersectionObserver((entries) => {
+        if (entries[0]?.isIntersecting) {
+          io.disconnect();
+          viewState.visibleCount += 20;
+          rerender();
+        }
+      }, { rootMargin: '120px' });
+      io.observe(sentinel);
+    }
+  }
+
+  // Pull-to-Refresh untuk mobile
+  const ptr = container.querySelector('#ptr-indicator');
+  let touchStartY = 0;
+  let pulling = false;
+  container.addEventListener('touchstart', (e) => {
+    if (window.scrollY <= 2 && e.touches.length === 1) {
+      touchStartY = e.touches[0].clientY;
+      pulling = true;
+    }
+  }, { passive: true });
+  container.addEventListener('touchmove', (e) => {
+    if (!pulling || !ptr) return;
+    const diff = e.touches[0].clientY - touchStartY;
+    if (diff > 20 && window.scrollY <= 2) {
+      ptr.classList.add('visible');
+      ptr.textContent = diff > 70 ? 'Lepaskan untuk menyegarkan...' : 'Tarik ke bawah untuk menyegarkan...';
+    }
+  }, { passive: true });
+  container.addEventListener('touchend', async (e) => {
+    if (!pulling || !ptr) return;
+    pulling = false;
+    const diff = (e.changedTouches[0]?.clientY || 0) - touchStartY;
+    if (diff > 70 && window.scrollY <= 2) {
+      haptic(50);
+      ptr.textContent = 'Menyegarkan data...';
+      await refreshAll(scene);
+      toast('Riwayat transaksi diperbarui.');
+    }
+    ptr.classList.remove('visible');
+  }, { passive: true });
 }
