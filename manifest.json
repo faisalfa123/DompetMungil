@@ -1,0 +1,16 @@
+{
+  "name": "DompetMungil - Catatan Keuangan Keluarga",
+  "short_name": "DompetMungil",
+  "description": "Catatan keuangan keluarga bergaya Ghibli dengan pembaca mutasi seluruh bank Indonesia dan studio cetak laporan.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F6F2E7",
+  "theme_color": "#2A6B4A",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
